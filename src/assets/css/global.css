@@ -6,13 +6,24 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f5f5;
+  background-color: #F5E6D3;
   color: #333;
   min-height: 100vh;
+  /*margin: 0 100px;*/
+}
+.espaco{
+  margin: 0 100px;
 }
 
 #app {
-  /*max-width: 480px;*/
   margin: 0 auto;
+
+}
+
+@media(max-width:650px) {
+  body {
+    margin: 0;
+    padding: 0;
+  }
 
 }
