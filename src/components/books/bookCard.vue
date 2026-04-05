@@ -1,84 +1,83 @@
 <script setup>
-const livros = [
-    {
-        "id": "gf1",
-        "title": "Gravity Falls: Journal 3",
-        "author": "Alex Hirsch",
-        "publishedDate": "2016-07-26",
-        "year": 2016,
-        "pageCount": 288,
-        "category": "Ficção juvenil",
-        "description": "Se você já assistiu Gravity Falls, conhece o Diário 3. Este livro reúne segredos, mistérios e criaturas estranhas da cidade.",
-        "image": "http://books.google.com/books/content?id=aw9aEQAAQBAJ&printsec=frontcover&img=1&zoom=3",
-        "language": "en",
-        "publisher": "Disney Press",
-        "isbn": "9781484746691"
-    },
-    {
-        "id": "gf2",
-        "title": "Gravity Falls: Lost Legends",
-        "author": "Alex Hirsch",
-        "publishedDate": "2018-07-24",
-        "year": 2018,
-        "pageCount": 224,
-        "category": "Quadrinhos",
-        "description": "Quatro histórias inéditas que expandem o universo de Gravity Falls com aventuras misteriosas e divertidas.",
-        "image": "http://books.google.com/books/content?id=lost123&printsec=frontcover&img=1&zoom=3",
-        "language": "en",
-        "publisher": "Disney Press",
-        "isbn": "9781368021425"
-    },
-    {
-        "id": "gf3",
-        "title": "Dipper's and Mabel's Guide to Mystery and Nonstop Fun!",
-        "author": "Rob Renzetti",
-        "publishedDate": "2016-02-02",
-        "year": 2016,
-        "pageCount": 144,
-        "category": "Infantil",
-        "description": "Um guia divertido com dicas, mistérios e atividades do universo de Gravity Falls.",
-        "image": "http://books.google.com/books/content?id=guide123&printsec=frontcover&img=1&zoom=3",
-        "language": "en",
-        "publisher": "Disney Press",
-        "isbn": "9781484710104"
-    }
-]
-
-const emitir = defineEmits(['mudarStatus'])
+import { Check } from 'lucide-vue-next'
+defineProps({
+  livro: Object
+})
 </script>
 
 <template>
-    <div class="lista">
-        <div class="card-livro" v-for="livro in livros" :key="livro.id">
+        <div class="card-livro">
             <img :src="livro.image" class="imagem" />
             <div class="detalhes">
-                {{ livro.title }}
-                <p>por {{ livro.author }}</p>
+                <h1>{{ livro.title }}</h1>
+                <p class="autor">por {{ livro.author }}</p>
                 <div class="info">
                     <div class="publicado">
-                        <p>publicado</p>
-                        <p>{{ livro.publishedDate }}</p>
+                        <p class="tituloInfo">publicado</p>
+                        <p class="detalheInfo">{{ livro.publishedDate }}</p>
                     </div>
                     <div class="paginas">
-                        <p>paginas</p>
-                        <p>{{ livro.pageCount }}</p>
+                        <p class="tituloInfo">paginas</p>
+                        <p class="detalheInfo">{{ livro.pageCount }}</p>
                     </div>
                 </div>
+                
+                <button><p>marcar como lido</p> <Check :size="20"/></button>
             </div>
         </div>
-    </div>
 
 </template>
 
 <style scoped>
-.lista {
-    display: flex;
-}
 .card-livro {
     display: flex;
+    gap: 30px;
 }
 
 .imagem {
     width: 200px;
+}
+.detalhes {
+    margin-top: 15px;
+}
+h1 {
+    color: #2C2C2C;
+    font-size: 20px;
+    max-width: 200px;
+    font-weight: 500;
+}
+.autor{
+    color: #5A4636;
+    font-weight: 500;
+    margin: 10px 0;
+}
+.info {
+    display: flex;
+    gap: 30px;
+    margin: 0 0 10px 0;
+}
+.info .tituloInfo {
+    color: #9C8A7A;
+    font-weight: 400;
+}
+.info .detalheInfo {
+    color: #5A4636;
+    font-weight: 500;
+}
+.detalhes button {
+    display: flex;
+    align-items: center;
+    background-color: #6B4226;
+    color: white;
+    gap: 5px;
+    border: none;
+    border-radius: 50px;
+    width: 100%;
+    height: 40px;
+    justify-content: center;
+}
+.detalhes button p {
+    font-size: 14px;
+    font-weight: 500;
 }
 </style>
