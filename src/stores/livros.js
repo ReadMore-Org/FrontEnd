@@ -1,4 +1,3 @@
-// stores/livros.js
 import { defineStore } from 'pinia'
 import { getLivros } from '@/services/livros'
 
