@@ -2,6 +2,7 @@
 import mensagemBemvindo from "@/components/home/mensagemBemvindo.vue";
 import cardMarketplace from "@/components/home/cardMarketplace.vue";
 import BookCard from "@/components/books/bookCard.vue";
+import StatsCard from "@/components/home/statsCard.vue";
 
 const livros = [
     {
@@ -57,35 +58,51 @@ const livros = [
         <div class="lista-livros">
             <BookCard v-for="livro in livros" :key="livro.id" :livro="livro" />
         </div>
+        <div class="lista-cards">
+            <StatsCard titulo="Total de livros" :valor="10" />
+        <StatsCard titulo="Lendo" :valor="11" />
+        <StatsCard titulo="Finalizados" :valor="12" />
+        <StatsCard titulo="Quero ler" :valor="14" />
+        </div>
+        
     </div>
 </template>
 
 <style scoped>
 div.home {
-    margin: 0 180px;
+    margin: 0 100px;
 }
+
 .lista-livros {
     display: flex;
     gap: 100px;
     margin: 30px 0;
 }
+.lista-cards {
+    display: flex;
+    gap: 40px;
+    margin: 70px 0;
+}
+
 .titulo-secao {
-  position: relative;
-  display: inline-block;
-  padding-bottom: 5px;
-  color: #2C2C2C;
-  font-weight: 500;
-  margin-top: 40px;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 5px;
+    color: #2C2C2C;
+    font-weight: 500;
+    margin-top: 40px;
+    font-size: 25px;
 }
 
 .titulo-secao::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 50%; /* controla o tamanho da linha */
-  height: 4px;
-  border-radius: 50px;
-  background: #6B4226;
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 50%;
+    /* controla o tamanho da linha */
+    height: 4px;
+    border-radius: 50px;
+    background: #6B4226;
 }
 </style>

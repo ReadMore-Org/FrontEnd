@@ -10,7 +10,8 @@
 h1 {
     color: #8B5E3C;
     font-weight: 500;
-    margin: 50px 0 0 0
+    margin: 50px 0 0 0;
+    font-size: 25px;
 }
 h1 span {
     color: #6B4226;
