@@ -3,7 +3,7 @@ import mensagemBemvindo from "@/components/home/mensagemBemvindo.vue";
 import cardMarketplace from "@/components/home/cardMarketplace.vue";
 import BookCard from "@/components/books/bookCard.vue";
 import StatsCard from "@/components/home/statsCard.vue";
-
+import barraProgresso from "@/components/home/barraProgresso.vue";
 const livros = [
     {
         "id": "gf1",
@@ -60,11 +60,16 @@ const livros = [
         </div>
         <div class="lista-cards">
             <StatsCard titulo="Total de livros" :valor="10" />
-        <StatsCard titulo="Lendo" :valor="11" />
-        <StatsCard titulo="Finalizados" :valor="12" />
-        <StatsCard titulo="Quero ler" :valor="14" />
+            <StatsCard titulo="Lendo" :valor="11" />
+            <StatsCard titulo="Finalizados" :valor="12" />
+            <StatsCard titulo="Quero ler" :valor="14" />
         </div>
-        
+        <h1 class="titulo-secao">Meta 2026</h1>
+        <barraProgresso />
+        <h1 class="titulo-secao">Recomendados para você</h1>
+        <div class="lista-livros">
+            <BookCard v-for="livro in livros" :key="livro.id" :livro="livro" />
+        </div>
     </div>
 </template>
 
@@ -77,11 +82,14 @@ div.home {
     display: flex;
     gap: 100px;
     margin: 30px 0;
+    width: 100%;
 }
+
 .lista-cards {
     display: flex;
-    gap: 40px;
-    margin: 70px 0;
+    justify-content: space-between;
+    gap: 5px;
+    margin-top: 80px;
 }
 
 .titulo-secao {

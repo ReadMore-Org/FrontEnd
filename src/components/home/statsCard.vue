@@ -13,7 +13,6 @@ defineProps ({
                 <h2>{{ titulo }}</h2>
                 <h1>{{ valor }}</h1>
             </div>
-
             <div class="icone">
                 <LibraryBig />
             </div>
@@ -25,7 +24,7 @@ defineProps ({
 <style scoped>
 .cardStats {
     background-color: #6B4226;
-    width: 300px;
+    width: 330px;
     height: 140px;
     border-radius: 6px;
     color: white;
@@ -33,7 +32,6 @@ defineProps ({
     display: flex;
     justify-content: space-between;
 }
-
 .cardStats h2 {
     font-weight: 500;
     font-size: 20px;

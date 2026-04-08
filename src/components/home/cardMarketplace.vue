@@ -29,7 +29,7 @@ import { Store } from 'lucide-vue-next'
 .esquerda h1{
     color: white;
     font-weight: 500;
-    font-size: 50px;
+    font-size: 40px;
     width: 80%;
 }
 .esquerda button {
@@ -45,8 +45,11 @@ import { Store } from 'lucide-vue-next'
     justify-content: center;
 }
 .esquerda button p {
-    font-size: 20px;
+    font-size: 15px;
     font-weight: 550;
+}
+.esquerda button svg {
+    stroke-width: 1.8px;
 }
 .direita {
   display: flex;
