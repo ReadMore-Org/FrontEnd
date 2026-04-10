@@ -18,64 +18,84 @@ const active = ref('home')
 <template>
     <footer>
         <div id="main">
-        <ul id="sobre">
-            <li>
-                <h1>READMORE</h1>
-                <p>A plataforma criada para acompanhar sua jornada de leitura</p>
-                <small>© 2026 READMORE. Todos os direitos reservados</small>
-            </li>
-        </ul>
-        <ul id="contato">
-            <li>
-            <h1>Contato</h1> 
-            <p><Mail />readmore@yahoo.com </p>
-            <p><Phone />+55 47 4002-8922</p>
-            <p><MapPin />Joinville, Brasil</p>
-            </li>
-        </ul>
-        <ul id="social">
-            <li>
-            <h1>Social</h1>
-            <p><a href="github.com"><img src="/public/imgs/social/github.png" alt="github"></a></p>
-            <p><a href="linkedin.com"><img src="/public/imgs/social/linkedin.png" alt="linkedin"></a></p>
-            <p><a href="instagram.com"><img src="/public/imgs/social/instagram.png" alt="instagram"></a></p>
-            </li>
-        </ul>
-        <ul id="navegacao">
-            <li>
-                <h1>Navegação</h1>
-                <p><a href="home"></a>Home</p>
-                <p><a href="estante"></a>Estante</p>
-                <p><a href="marketplace"></a>Marketplace</p>
-                <p><a href="perfil"></a>Perfil</p>
-            </li>
-        </ul>
+            <ul id="sobre">
+                <li>
+                    <h1>READMORE</h1>
+                    <p>A plataforma criada para acompanhar sua jornada de leitura</p>
+                    <small>© 2026 READMORE. Todos os direitos reservados</small>
+                </li>
+            </ul>
+            <div id="outros">
+                <ul id="contato">
+                    <li>
+                        <h1>Contato</h1>
+                        <p>
+                            <Mail :size="24" />readmore@yahoo.com
+                        </p>
+                        <p>
+                            <Phone :size="24" />+55 47 4002-8922
+                        </p>
+                        <p>
+                            <MapPin :size="24" />Joinville, Brasil
+                        </p>
+                    </li>
+                </ul>
+                <ul id="social">
+                    <li>
+                        <h1>Social</h1>
+
+                        <div class="icons">
+                            <a href="https://github.com">
+                                <img src="/imgs/social/github.png" alt="github">
+                            </a>
+
+                            <a href="https://linkedin.com">
+                                <img src="/imgs/social/linkedin.png" alt="linkedin">
+                            </a>
+
+                            <a href="https://instagram.com">
+                                <img src="/imgs/social/instagram.png" alt="instagram">
+                            </a>
+                        </div>
+
+                    </li>
+                </ul>
+                <ul id="navegacao">
+                    <li>
+                        <h1>Navegação</h1>
+                        <p><a href="home"></a>Home</p>
+                        <p><a href="estante"></a>Estante</p>
+                        <p><a href="marketplace"></a>Marketplace</p>
+                        <p><a href="perfil"></a>Perfil</p>
+                    </li>
+                </ul>
+            </div>
         </div>
         <nav id="mobile">
             <ul>
                 <li :class="{ active: active === 'home' }" @click="active = 'home'">
-                    <House :size="25"/>
+                    <House :size="25" />
                 </li>
 
                 <li :class="{ active: active === 'estante' }" @click="active = 'estante'">
-                    <Book :size="25"/>
+                    <Book :size="25" />
                 </li>
 
 
                 <li>
                     <span id="Mais">
-                        <Plus :size="38"/>
+                        <Plus :size="38" />
                     </span>
                 </li>
 
 
                 <li :class="{ active: active === 'marketplace' }" @click="active = 'marketplace'">
-                    <Store :size="25"/>
+                    <Store :size="25" />
                 </li>
 
 
                 <li :class="{ active: active === 'perfil' }" @click="active = 'perfil'">
-                    <User :size="25"/>
+                    <User :size="25" />
                 </li>
 
             </ul>
@@ -85,70 +105,138 @@ const active = ref('home')
 
 
 <style scoped>
+/* ===================== */
+/* DESKTOP (PADRÃO) */
+/* ===================== */
+
 footer {
     position: fixed;
     bottom: 0;
     width: 100%;
+    color: white;
 
-    background-image: 
+    background-image:
         linear-gradient(rgba(92, 51, 23, 0.85), rgba(92, 51, 23, 0.85)),
-        url('/caminho-da-sua-imagem.jpg');
+        url('/imgs/background.png');
 
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-
-    color: white;
 }
 
+/* Layout desktop */
 #main {
-    padding: 55px 274px 226px 80px;
     display: flex;
-    gap: 79px;
+    align-items: flex-start;
+    padding: 55px 274px 226px 80px;
 }
 
-ul{
+#outros {
+    display: flex;
+    margin-left: 79px;
+    gap: 110px;
+}
+
+/* Tipografia */
+#sobre li h1 {
+    font-size: 64px;
+    margin: 0;
+}
+
+#sobre li p {
+    font-size: 20px;
+    margin-bottom: 83px;
+    width: 90%;
+    font-weight: 500;
+}
+
+#sobre li small {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+ul {
     list-style: none;
 }
-a {
-    color: black;
+
+ul li h1 {
+    margin-bottom: 25px;
 }
+
+/* Contato */
+#contato p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    margin-bottom: 28px;
+}
+
+/* Social */
+.icons {
+    display: flex;
+    gap: 15px;
+}
+
+.icons img {
+    width: 20px;
+}
+
+/* Navegação */
+#navegacao li p {
+    margin-bottom: 17px;
+    font-size: 20px;
+}
+
+/* Mobile escondido no desktop */
 #mobile {
     display: none;
 }
 
-@media(max-width:650px) {
-footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    background-color: white;
+
+/* ===================== */
+/* MOBILE */
+/* ===================== */
+
+@media (max-width: 650px) {
+
+    footer {
+        background: white;
+        color: #9C8A7A;
+    }
+
+    /* Esconde desktop */
+    #main {
+        display: none;
+    }
+
+    /* Mostra mobile */
+    #mobile {
+        display: block;
+    }
+
+    /* ⚠️ IMPORTANTE: NÃO usar ul global */
+    #mobile ul {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 47px;
+        padding: 20px 0;
+    }
+
+    #mobile li {
+        cursor: pointer;
+    }
+
+    #Mais {
+        background-color: #6B4226;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px;
+        border-radius: 50%;
+        color: white;
+    }
 }
 
-ul {
-    padding: 40px 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 47px;
-    list-style: none;
-}
-
-li {
-    gap: 20px;
-    cursor: pointer;
-    color: #9C8A7A;
-}
-
-#Mais {
-    background-color: #6B4226;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 5px;
-    border-radius: 50%;
-    color: white;
-}
-
-}
 </style>
