@@ -1,4 +1,6 @@
 <script setup>
+import { Splide, SplideSlide } from '@splidejs/vue-splide'
+import '@splidejs/vue-splide/css'
 import mensagemBemvindo from "@/components/home/mensagemBemvindo.vue";
 import cardMarketplace from "@/components/home/cardMarketplace.vue";
 import BookCard from "@/components/books/bookCard.vue";
@@ -54,23 +56,33 @@ const livros = [
     <div class="home">
         <mensagemBemvindo />
         <cardMarketplace />
-        <h1 class="titulo-secao">Lendo atualmente</h1>
+        <!-- <h1 class="titulo-secao">Lendo atualmente</h1>
         <div class="lista-livros">
-            <BookCard v-for="livro in livros" :key="livro.id" :livro="livro" />
+            <Splide :options="{
+                perPage: 3,
+                gap: '100px',
+                arrows: true,
+                pagination: false,
+                drag: 'free'
+            }">
+                <SplideSlide v-for="livro in livros" :key="livro.id">
+                    <BookCard :livro="livro" />
+                </SplideSlide>
+            </Splide>
         </div>
         <div class="lista-cards">
             <StatsCard titulo="Total de livros" :valor="10" />
             <StatsCard titulo="Lendo" :valor="11" />
             <StatsCard titulo="Finalizados" :valor="12" />
-            <StatsCard titulo="Quero ler" :valor="14" />
+            <StatsCard titulo="Quero ler" :valor="13" />
         </div>
         <h1 class="titulo-secao">Meta 2026</h1>
         <barraProgresso />
         <h1 class="titulo-secao">Recomendados para você</h1>
         <div class="lista-livros">
             <BookCard v-for="livro in livros" :key="livro.id" :livro="livro" />
-        </div>
-    </div>
+        </div>-->
+    </div> 
 </template>
 
 <style scoped>
@@ -88,7 +100,7 @@ div.home {
 .lista-cards {
     display: flex;
     justify-content: space-between;
-    gap: 5px;
+    gap: 20px;
     margin-top: 80px;
 }
 
@@ -108,9 +120,26 @@ div.home {
     left: 0;
     bottom: 0;
     width: 50%;
-    /* controla o tamanho da linha */
     height: 4px;
     border-radius: 50px;
     background: #6B4226;
+}
+.splide__slide {
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.splide__slide:hover {
+    transform: scale(1.05);
+}
+@media (max-width: 650px) { 
+    div.home {
+        margin: 0;
+    }
 }
 </style>

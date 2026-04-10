@@ -24,7 +24,7 @@ defineProps ({
 <style scoped>
 .cardStats {
     background-color: #6B4226;
-    width: 330px;
+    width: 300px;
     height: 140px;
     border-radius: 6px;
     color: white;
