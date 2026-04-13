@@ -56,11 +56,17 @@ const livros = [
     <div class="home">
         <mensagemBemvindo />
         <cardMarketplace />
-        <!-- <h1 class="titulo-secao">Lendo atualmente</h1>
+         <h1 class="titulo-secao">Lendo atualmente</h1>
         <div class="lista-livros">
             <Splide :options="{
                 perPage: 3,
-                gap: '100px',
+                gap: '0px', /* Reduzido o gap padrão */
+                breakpoints: {
+                    640: {
+                        perPage: 1,
+                         gap: '30px'
+                    },
+                },
                 arrows: true,
                 pagination: false,
                 drag: 'free'
@@ -69,7 +75,7 @@ const livros = [
                     <BookCard :livro="livro" />
                 </SplideSlide>
             </Splide>
-        </div>
+        </div><!--
         <div class="lista-cards">
             <StatsCard titulo="Total de livros" :valor="10" />
             <StatsCard titulo="Lendo" :valor="11" />
@@ -81,19 +87,18 @@ const livros = [
         <h1 class="titulo-secao">Recomendados para você</h1>
         <div class="lista-livros">
             <BookCard v-for="livro in livros" :key="livro.id" :livro="livro" />
-        </div>-->
+        }-->
     </div> 
 </template>
 
 <style scoped>
 div.home {
-    margin: 0 100px;
+    margin: 0;
+    padding: 0 20px;
 }
 
 .lista-livros {
-    display: flex;
-    gap: 100px;
-    margin: 30px 0;
+margin: 30px 0 50px 0; /* mais espaço entre carrosseis */
     width: 100%;
 }
 
@@ -135,11 +140,18 @@ div.home {
 }
 
 .splide__slide:hover {
-    transform: scale(1.05);
+    transform: scale(1.05 );
 }
 @media (max-width: 650px) { 
     div.home {
         margin: 0;
     }
+    .splide__slide {
+            height: 200px;
+            transition: none;
+    }
+    .splide__slide:hover {
+    transform: none;
+}
 }
 </style>

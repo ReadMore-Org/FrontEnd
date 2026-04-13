@@ -65,34 +65,42 @@ import { Store } from 'lucide-vue-next'
 @media (max-width: 650px) {
   .card {
     text-align: center;
-    width: 350px;
     border-radius: 20px;
     justify-content: flex-start; 
+    border-radius: 10px;
   }
 
-  .esquerda {
-    margin: 10px 0 0 0;
-    width: 300px;
-    
-  }
+.esquerda {
+  margin: 10px 0 0 0;
+  padding: 10px;
+  width: 100%;
+  flex: 1;
+  min-width: 0;
+}
 
-  .esquerda h1 {
-    font-size: 20px; /* diminui texto */
-    width: 100%;
-  }
-
-  .esquerda button {
-    width: 90%;
-    max-width: 220px;
-    margin: 15px auto 0 auto;
-    height: 45px; /* botão menor */
-  }
+.esquerda h1 {
+  font-size: 17px;
+  width: 100%;
+  text-align: left;
+  margin: 0;
+  line-height: 1.3;
+}
+.esquerda button {
+  width: 150px;
+  height: 34px;
+  margin: 8px 0 0 0;
+  border-radius: 30px;
+  font-size: 13px;
+  gap: 6px;
+  padding: 0 10px;
+}
 
   .direita {
     margin: 20px 0 0 0;
+    padding: 0 10px 0 0;
   }
  .direita img {
-  width: 100px;
+  width: 90px;
   height: auto;
 }
   .livros {

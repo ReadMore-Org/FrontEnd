@@ -80,4 +80,54 @@ h1 {
     font-size: 14px;
     font-weight: 500;
 }
+
+@media (max-width: 650px) {
+  .card-livro {
+    gap: 16px;
+    width: 300px;
+    align-items: center;
+  }
+
+  .imagem {
+    width: 130px;
+    height: auto;
+    border-radius: 8px;
+  }
+
+  .detalhes {
+    margin-top: 0;
+    flex: 1;
+  }
+
+  h1 {
+    font-size: 16px;
+    max-width: 100%;
+    line-height: 1.25;
+    margin: 0;
+  }
+
+  .autor {
+    font-size: 13px;
+    margin: 8px 0;
+  }
+
+  .info {
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+
+  .tituloInfo,
+  .detalheInfo {
+    font-size: 12px;
+  }
+
+  .detalhes button {
+    width: 100%;
+    height: 38px;
+  }
+
+  .detalhes button p {
+    font-size: 13px;
+  }
+}
 </style>
