@@ -7,7 +7,7 @@ import { ref } from 'vue'
 
 const active = ref('home')
 
-const logado = ref(false)
+const logado = ref(true)
 </script>
 
 <template>
@@ -24,7 +24,7 @@ const logado = ref(false)
                 </ul>
             </nav>
         </div>
-        <div class="deslogado">
+        <div class="deslogado" v-if="!logado">
             <div class="intro_deslogado">
                 <h1>Seja bem-vindo</h1>
                 <h2>Organize seus livros e acompanhe sua leitura</h2>
