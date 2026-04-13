@@ -1,5 +1,5 @@
 <script setup>
-import { BellDot } from 'lucide-vue-next'
+import { BellDot} from 'lucide-vue-next'
 import { Plus } from 'lucide-vue-next'
 import { MoonStar } from 'lucide-vue-next'
 import { ref } from 'vue'
