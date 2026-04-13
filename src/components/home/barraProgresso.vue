@@ -24,7 +24,6 @@
 .container {
   border-radius: 12px;
   width: 100%;
-  margin: 30px 0;
 }
 
 .topo {

@@ -75,9 +75,10 @@ const livros = [
                     <BookCard :livro="livro" />
                 </SplideSlide>
             </Splide>
-        </div><!--
+        </div>
+         <h1 class="titulo-secao">Resumo rápido</h1>
         <div class="lista-cards">
-            <StatsCard titulo="Total de livros" :valor="10" />
+            <StatsCard titulo="Livros" :valor="10" />
             <StatsCard titulo="Lendo" :valor="11" />
             <StatsCard titulo="Finalizados" :valor="12" />
             <StatsCard titulo="Quero ler" :valor="13" />
@@ -86,8 +87,27 @@ const livros = [
         <barraProgresso />
         <h1 class="titulo-secao">Recomendados para você</h1>
         <div class="lista-livros">
-            <BookCard v-for="livro in livros" :key="livro.id" :livro="livro" />
-        }-->
+            
+        </div>
+        <div class="lista-livros">
+            <Splide :options="{
+                perPage: 3,
+                gap: '0px', /* Reduzido o gap padrão */
+                breakpoints: {
+                    640: {
+                        perPage: 1,
+                         gap: '30px'
+                    },
+                },
+                arrows: true,
+                pagination: false,
+                drag: 'free'
+            }">
+                <SplideSlide v-for="livro in livros" :key="livro.id">
+                    <BookCard :livro="livro" />
+                </SplideSlide>
+            </Splide>
+        </div>
     </div> 
 </template>
 
@@ -98,7 +118,6 @@ div.home {
 }
 
 .lista-livros {
-margin: 30px 0 50px 0; /* mais espaço entre carrosseis */
     width: 100%;
 }
 
@@ -106,7 +125,6 @@ margin: 30px 0 50px 0; /* mais espaço entre carrosseis */
     display: flex;
     justify-content: space-between;
     gap: 20px;
-    margin-top: 80px;
 }
 
 .titulo-secao {
@@ -115,7 +133,7 @@ margin: 30px 0 50px 0; /* mais espaço entre carrosseis */
     padding-bottom: 5px;
     color: #2C2C2C;
     font-weight: 500;
-    margin-top: 40px;
+    margin: 60px 0 30px 0;
     font-size: 25px;
 }
 
@@ -133,7 +151,6 @@ margin: 30px 0 50px 0; /* mais espaço entre carrosseis */
     border-radius: 12px;
     overflow: hidden;
     transition: transform 0.3s ease;
-    height: 400px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -147,11 +164,22 @@ margin: 30px 0 50px 0; /* mais espaço entre carrosseis */
         margin: 0;
     }
     .splide__slide {
-            height: 200px;
             transition: none;
     }
     .splide__slide:hover {
     transform: none;
 }
+.lista-cards {
+    display: flex;
+    flex-wrap: wrap; /* Permite que os itens se quebrem em múltiplas linhas */
+    gap: 20px; /* Espaçamento entre os cards */
+    justify-content: center; /* Alinha os cards ao centro */
+}
+.titulo-secao {
+    font-size: 20px;
+    margin-top: 0px;
+}
+
+
 }
 </style>
