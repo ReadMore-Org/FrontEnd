@@ -48,6 +48,20 @@ const livros = [
         "language": "en",
         "publisher": "Disney Press",
         "isbn": "9781484710104"
+    },
+    {
+        "id": "gf4  ",
+        "title": "Dipper's and Mabel's Guide to Mystery and Nonstop Fun!",
+        "author": "Rob Renzetti",
+        "publishedDate": "2016-02-02",
+        "year": 2016,
+        "pageCount": 144,
+        "category": "Infantil",
+        "description": "Um guia divertido com dicas, mistérios e atividades do universo de Gravity Falls.",
+        "image": "http://books.google.com/books/content?id=guide123&printsec=frontcover&img=1&zoom=3",
+        "language": "en",
+        "publisher": "Disney Press",
+        "isbn": "9781484710104"
     }
 ]
 </script>
@@ -118,7 +132,7 @@ div.home {
 }
 
 .lista-livros {
-    width: 100%;
+
 }
 
 .lista-cards {

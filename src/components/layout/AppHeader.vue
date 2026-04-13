@@ -47,7 +47,7 @@ const logado = ref(true)
                     <MoonStar :size="30" />
                 </button>
                 <button id="Sino">
-                    <BellDot :size="30" />
+                    <BellDot :size="28" />
                 </button>
             </div>
             <div class="imagem">
@@ -71,10 +71,11 @@ const logado = ref(true)
     padding: 16px 0;
     margin-bottom: 24px;
     align-items: center;
+    margin-bottom: 60px;
 }
 
 .app-header h1 {
-    font-size: 40px;
+    font-size: 30px;
     color: #654321;
     cursor: pointer;
     font-family: 'inter', sans-serif;
@@ -87,7 +88,7 @@ nav ul {
     text-decoration: none;
     color: #9C8A7A;
     font-weight: 500;
-    font-size: 24px;
+    font-size: 20px;
     list-style: none;
     cursor: pointer;
 }
@@ -119,8 +120,8 @@ button {
     border: none;
     color: white;
     border-radius: 65px;
-    padding: 15px 36px;
-    font-size: 22px;
+    padding: 12px 33px;
+    font-size: 18px;
     cursor: pointer;
 }
 
@@ -142,8 +143,8 @@ button {
 }
 
 .avatar {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     border-radius: 500px;
     border: solid 2px #654321;
     cursor: pointer;
@@ -214,7 +215,7 @@ button {
         background: #F5E6D3;
         border: none;
         margin: 0;
-        padding: 0;
+        padding: 20px 25px;
     }
 
     .right {

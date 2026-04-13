@@ -10,11 +10,16 @@
 h1 {
     color: #8B5E3C;
     font-weight: 500;
-    margin: 50px 0 0 0;
+    margin: 10px 0 0 0;
     font-size: 25px;
 }
 h1 span {
     color: #6B4226;
     font-weight: 600;
+}
+@media (max-width: 650px ) {
+    h1 {
+        font-size: 20px;
+    }
 }
 </style>

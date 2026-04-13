@@ -24,11 +24,11 @@ defineProps ({
 <style scoped>
 .cardStats {
     background-color: #6B4226;
-    width: 300px;
-    height: 140px;
+    width: 360px;
+    height: 150px;
     border-radius: 6px;
     color: white;
-    padding: 10px;
+    padding: 20px;
     display: flex;
     justify-content: space-between;
 }
