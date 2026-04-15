@@ -9,16 +9,16 @@ defineProps({
         <div class="card-livro">
             <img :src="livro.image" class="imagem" />
             <div class="detalhes">
-                <h1>{{ livro.title }}</h1>
-                <p class="autor">por {{ livro.author }}</p>
+                <h1>{{ livro.titulo }}</h1>
+                <p class="autor">por {{ livro.autores }}</p>
                 <div class="info">
                     <div class="publicado">
                         <p class="tituloInfo">publicado</p>
-                        <p class="detalheInfo">{{ livro.publishedDate }}</p>
+                        <p class="detalheInfo">{{ livro.publicacao }}</p>
                     </div>
                     <div class="paginas">
                         <p class="tituloInfo">paginas</p>
-                        <p class="detalheInfo">{{ livro.pageCount }}</p>
+                        <p class="detalheInfo">{{ livro.paginas }}</p>
                     </div>
                 </div>
                 
