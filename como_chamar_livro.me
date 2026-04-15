@@ -1,12 +1,12 @@
 <!-- views/LivrosView.vue -->
 <script setup>
 import { onMounted } from 'vue'
-import { useLivroStore } from '@/stores/livros'
+import { useLivrosStore } from '@/stores/livros'
 
-const livroStore = useLivroStore()
+const livrosStore = useLivrosStore()
 
 onMounted(() => {
-  livroStore.fetchLivros()
+  livrosStore.fetchLivros()
 })
 </script>
 
@@ -14,8 +14,8 @@ onMounted(() => {
   <div>
     <h1>Livros</h1>
 
-    <p v-if="livroStore.loading">Carregando...</p>
-    <p v-if="livroStore.error">{{ livroStore.error }}</p>
+    <p v-if="livrosStore.loading">Carregando...</p>
+    <p v-if="livrosStore.error">{{ livroStore.error }}</p>
 
     <ul v-if="!livroStore.loading">
       <li v-for="livro in livroStore.livros" :key="livro.id">
