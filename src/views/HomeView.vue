@@ -11,6 +11,7 @@ import cardMarketplace from "@/components/home/cardMarketplace.vue";
 import BookCard from "@/components/books/bookCard.vue";
 import StatsCard from "@/components/home/statsCard.vue";
 import barraProgresso from "@/components/home/barraProgresso.vue";
+import ProdutoView from '@/views/ProdutoView.vue'
 
 const livroStore = useLivrosStore()
 
@@ -40,7 +41,9 @@ onMounted(() => {
                 drag: 'free'
             }">
                 <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
+                <RouterLink :to="`/livro/${livro.id}`">
                     <BookCard :livro="livro" />
+                </RouterLink>
                 </SplideSlide>
             </Splide>
         </div>

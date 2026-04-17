@@ -17,7 +17,7 @@ const logado = ref(true)
             <h1>ReadMore</h1>
             <nav>
                 <ul>
-                    <li :class="{ active: active === 'home' }" @click="active = 'home'">Home</li>
+                    <RouterLink to="/"><li :class="{ active: active === 'home' }" @click="active = 'home'">Home</li> </RouterLink>
                     <!-- <router-link to="/" active-class="active">Home</router-link> -->
                     <li :class="{ active: active === 'livros' }" @click="active = 'livros'">Meus Livros</li>
                     <li :class="{ active: active === 'market' }" @click="active = 'market'">Marketplace</li>
