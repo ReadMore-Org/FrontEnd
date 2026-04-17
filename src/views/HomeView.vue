@@ -1,62 +1,30 @@
 <script setup>
+import { onMounted } from 'vue'
+
+import { useLivrosStore } from '@/stores/livros'
+
 import { Splide, SplideSlide } from '@splidejs/vue-splide'
 import '@splidejs/vue-splide/css'
+
 import mensagemBemvindo from "@/components/home/mensagemBemvindo.vue";
 import cardMarketplace from "@/components/home/cardMarketplace.vue";
 import BookCard from "@/components/books/bookCard.vue";
 import StatsCard from "@/components/home/statsCard.vue";
 import barraProgresso from "@/components/home/barraProgresso.vue";
-const livros = [
-    {
-        "id": "gf1",
-        "title": "Gravity Falls: Journal 3",
-        "author": "Alex Hirsch",
-        "publishedDate": "2016-07-26",
-        "year": 2016,
-        "pageCount": 288,
-        "category": "Ficção juvenil",
-        "description": "Se você já assistiu Gravity Falls, conhece o Diário 3. Este livro reúne segredos, mistérios e criaturas estranhas da cidade.",
-        "image": "http://books.google.com/books/content?id=aw9aEQAAQBAJ&printsec=frontcover&img=1&zoom=3",
-        "language": "en",
-        "publisher": "Disney Press",
-        "isbn": "9781484746691"
-    },
-    {
-        "id": "gf2",
-        "title": "Gravity Falls: Lost Legends",
-        "author": "Alex Hirsch",
-        "publishedDate": "2018-07-24",
-        "year": 2018,
-        "pageCount": 224,
-        "category": "Quadrinhos",
-        "description": "Quatro histórias inéditas que expandem o universo de Gravity Falls com aventuras misteriosas e divertidas.",
-        "image": "http://books.google.com/books/content?id=lost123&printsec=frontcover&img=1&zoom=3",
-        "language": "en",
-        "publisher": "Disney Press",
-        "isbn": "9781368021425"
-    },
-    {
-        "id": "gf3",
-        "title": "Dipper's and Mabel's Guide to Mystery and Nonstop Fun!",
-        "author": "Rob Renzetti",
-        "publishedDate": "2016-02-02",
-        "year": 2016,
-        "pageCount": 144,
-        "category": "Infantil",
-        "description": "Um guia divertido com dicas, mistérios e atividades do universo de Gravity Falls.",
-        "image": "http://books.google.com/books/content?id=guide123&printsec=frontcover&img=1&zoom=3",
-        "language": "en",
-        "publisher": "Disney Press",
-        "isbn": "9781484710104"
-    }
-]
+
+const livroStore = useLivrosStore()
+
+onMounted(() => {
+    livroStore.fetchLivros()
+})
 </script>
 
 <template>
+
     <div class="home">
         <mensagemBemvindo />
         <cardMarketplace />
-         <h1 class="titulo-secao">Lendo atualmente</h1>
+        <h1 class="titulo-secao">Lendo atualmente</h1>
         <div class="lista-livros">
             <Splide :options="{
                 perPage: 3,
@@ -64,19 +32,19 @@ const livros = [
                 breakpoints: {
                     640: {
                         perPage: 1,
-                         gap: '30px'
+                        gap: '30px'
                     },
                 },
                 arrows: true,
                 pagination: false,
                 drag: 'free'
             }">
-                <SplideSlide v-for="livro in livros" :key="livro.id">
+                <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
                     <BookCard :livro="livro" />
                 </SplideSlide>
             </Splide>
         </div>
-         <h1 class="titulo-secao">Resumo rápido</h1>
+        <h1 class="titulo-secao">Resumo rápido</h1>
         <div class="lista-cards">
             <StatsCard titulo="Livros" :valor="10" />
             <StatsCard titulo="Lendo" :valor="11" />
@@ -87,28 +55,28 @@ const livros = [
         <barraProgresso />
         <h1 class="titulo-secao">Recomendados para você</h1>
         <div class="lista-livros">
-            
+
         </div>
         <div class="lista-livros">
             <Splide :options="{
                 perPage: 3,
-                gap: '0px', /* Reduzido o gap padrão */
+                gap: '0px',
                 breakpoints: {
                     640: {
                         perPage: 1,
-                         gap: '30px'
+                        gap: '30px'
                     },
                 },
                 arrows: true,
                 pagination: false,
                 drag: 'free'
             }">
-                <SplideSlide v-for="livro in livros" :key="livro.id">
+                <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
                     <BookCard :livro="livro" />
                 </SplideSlide>
             </Splide>
         </div>
-    </div> 
+    </div>
 </template>
 
 <style scoped>
@@ -117,9 +85,7 @@ div.home {
     padding: 0 20px;
 }
 
-.lista-livros {
-    width: 100%;
-}
+.lista-livros {}
 
 .lista-cards {
     display: flex;
@@ -147,6 +113,7 @@ div.home {
     border-radius: 50px;
     background: #6B4226;
 }
+
 .splide__slide {
     border-radius: 12px;
     overflow: hidden;
@@ -157,28 +124,36 @@ div.home {
 }
 
 .splide__slide:hover {
-    transform: scale(1.05 );
+    transform: scale(1.05);
 }
-@media (max-width: 650px) { 
+
+@media (max-width: 650px) {
     div.home {
         margin: 0;
     }
+
     .splide__slide {
-            transition: none;
+        transition: none;
     }
+
     .splide__slide:hover {
-    transform: none;
-}
-.lista-cards {
-    display: flex;
-    flex-wrap: wrap; /* Permite que os itens se quebrem em múltiplas linhas */
-    gap: 20px; /* Espaçamento entre os cards */
-    justify-content: center; /* Alinha os cards ao centro */
-}
-.titulo-secao {
-    font-size: 20px;
-    margin-top: 0px;
-}
+        transform: none;
+    }
+
+    .lista-cards {
+        display: flex;
+        flex-wrap: wrap;
+        /* Permite que os itens se quebrem em múltiplas linhas */
+        gap: 20px;
+        /* Espaçamento entre os cards */
+        justify-content: center;
+        /* Alinha os cards ao centro */
+    }
+
+    .titulo-secao {
+        font-size: 20px;
+        margin-top: 0px;
+    }
 
 
 }

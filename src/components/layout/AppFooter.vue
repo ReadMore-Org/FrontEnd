@@ -110,7 +110,7 @@ const active = ref('home')
 /* ===================== */
 
 footer {
-    position: fixed;
+    margin-top: 150px;
     bottom: 0;
     width: 100%;
     color: white;

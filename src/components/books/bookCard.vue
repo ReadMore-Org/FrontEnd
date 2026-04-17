@@ -3,82 +3,97 @@ import { Check } from 'lucide-vue-next'
 defineProps({
   livro: Object
 })
+
 </script>
 
 <template>
-        <div class="card-livro">
-            <img :src="livro.image" class="imagem" />
-            <div class="detalhes">
-                <h1>{{ livro.title }}</h1>
-                <p class="autor">por {{ livro.author }}</p>
-                <div class="info">
-                    <div class="publicado">
-                        <p class="tituloInfo">publicado</p>
-                        <p class="detalheInfo">{{ livro.publishedDate }}</p>
-                    </div>
-                    <div class="paginas">
-                        <p class="tituloInfo">paginas</p>
-                        <p class="detalheInfo">{{ livro.pageCount }}</p>
-                    </div>
-                </div>
-                
-                <button><p>marcar como lido</p> <Check :size="20"/></button>
-            </div>
+  <div class="card-livro">
+    <img class="imagem" :src="livro.capa?.url || 'https://via.placeholder.com/200x300'" alt="Capa do livro" />
+
+    <div class="detalhes">
+      <h1>{{ livro.titulo }}</h1>
+      <p class="autor" v-if="livro.autores?.length">
+        por {{livro.autores.map(a => a.nome).join(', ')}}
+      </p>
+      <div class="info">
+        <div class="publicado">
+          <p class="tituloInfo">publicado</p>
+          <p class="detalheInfo">{{ livro.publicacao }}</p>
         </div>
+        <div class="paginas">
+          <p class="tituloInfo">paginas</p>
+          <p class="detalheInfo">{{ livro.paginas }}</p>
+        </div>
+      </div>
+
+      <button>
+        <p>marcar como lido</p>
+        <Check :size="20" />
+      </button>
+    </div>
+  </div>
 
 </template>
 
 <style scoped>
 .card-livro {
-    display: flex;
-    gap: 30px;
+  display: flex;
+  gap: 30px;
 }
 
 .imagem {
-    width: 200px;
+  width: 200px;
 }
+
 .detalhes {
-    margin-top: 15px;
+  margin-top: 15px;
 }
+
 h1 {
-    color: #2C2C2C;
-    font-size: 20px;
-    max-width: 200px;
-    font-weight: 500;
+  color: #2C2C2C;
+  font-size: 20px;
+  max-width: 200px;
+  font-weight: 500;
 }
-.autor{
-    color: #5A4636;
-    font-weight: 500;
-    margin: 10px 0;
+
+.autor {
+  color: #5A4636;
+  font-weight: 500;
+  margin: 10px 0;
 }
+
 .info {
-    display: flex;
-    gap: 30px;
-    margin: 0 0 10px 0;
+  display: flex;
+  gap: 30px;
+  margin: 0 0 10px 0;
 }
+
 .info .tituloInfo {
-    color: #9C8A7A;
-    font-weight: 400;
+  color: #9C8A7A;
+  font-weight: 400;
 }
+
 .info .detalheInfo {
-    color: #5A4636;
-    font-weight: 500;
+  color: #5A4636;
+  font-weight: 500;
 }
+
 .detalhes button {
-    display: flex;
-    align-items: center;
-    background-color: #6B4226;
-    color: white;
-    gap: 5px;
-    border: none;
-    border-radius: 50px;
-    width: 100%;
-    height: 40px;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  background-color: #6B4226;
+  color: white;
+  gap: 5px;
+  border: none;
+  border-radius: 50px;
+  width: 100%;
+  height: 40px;
+  justify-content: center;
 }
+
 .detalhes button p {
-    font-size: 14px;
-    font-weight: 500;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 @media (max-width: 650px) {

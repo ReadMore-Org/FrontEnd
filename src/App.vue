@@ -6,9 +6,20 @@ import AppFooter from './components/layout/AppFooter.vue';
 
 <template>
   <AppHeader/>
+  <div class="corpo">
   <RouterView />
+  </div>
   <AppFooter/>
 </template>
 
 <style scoped>
+div.corpo{
+  padding: 0 120px;
+}
+@media (max-width: 650px) {
+  div.corpo {
+    padding: 0;
+  }
+}
+
 </style>
