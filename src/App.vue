@@ -6,9 +6,7 @@ import AppFooter from './components/layout/AppFooter.vue';
 
 <template>
   <AppHeader/>
-  <div class="corpo">
   <RouterView />
-  </div>
   <AppFooter/>
 </template>
 

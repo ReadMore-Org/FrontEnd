@@ -12,6 +12,7 @@ import BookCard from "@/components/books/bookCard.vue";
 import StatsCard from "@/components/home/statsCard.vue";
 import barraProgresso from "@/components/home/barraProgresso.vue";
 import ProdutoView from '@/views/ProdutoView.vue'
+import ListaRecursos from '@/components/home/listaRecursos.vue';
 
 const livroStore = useLivrosStore()
 
@@ -21,10 +22,9 @@ onMounted(() => {
 </script>
 
 <template>
-
-    <div class="home">
-        <mensagemBemvindo />
-        <cardMarketplace />
+<cardMarketplace />
+<ListaRecursos />
+    <div class="margin">
         <h1 class="titulo-secao">Lendo atualmente</h1>
         <div class="lista-livros">
             <Splide :options="{
@@ -83,12 +83,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-div.home {
-    margin: 0;
-    padding: 0 20px;
-}
-
-.lista-livros {}
 
 .lista-cards {
     display: flex;

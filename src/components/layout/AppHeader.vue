@@ -69,9 +69,7 @@ const logado = ref(true)
     margin: 0;
     width: 100% !important;
     padding: 16px 0;
-    margin-bottom: 24px;
     align-items: center;
-    margin-bottom: 60px;
 }
 
 .app-header h1 {
