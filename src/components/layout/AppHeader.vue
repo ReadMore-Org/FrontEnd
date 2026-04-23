@@ -41,13 +41,13 @@ const logado = ref(true)
         <div class="right" v-if="logado">
             <div class="icones">
                 <button id="Mais">
-                    <Plus :size="27" />Adicionar Livro
+                    <Plus :size="24" />Adicionar Livro
                 </button>
                 <button id="Lua">
-                    <MoonStar :size="30" />
+                    <MoonStar :size="24" />
                 </button>
                 <button id="Sino">
-                    <BellDot :size="28" />
+                    <BellDot :size="24" />
                 </button>
             </div>
             <div class="imagem">
@@ -86,7 +86,7 @@ nav ul {
     text-decoration: none;
     color: #9C8A7A;
     font-weight: 500;
-    font-size: 20px;
+    font-size: 17px;
     list-style: none;
     cursor: pointer;
 }
@@ -118,8 +118,9 @@ button {
     border: none;
     color: white;
     border-radius: 65px;
-    padding: 12px 33px;
+    padding: 8px 17px;
     font-size: 18px;
+    font-weight: 500;
     cursor: pointer;
 }
 
@@ -141,8 +142,8 @@ button {
 }
 
 .avatar {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border-radius: 500px;
     border: solid 2px #654321;
     cursor: pointer;

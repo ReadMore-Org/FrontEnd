@@ -20,6 +20,8 @@ import { Store } from 'lucide-vue-next'
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 0 0 50px 0;
+
 }
 .esquerda {
     margin: 0px 0px 40px 100px;
@@ -99,7 +101,7 @@ import { Store } from 'lucide-vue-next'
     padding: 0 10px 0 0;
   }
  .direita img {
-  width: 90px;
+  width: 100px;
   height: auto;
 }
   .livros {

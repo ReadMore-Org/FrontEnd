@@ -23,14 +23,17 @@ defineProps ({
 
 <style scoped>
 .cardStats {
-    background-color: #6B4226;
-    width: 360px;
-    height: 150px;
-    border-radius: 6px;
-    color: white;
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
+  background-color: #6B4226;
+  width: 100%;
+  max-width: 360px;
+  min-width: 290px;
+  height: 150px;
+  border-radius: 10px;
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  box-sizing: border-box; 
 }
 .cardStats h2 {
     font-weight: 500;
@@ -65,8 +68,8 @@ defineProps ({
     font-size: 30px;
 }
         .icone svg {
-        width: 20px;  /* Reduz o tamanho do ícone no mobile */
-        height: 20px; /* Reduz o tamanho do ícone no mobile */
+        width: 20px; 
+        height: 20px; 
     }
 }
 

@@ -42,7 +42,7 @@ defineProps({
 }
 
 .imagem {
-  width: 200px;
+  width: 150px;
 }
 
 .detalhes {

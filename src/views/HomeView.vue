@@ -89,7 +89,9 @@ onMounted(() => {
     justify-content: space-between;
     gap: 20px;
 }
-
+.margin {
+    padding: 60px 0 0 0;
+}
 .titulo-secao {
     position: relative;
     display: inline-block;
