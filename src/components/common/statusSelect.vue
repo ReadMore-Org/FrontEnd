@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from "vue";
-
+import { Check } from 'lucide-vue-next'
 const props = defineProps({
   modelValue: String,
 });
@@ -28,7 +28,7 @@ watch(status, (novo) => {
         class="btn-status"
         :class="{ ativo: status === st }"
       >
-        <span v-if="status === st">✔</span>
+        <span v-if="status === st"><Check :size="18"/></span>
         {{
           st === "quero-ler"
             ? "Quero ler"
@@ -54,6 +54,7 @@ watch(status, (novo) => {
 
 .botoes-status {
   display: flex;
+
   gap: 10px;
 }
 
