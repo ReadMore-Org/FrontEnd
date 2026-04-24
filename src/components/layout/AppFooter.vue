@@ -105,12 +105,9 @@ const active = ref('home')
 
 
 <style scoped>
-/* ===================== */
-/* DESKTOP (PADRÃO) */
-/* ===================== */
 
 footer {
-    margin-top: 150px;
+    margin-top: 100px;
     bottom: 0;
     width: 100%;
     color: white;
@@ -124,11 +121,10 @@ footer {
     background-repeat: no-repeat;
 }
 
-/* Layout desktop */
 #main {
     display: flex;
     align-items: flex-start;
-    padding: 55px 274px 226px 80px;
+    padding: 55px 274px 100px 80px;
 }
 
 #outros {
@@ -137,21 +133,20 @@ footer {
     gap: 110px;
 }
 
-/* Tipografia */
 #sobre li h1 {
-    font-size: 64px;
+    font-size: 50px;
     margin: 0;
 }
 
 #sobre li p {
-    font-size: 20px;
+    font-size: 18px;
     margin-bottom: 83px;
     width: 90%;
     font-weight: 500;
 }
 
 #sobre li small {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
 }
 
@@ -163,16 +158,14 @@ ul li h1 {
     margin-bottom: 25px;
 }
 
-/* Contato */
 #contato p {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 20px;
+    font-size: 16px;
     margin-bottom: 28px;
 }
 
-/* Social */
 .icons {
     display: flex;
     gap: 15px;
@@ -182,27 +175,30 @@ ul li h1 {
     width: 20px;
 }
 
-/* Navegação */
+
 #navegacao li p {
     margin-bottom: 17px;
-    font-size: 20px;
+    font-size: 16px;
 }
 
-/* Mobile escondido no desktop */
 #mobile {
     display: none;
 }
-
-
-/* ===================== */
-/* MOBILE */
-/* ===================== */
-
 @media (max-width: 650px) {
-
     footer {
         background: white;
         color: #9C8A7A;
+
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+    }
+
+    /* evita o conteúdo ficar escondido atrás do footer */
+    body {
+        padding-bottom: 80px; /* ajusta conforme a altura do footer */
     }
 
     /* Esconde desktop */
@@ -215,7 +211,6 @@ ul li h1 {
         display: block;
     }
 
-    /* ⚠️ IMPORTANTE: NÃO usar ul global */
     #mobile ul {
         display: flex;
         justify-content: center;
@@ -238,5 +233,4 @@ ul li h1 {
         color: white;
     }
 }
-
 </style>

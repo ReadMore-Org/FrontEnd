@@ -5,12 +5,14 @@ import { useLivrosStore } from '@/stores/livros'
 
 import { Splide, SplideSlide } from '@splidejs/vue-splide'
 import '@splidejs/vue-splide/css'
-
+import AppHeader from '@/components/layout/AppHeader.vue'
 import mensagemBemvindo from "@/components/home/mensagemBemvindo.vue";
 import cardMarketplace from "@/components/home/cardMarketplace.vue";
 import BookCard from "@/components/books/bookCard.vue";
 import StatsCard from "@/components/home/statsCard.vue";
 import barraProgresso from "@/components/home/barraProgresso.vue";
+import ProdutoView from '@/views/ProdutoView.vue'
+import ListaRecursos from '@/components/home/listaRecursos.vue';
 
 const livroStore = useLivrosStore()
 
@@ -20,10 +22,10 @@ onMounted(() => {
 </script>
 
 <template>
-
-    <div class="home">
-        <mensagemBemvindo />
-        <cardMarketplace />
+<AppHeader/>
+<cardMarketplace />
+<ListaRecursos />
+    <div class="margin">
         <h1 class="titulo-secao">Lendo atualmente</h1>
         <div class="lista-livros">
             <Splide :options="{
@@ -40,7 +42,9 @@ onMounted(() => {
                 drag: 'free'
             }">
                 <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
+                <RouterLink :to="`/livro/${livro.id}`">
                     <BookCard :livro="livro" />
+                </RouterLink>
                 </SplideSlide>
             </Splide>
         </div>
@@ -80,18 +84,13 @@ onMounted(() => {
 </template>
 
 <style scoped>
-div.home {
-    margin: 0;
-    padding: 0 20px;
-}
-
-.lista-livros {}
 
 .lista-cards {
     display: flex;
     justify-content: space-between;
     gap: 20px;
 }
+
 
 .titulo-secao {
     position: relative;
@@ -128,9 +127,7 @@ div.home {
 }
 
 @media (max-width: 650px) {
-    div.home {
-        margin: 0;
-    }
+
 
     .splide__slide {
         transition: none;
@@ -144,15 +141,14 @@ div.home {
         display: flex;
         flex-wrap: wrap;
         /* Permite que os itens se quebrem em múltiplas linhas */
-        gap: 20px;
+        gap: 10px;
         /* Espaçamento entre os cards */
         justify-content: center;
-        /* Alinha os cards ao centro */
     }
 
     .titulo-secao {
         font-size: 20px;
-        margin-top: 0px;
+        margin-top: 50px;
     }
 
 

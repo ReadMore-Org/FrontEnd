@@ -2,6 +2,8 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  text-decoration: none;
+  list-style: none;
 }
 
 body {
@@ -19,14 +21,19 @@ html, body {
 
 
 }
-
+.margin {
+  margin: 0 100px;
+  padding: 0;
+}
 @media (max-width: 650px) {
   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
   }
-
+  .margin {
+    margin: 0px 10px 100px 10px;
+  }
   body {
     margin: 0;
     padding: 0;

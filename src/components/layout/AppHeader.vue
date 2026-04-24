@@ -17,7 +17,7 @@ const logado = ref(true)
             <h1>ReadMore</h1>
             <nav>
                 <ul>
-                    <li :class="{ active: active === 'home' }" @click="active = 'home'">Home</li>
+                    <RouterLink to="/"><li :class="{ active: active === 'home' }" @click="active = 'home'">Home</li> </RouterLink>
                     <!-- <router-link to="/" active-class="active">Home</router-link> -->
                     <li :class="{ active: active === 'livros' }" @click="active = 'livros'">Meus Livros</li>
                     <li :class="{ active: active === 'market' }" @click="active = 'market'">Marketplace</li>
@@ -41,13 +41,10 @@ const logado = ref(true)
         <div class="right" v-if="logado">
             <div class="icones">
                 <button id="Mais">
-                    <Plus :size="27" />Adicionar Livro
-                </button>
-                <button id="Lua">
-                    <MoonStar :size="30" />
+                    <Plus :size="24" />Adicionar Livro
                 </button>
                 <button id="Sino">
-                    <BellDot :size="28" />
+                    <BellDot :size="24" />
                 </button>
             </div>
             <div class="imagem">
@@ -69,9 +66,7 @@ const logado = ref(true)
     margin: 0;
     width: 100% !important;
     padding: 16px 0;
-    margin-bottom: 24px;
     align-items: center;
-    margin-bottom: 60px;
 }
 
 .app-header h1 {
@@ -88,7 +83,7 @@ nav ul {
     text-decoration: none;
     color: #9C8A7A;
     font-weight: 500;
-    font-size: 20px;
+    font-size: 17px;
     list-style: none;
     cursor: pointer;
 }
@@ -120,8 +115,9 @@ button {
     border: none;
     color: white;
     border-radius: 65px;
-    padding: 12px 33px;
+    padding: 8px 17px;
     font-size: 18px;
+    font-weight: 500;
     cursor: pointer;
 }
 
@@ -143,8 +139,8 @@ button {
 }
 
 .avatar {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border-radius: 500px;
     border: solid 2px #654321;
     cursor: pointer;
@@ -201,14 +197,22 @@ button {
     .app-header h1,
     nav ul {
         display: none;
+
     }
 
     .intro_mobile {
         display: flex;
-        flex-direction: column;
         line-height: 18px;
         font-family: 'inter', sans-serif;
+       
     }
+    .intro_mobile h2 {
+        display: flex;
+        line-height: 18px;
+        font-family: 'inter', sans-serif;
+        min-width: 120px;
+    }
+
 
     .app-header {
         display: flex;
@@ -231,10 +235,10 @@ button {
         gap: 16px;
     }
 
-    .avatar {
+    div.imagem img.avatar {
         width: 50px;
-        height: 50px;
-        border-radius: 500px;
+        height: 50px !important; 
+        border-radius: 1000px;
         border: solid 2px #654321;
         cursor: pointer;
     }
@@ -242,14 +246,12 @@ button {
     .icones {
         gap: 10px;
     }
-
-    #Lua,
     #Sino {
         color: #5A4636;
         background-color: white;
         border-radius: 50%;
-        width: 45px;
-        height: 45px;
+        width: 40px;
+        height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;

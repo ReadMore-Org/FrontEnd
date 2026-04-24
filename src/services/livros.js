@@ -9,3 +9,5 @@ export const createLivro = (data) => api.post('/livros/', data)
 export const updateLivro = (id, data) => api.put(`/livros/${id}/`, data)
 
 export const deleteLivro = (id) => api.delete(`/livros/${id}/`)
+
+export const getCategorias = () => api.get('/categorias/')

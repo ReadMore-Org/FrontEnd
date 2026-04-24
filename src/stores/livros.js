@@ -5,12 +5,14 @@ import {
   createLivro,
   updateLivro,
   deleteLivro,
+  getCategorias,
 } from "@/services/livros";
 
 export const useLivrosStore = defineStore("livros", () => {
   const livros = ref([]);
   const loading = ref(false);
   const error = ref(null);
+  const categorias = ref([]);
 
   const totalLivros = computed(() => livros.value.length);
 
@@ -69,12 +71,23 @@ export const useLivrosStore = defineStore("livros", () => {
       console.error(err);
     }
   }
+  async function fetchCategorias() {
+    try {
+      const res = await getCategorias();
+      categorias.value = res.data.results || [];
+    } catch (err) {
+      console.error("Erro ao carregar categorias", err);
+    }
+  }
+  
 
   return {
     livros,
+    categorias, 
     loading,
     error,
     totalLivros,
+    fetchCategorias,
     fetchLivros,
     addLivro,
     updateLivroStore,
