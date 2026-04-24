@@ -43,9 +43,6 @@ const logado = ref(true)
                 <button id="Mais">
                     <Plus :size="24" />Adicionar Livro
                 </button>
-                <button id="Lua">
-                    <MoonStar :size="24" />
-                </button>
                 <button id="Sino">
                     <BellDot :size="24" />
                 </button>
@@ -200,14 +197,22 @@ button {
     .app-header h1,
     nav ul {
         display: none;
+
     }
 
     .intro_mobile {
         display: flex;
-        flex-direction: column;
         line-height: 18px;
         font-family: 'inter', sans-serif;
+       
     }
+    .intro_mobile h2 {
+        display: flex;
+        line-height: 18px;
+        font-family: 'inter', sans-serif;
+        min-width: 120px;
+    }
+
 
     .app-header {
         display: flex;
@@ -230,10 +235,10 @@ button {
         gap: 16px;
     }
 
-    .avatar {
+    div.imagem img.avatar {
         width: 50px;
-        height: 50px;
-        border-radius: 500px;
+        height: 50px !important; 
+        border-radius: 1000px;
         border: solid 2px #654321;
         cursor: pointer;
     }
@@ -241,14 +246,12 @@ button {
     .icones {
         gap: 10px;
     }
-
-    #Lua,
     #Sino {
         color: #5A4636;
         background-color: white;
         border-radius: 50%;
-        width: 45px;
-        height: 45px;
+        width: 40px;
+        height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;

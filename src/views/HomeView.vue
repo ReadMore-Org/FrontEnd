@@ -5,7 +5,7 @@ import { useLivrosStore } from '@/stores/livros'
 
 import { Splide, SplideSlide } from '@splidejs/vue-splide'
 import '@splidejs/vue-splide/css'
-
+import AppHeader from '@/components/layout/AppHeader.vue'
 import mensagemBemvindo from "@/components/home/mensagemBemvindo.vue";
 import cardMarketplace from "@/components/home/cardMarketplace.vue";
 import BookCard from "@/components/books/bookCard.vue";
@@ -22,6 +22,7 @@ onMounted(() => {
 </script>
 
 <template>
+<AppHeader/>
 <cardMarketplace />
 <ListaRecursos />
     <div class="margin">
@@ -89,9 +90,8 @@ onMounted(() => {
     justify-content: space-between;
     gap: 20px;
 }
-.margin {
-    padding: 60px 0 0 0;
-}
+
+
 .titulo-secao {
     position: relative;
     display: inline-block;
@@ -127,9 +127,7 @@ onMounted(() => {
 }
 
 @media (max-width: 650px) {
-    div.home {
-        margin: 0;
-    }
+
 
     .splide__slide {
         transition: none;
@@ -143,15 +141,14 @@ onMounted(() => {
         display: flex;
         flex-wrap: wrap;
         /* Permite que os itens se quebrem em múltiplas linhas */
-        gap: 20px;
+        gap: 10px;
         /* Espaçamento entre os cards */
         justify-content: center;
-        /* Alinha os cards ao centro */
     }
 
     .titulo-secao {
         font-size: 20px;
-        margin-top: 0px;
+        margin-top: 50px;
     }
 
 

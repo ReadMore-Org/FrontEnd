@@ -185,10 +185,20 @@ ul li h1 {
     display: none;
 }
 @media (max-width: 650px) {
-
     footer {
         background: white;
         color: #9C8A7A;
+
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+    }
+
+    /* evita o conteúdo ficar escondido atrás do footer */
+    body {
+        padding-bottom: 80px; /* ajusta conforme a altura do footer */
     }
 
     /* Esconde desktop */
@@ -201,7 +211,6 @@ ul li h1 {
         display: block;
     }
 
-    /* ⚠️ IMPORTANTE: NÃO usar ul global */
     #mobile ul {
         display: flex;
         justify-content: center;
@@ -224,5 +233,4 @@ ul li h1 {
         color: white;
     }
 }
-
 </style>

@@ -7,33 +7,28 @@ defineProps ({
 </script>
 
 <template>
-    <div class="maior">
-        <div class="cardStats">
-            <div>
-                <h2>{{ titulo }}</h2>
-                <h1>{{ valor }}</h1>
-            </div>
-            <div class="icone">
-                <LibraryBig :size="24" />
-            </div>
+    <div class="cardStats">
+        <div>
+            <h2>{{ titulo }}</h2>
+            <h1>{{ valor }}</h1>
+        </div>
+        <div class="icone">
+            <LibraryBig :size="24" />
         </div>
     </div>
-
 </template>
 
 <style scoped>
 .cardStats {
   background-color: #6B4226;
-  width: 100%;
-  max-width: 360px;
-  min-width: 290px;
   height: 150px;
   border-radius: 10px;
   color: white;
   padding: 20px;
   display: flex;
   justify-content: space-between;
-  box-sizing: border-box; 
+  box-sizing: border-box;
+  width: 100%; /* só isso aqui */
 }
 .cardStats h2 {
     font-weight: 500;
@@ -52,8 +47,8 @@ defineProps ({
     font-size: 40px;
 }
 @media (max-width: 650px) { 
-    div.cardStats {
-        width: 130px;
+    .lista-cards .cardStats {
+        flex: 1 1 calc(50% - 10px);
         height: 120px;
     }
     .cardStats h2 {

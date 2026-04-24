@@ -1,40 +1,20 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import { useRoute } from "vue-router";
-import { useLivrosStore } from "@/stores/livros";
+
 import { Star, Heart, Share2, Settings, ArrowLeft } from "lucide-vue-next";
 import statusSelect from "@/components/common/statusSelect.vue";
-const route = useRoute();
-const livroStore = useLivrosStore();
-const id = Number(route.params.id);
-
-const status = ref("quero-ler");
-const statusOpcoes = ["quero-ler", "lendo", "lido"];
-
-const livro = computed(() => {
-  return livroStore.livros.find((livro) => livro.id === id);
+defineProps({
+  livro: Object,
+  categoriaNome: String
 });
-onMounted(async () => {
-  await Promise.all([livroStore.fetchLivros(), livroStore.fetchCategorias()]);
-});
-const formatarData = (data) => {
-  return new Date(data).toLocaleDateString("pt-BR");
-};
+
 const voltar = () => {
   window.history.back();
 };
-const categoriaNome = computed(() => {
-  const livroAtual = livro.value;
-  const categorias = livroStore.categorias;
 
-  if (!livroAtual || !categorias.length) return "";
-
-  const categoria = categorias.find(
-    (c) => Number(c.id) === Number(livroAtual.categoria),
-  );
-
-  return categoria?.descricao || "Sem categoria";
-});
+const formatarData = (data) => {
+  return new Date(data).toLocaleDateString("pt-BR");
+};
 </script>
 <template>
   <button @click="voltar" class="btn-voltar">
