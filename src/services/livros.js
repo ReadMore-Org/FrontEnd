@@ -1,6 +1,8 @@
 import api from './api'
 
-export const getLivros = () => api.get('/livros/')
+export function getLivros(page = 1) {
+  return api.get(`/livros/?page=${page}`);
+}
 
 export const getLivro = (id) => api.get(`/livros/${id}/`)
 

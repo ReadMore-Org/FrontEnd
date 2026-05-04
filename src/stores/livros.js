@@ -16,21 +16,38 @@ export const useLivrosStore = defineStore("livros", () => {
 
   const totalLivros = computed(() => livros.value.length);
 
-  async function fetchLivros() {
-    loading.value = true;
-    error.value = null;
+let alreadyLoaded = false;
 
-    try {
-      const response = await getLivros();
+async function fetchLivros() {
+  if (alreadyLoaded) return; 
+  alreadyLoaded = true;
 
-      livros.value = response.data.results || [];
-    } catch (err) {
-      error.value = "Erro ao carregar livros.";
-      console.error(err);
-    } finally {
-      loading.value = false;
-    }
+  loading.value = true;
+  error.value = null;
+
+  try {
+    livros.value = [];
+
+    let page = 1;
+    let totalPages = 1;
+
+    do {
+      const response = await getLivros(page);
+
+      livros.value.push(...response.data.results);
+
+      totalPages = response.data.total_pages;
+      page++;
+    } while (page <= totalPages);
+
+  } catch (err) {
+    error.value = "Erro ao carregar livros.";
+    console.error(err);
+  } finally {
+    loading.value = false;
   }
+}
+
 
   async function addLivro(data) {
     error.value = null;
@@ -79,11 +96,11 @@ export const useLivrosStore = defineStore("livros", () => {
       console.error("Erro ao carregar categorias", err);
     }
   }
-  
+
 
   return {
     livros,
-    categorias, 
+    categorias,
     loading,
     error,
     totalLivros,
