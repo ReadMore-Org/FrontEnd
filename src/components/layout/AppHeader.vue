@@ -1,5 +1,5 @@
 <script setup>
-import { BellDot} from 'lucide-vue-next'
+import { BellDot } from 'lucide-vue-next'
 import { Plus } from 'lucide-vue-next'
 import { MoonStar } from 'lucide-vue-next'
 import { ref } from 'vue'
@@ -7,17 +7,19 @@ import { ref } from 'vue'
 
 const active = ref('home')
 
-const logado = ref(true)
+const logado = ref(false)
 </script>
 
 <template>
     <header class="app-header">
-        
+
         <div class="left">
             <h1>ReadMore</h1>
             <nav>
                 <ul>
-                    <RouterLink to="/"><li :class="{ active: active === 'home' }" @click="active = 'home'">Home</li> </RouterLink>
+                    <RouterLink to="/">
+                        <li :class="{ active: active === 'home' }" @click="active = 'home'">Home</li>
+                    </RouterLink>
                     <!-- <router-link to="/" active-class="active">Home</router-link> -->
                     <li :class="{ active: active === 'livros' }" @click="active = 'livros'">Meus Livros</li>
                     <li :class="{ active: active === 'market' }" @click="active = 'market'">Marketplace</li>
@@ -29,13 +31,19 @@ const logado = ref(true)
                 <h1>Seja bem-vindo</h1>
                 <h2>Organize seus livros e acompanhe sua leitura</h2>
             </div>
+            
             <div class="botoes">
+                <RouterLink to="/login">
                 <button id="entrar">
                     Entrar
                 </button>
-                <button id="criar">
-                    Criar conta
-                </button>
+            </RouterLink>
+
+                <RouterLink to="/signup">
+                    <button id="criar">
+                        Criar conta
+                    </button>
+                </RouterLink>
             </div>
         </div>
         <div class="right" v-if="logado">
@@ -52,7 +60,7 @@ const logado = ref(true)
                 <div class="intro_mobile">
                     <h2><span>Bem-vindo de volta</span></h2>
                     <h2>Macaco</h2>
-                </div>
+                </div>node -v
             </div>
         </div>
     </header>
@@ -169,8 +177,8 @@ button {
 .deslogado button {
     background: none;
     border: none;
-    font-size: 24px;
-    padding: 12px 38px;
+    font-size: 16px;
+    padding: 10px 36px;
     font-family: 'inter', sans-serif;
     cursor: pointer;
 }
@@ -192,7 +200,7 @@ button {
     .left {
         gap: 0;
     }
-    
+
     #Mais,
     .app-header h1,
     nav ul {
@@ -204,8 +212,9 @@ button {
         display: flex;
         line-height: 18px;
         font-family: 'inter', sans-serif;
-       
+
     }
+
     .intro_mobile h2 {
         display: flex;
         line-height: 18px;
@@ -237,7 +246,7 @@ button {
 
     div.imagem img.avatar {
         width: 50px;
-        height: 50px !important; 
+        height: 50px !important;
         border-radius: 1000px;
         border: solid 2px #654321;
         cursor: pointer;
@@ -246,6 +255,7 @@ button {
     .icones {
         gap: 10px;
     }
+
     #Sino {
         color: #5A4636;
         background-color: white;
