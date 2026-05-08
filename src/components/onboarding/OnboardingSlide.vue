@@ -33,11 +33,7 @@ defineEmits([
       </h1>
 
       <div class="image-wrapper">
-        <img
-          :src="slide.image"
-          :alt="slide.title"
-          class="slide-image"
-        />
+        <img :src="slide.image" :alt="slide.title" class="slide-image" />
       </div>
 
       <div class="text-content">
@@ -50,17 +46,10 @@ defineEmits([
         </p>
       </div>
 
-      <OnboardingDots
-        :current="current"
-        :total="total"
-      />
+      <OnboardingDots :current="current" :total="total" />
 
-      <OnboardingButtons
-        :is-first-slide="current === 0"
-        :is-last-slide="current === total - 1"
-        @next="$emit('next')"
-        @back="$emit('back')"
-      />
+      <OnboardingButtons :is-first-slide="current === 0" :is-last-slide="current === total - 1" @next="$emit('next')"
+        @back="$emit('back')" />
     </div>
   </div>
 </template>
@@ -73,12 +62,12 @@ defineEmits([
   justify-content: center;
   align-items: center;
 
-  padding: 24px;
+  padding: 18px;
 }
 
 .content {
   width: 100%;
-  max-width: 420px;
+  max-width: 545px;
 
   display: flex;
   flex-direction: column;
@@ -88,8 +77,9 @@ defineEmits([
 }
 
 .logo {
-  font-size: 32px;
-  font-weight: 800;
+  font-size: 40px;
+  font-family: 'inter', sans-serif;
+  font-weight: 500;
 
   color: #5c4033;
 
@@ -108,7 +98,7 @@ defineEmits([
 
 .slide-image {
   width: 100%;
-  max-width: 280px;
+  max-width: 451px;
 
   object-fit: contain;
 }
@@ -117,6 +107,17 @@ defineEmits([
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.text-content h2{
+  font-size: 44px;
+  font-weight: 200;
+  margin-bottom: 18px;
+}
+
+.text-content p.description{
+  font-size: 22px;
+  color: black;
 }
 
 .title {
