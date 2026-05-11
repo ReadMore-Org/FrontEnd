@@ -7,7 +7,7 @@ import { ref } from 'vue'
 
 const active = ref('home')
 
-const logado = ref(true)
+const logado = ref(false)
 </script>
 
 <template>
@@ -36,13 +36,19 @@ const logado = ref(true)
                 <h1>Seja bem-vindo</h1>
                 <h2>Organize seus livros e acompanhe sua leitura</h2>
             </div>
+            
             <div class="botoes">
+                <RouterLink to="/login">
                 <button id="entrar">
                     Entrar
                 </button>
-                <button id="criar">
-                    Criar conta
-                </button>
+            </RouterLink>
+
+                <RouterLink to="/signup">
+                    <button id="criar">
+                        Criar conta
+                    </button>
+                </RouterLink>
             </div>
         </div>
         <div class="right" v-if="logado">
@@ -59,7 +65,7 @@ const logado = ref(true)
                 <div class="intro_mobile">
                     <h2><span>Bem-vindo de volta</span></h2>
                     <h2>Macaco</h2>
-                </div>
+                </div>node -v
             </div>
         </div>
     </header>
@@ -181,8 +187,8 @@ button {
 .deslogado button {
     background: none;
     border: none;
-    font-size: 24px;
-    padding: 12px 38px;
+    font-size: 16px;
+    padding: 10px 36px;
     font-family: 'inter', sans-serif;
     cursor: pointer;
 }
