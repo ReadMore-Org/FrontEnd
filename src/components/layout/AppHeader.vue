@@ -1,5 +1,5 @@
 <script setup>
-import { BellDot} from 'lucide-vue-next'
+import { BellDot } from 'lucide-vue-next'
 import { Plus } from 'lucide-vue-next'
 import { MoonStar } from 'lucide-vue-next'
 import { ref } from 'vue'
@@ -12,15 +12,22 @@ const logado = ref(true)
 
 <template>
     <header class="app-header">
-        
+
         <div class="left">
             <h1>ReadMore</h1>
             <nav>
                 <ul>
-                    <RouterLink to="/"><li :class="{ active: active === 'home' }" @click="active = 'home'">Home</li> </RouterLink>
-                    <!-- <router-link to="/" active-class="active">Home</router-link> -->
-                    <li :class="{ active: active === 'livros' }" @click="active = 'livros'">Meus Livros</li>
-                    <li :class="{ active: active === 'market' }" @click="active = 'market'">Marketplace</li>
+                    <li :class="{ active: active === 'home' }" @click="active = 'home'">
+                        <RouterLink to="/home">Home</RouterLink>
+                    </li>
+
+                    <li :class="{ active: active === 'livros' }" @click="active = 'livros'">
+                        <RouterLink to="/home">Meus Livros</RouterLink>
+                    </li>
+
+                    <li :class="{ active: active === 'market' }" @click="active = 'market'">
+                        <RouterLink to="/home">Marketplace</RouterLink>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -88,7 +95,12 @@ nav ul {
     cursor: pointer;
 }
 
-nav ul li.active {
+nav ul li a {
+    text-decoration: none;
+    color: #9C8A7A;
+}
+
+nav ul li.active a {
     color: #654321;
 }
 
@@ -192,7 +204,7 @@ button {
     .left {
         gap: 0;
     }
-    
+
     #Mais,
     .app-header h1,
     nav ul {
@@ -204,8 +216,9 @@ button {
         display: flex;
         line-height: 18px;
         font-family: 'inter', sans-serif;
-       
+
     }
+
     .intro_mobile h2 {
         display: flex;
         line-height: 18px;
@@ -237,7 +250,7 @@ button {
 
     div.imagem img.avatar {
         width: 50px;
-        height: 50px !important; 
+        height: 50px !important;
         border-radius: 1000px;
         border: solid 2px #654321;
         cursor: pointer;
@@ -246,6 +259,7 @@ button {
     .icones {
         gap: 10px;
     }
+
     #Sino {
         color: #5A4636;
         background-color: white;

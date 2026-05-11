@@ -29,7 +29,7 @@ defineEmits([
   <div class="slide-container">
     <div class="content">
       <h1 class="logo">
-        ReadMore
+        <span>Read</span>More
       </h1>
 
       <div class="image-wrapper">
@@ -86,6 +86,10 @@ defineEmits([
   margin-bottom: 32px;
 }
 
+.logo span {
+  color: #2C2C2C;
+}
+
 .image-wrapper {
   width: 100%;
 
@@ -109,13 +113,13 @@ defineEmits([
   gap: 14px;
 }
 
-.text-content h2{
+.text-content h2 {
   font-size: 44px;
   font-weight: 200;
   margin-bottom: 18px;
 }
 
-.text-content p.description{
+.text-content p.description {
   font-size: 22px;
   color: black;
 }
@@ -138,19 +142,20 @@ defineEmits([
 
 @media (max-width: 480px) {
   .logo {
+    font-size: 35px;
+  }
+
+  .text-content h2 {
     font-size: 28px;
+    margin-bottom: 12px;
   }
 
-  .title {
-    font-size: 24px;
-  }
-
-  .description {
-    font-size: 15px;
+  .text-content p.description {
+    font-size: 16px;
   }
 
   .slide-image {
-    max-width: 230px;
+    max-width: 270px;
   }
 }
 </style>

@@ -95,9 +95,10 @@ function finishOnboarding() {
 .skip-button {
   border: none;
   background: transparent;
+  padding-right: 30px;
 
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
 
   color: #7a5c45;
 
@@ -123,5 +124,10 @@ function finishOnboarding() {
 .fade-leave-to {
   opacity: 0;
   transform: translateX(-30px);
+}
+@media (max-width: 480px) {
+  button.skip-button{
+    padding-right: 10px;
+  }
 }
 </style>
