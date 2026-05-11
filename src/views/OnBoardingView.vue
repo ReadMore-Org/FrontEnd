@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 
 import OnboardingSlide from '@/components/onboarding/OnboardingSlide.vue'
+import router from '@/router'
 
 const currentSlide = ref(0)
 
@@ -45,7 +46,7 @@ function skipOnboarding() {
 }
 
 function finishOnboarding() {
-  console.log('Onboarding finalizado')
+  router.push('/signup');
 }
 </script>
 
