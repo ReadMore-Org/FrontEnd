@@ -17,12 +17,17 @@ const logado = ref(false)
             <h1>ReadMore</h1>
             <nav>
                 <ul>
-                    <RouterLink to="/">
-                        <li :class="{ active: active === 'home' }" @click="active = 'home'">Home</li>
-                    </RouterLink>
-                    <!-- <router-link to="/" active-class="active">Home</router-link> -->
-                    <li :class="{ active: active === 'livros' }" @click="active = 'livros'">Meus Livros</li>
-                    <li :class="{ active: active === 'market' }" @click="active = 'market'">Marketplace</li>
+                    <li :class="{ active: active === 'home' }" @click="active = 'home'">
+                        <RouterLink to="/home">Home</RouterLink>
+                    </li>
+
+                    <li :class="{ active: active === 'livros' }" @click="active = 'livros'">
+                        <RouterLink to="/home">Meus Livros</RouterLink>
+                    </li>
+
+                    <li :class="{ active: active === 'market' }" @click="active = 'market'">
+                        <RouterLink to="/home">Marketplace</RouterLink>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -96,7 +101,12 @@ nav ul {
     cursor: pointer;
 }
 
-nav ul li.active {
+nav ul li a {
+    text-decoration: none;
+    color: #9C8A7A;
+}
+
+nav ul li.active a {
     color: #654321;
 }
 
