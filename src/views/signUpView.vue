@@ -80,7 +80,9 @@ const handleSubmit = () => {
         </button>
 
         <footer class="form-footer">
-          <p>Já tem uma conta? <a href="#">Entre aqui</a></p>
+          <RouterLink to="/login">
+          <p>Já tem uma conta? <span>Entre aqui</span></p> 
+        </RouterLink>
         </footer>
       </section>
     </div>
@@ -106,7 +108,7 @@ const handleSubmit = () => {
   max-width: 600px;
   min-height: 600px;
   background: var(--white);
-  border-radius: 24px;
+  border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
@@ -131,13 +133,13 @@ const handleSubmit = () => {
 
 .tagline { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; }
 
-/* Lado do Formulário */
 .lado-marca {
   flex: 1.2;
   padding: 60px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  background-color: white;
 }
 
 .info-marca h1 {
@@ -256,11 +258,13 @@ input:focus {
 }
 
 .form-footer a {
-  color: #63422b;
+  color: #2C2C2C;
   text-decoration: none;
   font-weight: bold;
 }
-
+.form-footer a span {
+  color: #4a3120;
+}
 /* Responsividade Básica */
 @media (max-width: 768px) {
   .brand-side { display: none; }
