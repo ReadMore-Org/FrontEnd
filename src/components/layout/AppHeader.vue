@@ -2,12 +2,14 @@
 import { BellDot } from 'lucide-vue-next'
 import { Plus } from 'lucide-vue-next'
 import { MoonStar } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
+
+const authStore = useAuthStore()
 
 const active = ref('home')
 
-const logado = ref(false)
 </script>
 
 <template>
@@ -31,7 +33,7 @@ const logado = ref(false)
                 </ul>
             </nav>
         </div>
-        <div class="deslogado" v-if="!logado">
+        <div class="deslogado" v-if="!authStore.isAuthenticated">
             <div class="intro_deslogado">
                 <h1>Seja bem-vindo</h1>
                 <h2>Organize seus livros e acompanhe sua leitura</h2>
@@ -51,7 +53,7 @@ const logado = ref(false)
                 </RouterLink>
             </div>
         </div>
-        <div class="right" v-if="logado">
+        <div class="right" v-if="authStore.isAuthenticated">
             <div class="icones">
                 <button id="Mais">
                     <Plus :size="24" />Adicionar Livro
@@ -65,7 +67,7 @@ const logado = ref(false)
                 <div class="intro_mobile">
                     <h2><span>Bem-vindo de volta</span></h2>
                     <h2>Macaco</h2>
-                </div>node -v
+                </div>
             </div>
         </div>
     </header>
