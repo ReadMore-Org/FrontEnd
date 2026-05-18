@@ -31,7 +31,11 @@ async function handleLogin() {
       form.value.senha
     );
 
-    router.push('/home');
+    if (authStore.user.show_onboarding) {
+      router.push('/onboarding')
+    } else {
+      router.push('/home')
+    }
   } catch (err) {
     errorMessage.value =
       err.response?.data?.detail ||
@@ -57,39 +61,21 @@ async function handleLogin() {
           <div class="campo">
             <Mail :size="20" class="input-icon" />
 
-            <input
-              v-model="form.email"
-              type="email"
-              placeholder="E-mail"
-              required
-            />
+            <input v-model="form.email" type="email" placeholder="E-mail" required />
           </div>
 
           <div class="campo">
             <Lock :size="20" class="input-icon" />
 
-            <input
-              v-model="form.senha"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="Senha"
-              required
-            />
+            <input v-model="form.senha" :type="showPassword ? 'text' : 'password'" placeholder="Senha" required />
 
-            <button
-              type="button"
-              class="eye-btn"
-              @click="togglePassword"
-            >
+            <button type="button" class="eye-btn" @click="togglePassword">
               <Eye v-if="!showPassword" :size="20" />
               <EyeOff v-else :size="20" />
             </button>
           </div>
 
-          <button
-            type="submit"
-            class="btn-submit"
-            :disabled="loading"
-          >
+          <button type="submit" class="btn-submit" :disabled="loading">
             {{ loading ? 'Entrando...' : 'Entrar' }}
           </button>
 
@@ -107,13 +93,21 @@ async function handleLogin() {
         </div>
 
         <button class="btn-google">
-          <img
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-            alt="Google"
-          />
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
 
           Entrar com Google
         </button>
+
+        <footer class="form-footer">
+
+          <RouterLink to="/signup">
+            <p>
+              Não possui uma conta?
+              <span>Cadastre-se</span>
+            </p>
+          </RouterLink>
+
+        </footer>
 
       </div>
     </div>
@@ -292,6 +286,22 @@ p.esqueceu {
   color: #4a3120;
   text-align: center;
   cursor: pointer;
+}
+
+.form-footer {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.form-footer a {
+  color: #2C2C2C;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.form-footer a span {
+  color: #4a3120;
 }
 
 @media (max-width: 768px) {

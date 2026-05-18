@@ -1,15 +1,21 @@
-import { computed, ref } from 'vue';
-import { defineStore } from 'pinia';
-import auth from '../services/auth';
+import { computed, ref } from "vue";
+import { defineStore } from "pinia";
 
-export const useAuthStore = defineStore('auth', () => {
+import auth from "../services/auth";
+import api from "../services/api";
+
+export const useAuthStore = defineStore("auth", () => {
 
   const accessToken = ref(
-    localStorage.getItem('access_token')
+    localStorage.getItem("access_token")
   );
 
   const refreshToken = ref(
-    localStorage.getItem('refresh_token')
+    localStorage.getItem("refresh_token")
+  );
+
+  const user = ref(
+    JSON.parse(localStorage.getItem("user"))
   );
 
   const isAuthenticated = computed(
@@ -27,29 +33,60 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = data.refresh;
 
     localStorage.setItem(
-      'access_token',
+      "access_token",
       data.access
     );
 
     localStorage.setItem(
-      'refresh_token',
+      "refresh_token",
       data.refresh
+    );
+
+    // busca usuário autenticado
+    const response = await auth.me();
+
+    user.value = response.data;
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(response.data)
     );
   }
 
   function logout() {
+
     accessToken.value = null;
     refreshToken.value = null;
 
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    user.value = null;
+
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user");
+  }
+
+  async function updateOnboardingPreference(showOnboarding) {
+
+    await api.patch("/usuarios/me/", {
+      show_onboarding: showOnboarding,
+    });
+
+    user.value.show_onboarding =
+      showOnboarding;
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(user.value)
+    );
   }
 
   return {
     accessToken,
     refreshToken,
+    user,
     isAuthenticated,
     login,
-    logout
+    logout,
+    updateOnboardingPreference,
   };
 });

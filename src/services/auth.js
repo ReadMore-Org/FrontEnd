@@ -7,4 +7,7 @@ export default {
       password,
     });
   },
+  me() {
+    return api.get("/usuarios/me");
+  },
 };
