@@ -55,9 +55,11 @@ const active = ref('home')
         </div>
         <div class="right" v-if="authStore.isAuthenticated">
             <div class="icones">
+                <RouterLink to="/adicionar">
                 <button id="Mais">
                     <Plus :size="24" />Adicionar Livro
                 </button>
+                </RouterLink>
                 <button id="Sino">
                     <BellDot :size="24" />
                 </button>
