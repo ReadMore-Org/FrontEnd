@@ -10,11 +10,12 @@ import { ScanLine } from "lucide-vue-next";
 
       <p class="text">Use a câmera para identificar o livro rapidamente</p>
 
+      <RouterLink to="/scan">
       <div class="button brown">
         <ScanLine />
         <span>Escanear código</span>
       </div>
-
+      </RouterLink>
       <p class="text">Busque o livro pelo nome</p>
 
       <div class="button brown">
