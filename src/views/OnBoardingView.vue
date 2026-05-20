@@ -157,9 +157,21 @@ const dontShowAgain = ref(false)
   color: #5c4033;
 }
 
+.checkbox input[type="checkbox"] {
+  accent-color: #654321;
+}
+
 @media (max-width: 480px) {
   button.skip-button {
     padding-right: 10px;
+  }
+
+  .checkbox {
+    font-size: 18px;
+  }
+
+  .checkbox input[type="checkbox"] {
+    transform: scale(1.5);
   }
 }
 </style>
