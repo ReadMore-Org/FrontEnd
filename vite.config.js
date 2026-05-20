@@ -45,9 +45,19 @@ export default defineConfig({
     }),
     vueDevTools(),
   ],
+
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+
+  server: {
+    host: true,
+    allowedHosts: true,
+    
+    hmr: {
+    clientPort: 443,
+  },
   },
 });

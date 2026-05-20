@@ -7,6 +7,7 @@ import SignUpView from '@/views/signUpView.vue'
 import LogInView from '@/views/logInView.vue'
 
 import AddBookView from "@/views/AddBookView.vue";
+import ScanCodeView from "@/views/ScanCodeView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -41,6 +42,11 @@ const router = createRouter({
       path: '/adicionar',
       name: 'adicionar',
       component: AddBookView,
+    },
+    {
+      path: '/scan',
+      name: 'scan',
+      component: ScanCodeView,
     },
   ],
 });
