@@ -5,8 +5,23 @@ import { MoonStar } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
-
 const authStore = useAuthStore()
+const user = computed(() => authStore.user)
+
+
+const userEmail = computed(() =>
+    user.value?.email || ''
+)
+
+const userPhoto = computed(() => {
+    return authStore.user?.foto?.url
+        ? `http://127.0.0.1:8000${authStore.user.foto.url}`
+        : '/imgs/avatar.jpeg'
+})
+
+
+console.log(authStore.user)
+console.log(userPhoto.value)
 
 const active = ref('home')
 
@@ -38,13 +53,13 @@ const active = ref('home')
                 <h1>Seja bem-vindo</h1>
                 <h2>Organize seus livros e acompanhe sua leitura</h2>
             </div>
-            
+
             <div class="botoes">
                 <RouterLink to="/login">
-                <button id="entrar">
-                    Entrar
-                </button>
-            </RouterLink>
+                    <button id="entrar">
+                        Entrar
+                    </button>
+                </RouterLink>
 
                 <RouterLink to="/signup">
                     <button id="criar">
@@ -63,10 +78,10 @@ const active = ref('home')
                 </button>
             </div>
             <div class="imagem">
-                <img src="/public/imgs/macaco.png" alt="avatar" class="avatar">
+                <img :src="userPhoto" alt="avatar" class="avatar">
                 <div class="intro_mobile">
                     <h2><span>Bem-vindo de volta</span></h2>
-                    <h2>Macaco</h2>
+                    <p>{{ userEmail }}</p>
                 </div>
             </div>
         </div>
@@ -166,10 +181,24 @@ button {
     cursor: pointer;
 }
 
+.imagem {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
 .intro_mobile {
     display: flex;
     flex-direction: column;
+}
+
+.intro_mobile span {
     display: none;
+}
+
+.intro_mobile h2 {
+    font-weight: 100;
+    font-size: 20px;
 }
 
 .deslogado {
@@ -224,7 +253,10 @@ button {
         display: flex;
         line-height: 18px;
         font-family: 'inter', sans-serif;
+    }
 
+    .intro_mobile span {
+        display: inline;
     }
 
     .intro_mobile h2 {

@@ -10,7 +10,9 @@ import {
 
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
+import { useAuthStore } from '@/stores/auth';
 
+const authStore = useAuthStore();
 const router = useRouter();
 
 const loading = ref(false);
@@ -40,7 +42,13 @@ async function handleRegister() {
       password: form.value.senha
     });
 
-    router.push('/home');
+    // login automático
+    await authStore.login(
+      form.value.email,
+      form.value.senha
+    );
+
+    router.push('/onboarding');
 
   } catch (err) {
 
@@ -67,81 +75,37 @@ async function handleRegister() {
           <p>Seu cantinho de leitura começa aqui.</p>
         </header>
 
-        <form
-          @submit.prevent="handleRegister"
-          class="form"
-        >
+        <form @submit.prevent="handleRegister" class="form">
 
           <div class="campo">
-            <User
-              :size="20"
-              class="input-icon"
-            />
+            <User :size="20" class="input-icon" />
 
-            <input
-              v-model="form.nome"
-              type="text"
-              placeholder="Nome completo"
-              required
-            />
+            <input v-model="form.nome" type="text" placeholder="Nome completo" required />
           </div>
 
           <div class="campo">
-            <Mail
-              :size="20"
-              class="input-icon"
-            />
+            <Mail :size="20" class="input-icon" />
 
-            <input
-              v-model="form.email"
-              type="email"
-              placeholder="E-mail"
-              required
-            />
+            <input v-model="form.email" type="email" placeholder="E-mail" required />
           </div>
 
           <div class="campo">
-            <Lock
-              :size="20"
-              class="input-icon"
-            />
+            <Lock :size="20" class="input-icon" />
 
-            <input
-              v-model="form.senha"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="Senha"
-              required
-            />
+            <input v-model="form.senha" :type="showPassword ? 'text' : 'password'" placeholder="Senha" required />
 
-            <button
-              type="button"
-              class="eye-btn"
-              @click="togglePassword"
-            >
-              <Eye
-                v-if="!showPassword"
-                :size="20"
-              />
+            <button type="button" class="eye-btn" @click="togglePassword">
+              <Eye v-if="!showPassword" :size="20" />
 
-              <EyeOff
-                v-else
-                :size="20"
-              />
+              <EyeOff v-else :size="20" />
             </button>
           </div>
 
-          <button
-            type="submit"
-            class="btn-submit"
-            :disabled="loading"
-          >
+          <button type="submit" class="btn-submit" :disabled="loading">
             {{ loading ? 'Cadastrando...' : 'Cadastrar' }}
           </button>
 
-          <p
-            v-if="errorMessage"
-            class="error"
-          >
+          <p v-if="errorMessage" class="error">
             {{ errorMessage }}
           </p>
 
@@ -152,10 +116,7 @@ async function handleRegister() {
         </div>
 
         <button class="btn-google">
-          <img
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-            alt="Google"
-          />
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
 
           Cadastrar com Google
         </button>

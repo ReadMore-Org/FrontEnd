@@ -6,6 +6,7 @@ import { useLivrosStore } from '@/stores/livros'
 import { Splide, SplideSlide } from '@splidejs/vue-splide'
 import '@splidejs/vue-splide/css'
 import AppHeader from '@/components/layout/AppHeader.vue'
+import AppFooter from '@/components/layout/AppFooter.vue'
 import mensagemBemvindo from "@/components/home/mensagemBemvindo.vue";
 import cardMarketplace from "@/components/home/cardMarketplace.vue";
 import BookCard from "@/components/books/bookCard.vue";
@@ -81,6 +82,8 @@ onMounted(() => {
             </Splide>
         </div>
     </div>
+
+    <AppFooter/>
 </template>
 
 <style scoped>
