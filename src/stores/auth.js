@@ -22,6 +22,7 @@ export const useAuthStore = defineStore("auth", () => {
     () => !!accessToken.value
   );
 
+
   async function login(email, password) {
 
     const { data } = await auth.login(
@@ -52,6 +53,35 @@ export const useAuthStore = defineStore("auth", () => {
       JSON.stringify(response.data)
     );
   }
+
+  async function loginWithGoogle(accessTokenGoogle) {
+
+  const { data } = await auth.googleLogin(
+    accessTokenGoogle
+  );
+
+  accessToken.value = data.access;
+  refreshToken.value = data.refresh;
+
+  localStorage.setItem(
+    "access_token",
+    data.access
+  );
+
+  localStorage.setItem(
+    "refresh_token",
+    data.refresh
+  );
+
+  // usuário vindo do backend
+  user.value = data.user;
+
+  localStorage.setItem(
+    "user",
+    JSON.stringify(data.user)
+  );
+}
+
 
   function logout() {
 
@@ -86,6 +116,7 @@ export const useAuthStore = defineStore("auth", () => {
     user,
     isAuthenticated,
     login,
+    loginWithGoogle,
     logout,
     updateOnboardingPreference,
   };

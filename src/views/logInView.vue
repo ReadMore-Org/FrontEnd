@@ -4,6 +4,9 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
+import { googleTokenLogin } from 'vue3-google-login';
+
+
 const router = useRouter();
 const authStore = useAuthStore();
 
@@ -43,6 +46,22 @@ async function handleLogin() {
   } finally {
     loading.value = false;
   }
+}
+
+async function handleGoogleLogin() {
+
+  try {
+    const response = await googleTokenLogin();
+    await authStore.loginWithGoogle(
+      response.access_token
+    );
+    router.push('/home');
+  } catch (error) {
+    console.error(error);
+    errorMessage.value =
+      'Erro ao entrar com Google.';
+  }
+  
 }
 </script>
 
@@ -92,7 +111,7 @@ async function handleLogin() {
           <span>ou</span>
         </div>
 
-        <button class="btn-google">
+        <button class="btn-google" @click="handleGoogleLogin">
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
 
           Entrar com Google
