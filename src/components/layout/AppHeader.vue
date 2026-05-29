@@ -14,9 +14,19 @@ const userEmail = computed(() =>
 )
 
 const userPhoto = computed(() => {
-    return authStore.user?.foto?.url
-        ? `http://127.0.0.1:8000${authStore.user.foto.url}`
-        : '/imgs/avatar.jpeg'
+
+    // foto manual do sistema
+    if (authStore.user?.foto?.url) {
+        return `http://127.0.0.1:8000${authStore.user.foto.url}`
+    }
+
+    // foto do Google
+    if (authStore.user?.google_picture) {
+        return authStore.user.google_picture
+    }
+
+    // fallback
+    return '/imgs/avatar.jpeg'
 })
 
 

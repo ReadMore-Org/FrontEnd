@@ -73,12 +73,14 @@ export const useAuthStore = defineStore("auth", () => {
     data.refresh
   );
 
-  // usuário vindo do backend
-  user.value = data.user;
+  // busca usuário COMPLETO
+  const response = await auth.me();
+
+  user.value = response.data;
 
   localStorage.setItem(
     "user",
-    JSON.stringify(data.user)
+    JSON.stringify(response.data)
   );
 }
 
