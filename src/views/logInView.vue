@@ -51,17 +51,28 @@ async function handleLogin() {
 async function handleGoogleLogin() {
 
   try {
+    console.log('1 - Abrindo login Google');
     const response = await googleTokenLogin();
+    console.log('2 - Google respondeu');
+    console.log(response);
+
     await authStore.loginWithGoogle(
       response.access_token
     );
+
+    console.log('3 - Login backend concluído');
     router.push('/home');
+    console.log('4 - Redirecionamento executado');
+
   } catch (error) {
+
+    console.error('ERRO LOGIN GOOGLE');
     console.error(error);
+
     errorMessage.value =
       'Erro ao entrar com Google.';
   }
-  
+
 }
 </script>
 

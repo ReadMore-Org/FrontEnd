@@ -5,88 +5,50 @@ import auth from "../services/auth";
 import api from "../services/api";
 
 export const useAuthStore = defineStore("auth", () => {
+  const accessToken = ref(localStorage.getItem("access_token"));
 
-  const accessToken = ref(
-    localStorage.getItem("access_token")
-  );
+  const refreshToken = ref(localStorage.getItem("refresh_token"));
 
-  const refreshToken = ref(
-    localStorage.getItem("refresh_token")
-  );
+  const user = ref(JSON.parse(localStorage.getItem("user")));
 
-  const user = ref(
-    JSON.parse(localStorage.getItem("user"))
-  );
-
-  const isAuthenticated = computed(
-    () => !!accessToken.value
-  );
-
+  const isAuthenticated = computed(() => !!accessToken.value);
 
   async function login(email, password) {
-
-    const { data } = await auth.login(
-      email,
-      password
-    );
+    const { data } = await auth.login(email, password);
 
     accessToken.value = data.access;
     refreshToken.value = data.refresh;
 
-    localStorage.setItem(
-      "access_token",
-      data.access
-    );
+    localStorage.setItem("access_token", data.access);
 
-    localStorage.setItem(
-      "refresh_token",
-      data.refresh
-    );
+    localStorage.setItem("refresh_token", data.refresh);
 
-    // busca usuário autenticado
     const response = await auth.me();
 
     user.value = response.data;
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify(response.data)
-    );
+    localStorage.setItem("user", JSON.stringify(response.data));
   }
 
   async function loginWithGoogle(accessTokenGoogle) {
+    const { data } = await auth.googleLogin(accessTokenGoogle);
 
-  const { data } = await auth.googleLogin(
-    accessTokenGoogle
-  );
+    accessToken.value = data.access;
+    refreshToken.value = data.refresh;
 
-  accessToken.value = data.access;
-  refreshToken.value = data.refresh;
+    localStorage.setItem("access_token", data.access);
 
-  localStorage.setItem(
-    "access_token",
-    data.access
-  );
+    localStorage.setItem("refresh_token", data.refresh);
 
-  localStorage.setItem(
-    "refresh_token",
-    data.refresh
-  );
+    // busca usuário COMPLETO
+    const response = await auth.me();
 
-  // busca usuário COMPLETO
-  const response = await auth.me();
+    user.value = response.data;
 
-  user.value = response.data;
+    localStorage.setItem("user", JSON.stringify(response.data));
+  }
 
-  localStorage.setItem(
-    "user",
-    JSON.stringify(response.data)
-  );
-}
-
-
-  function logout() {
-
+  async function logout() {
     accessToken.value = null;
     refreshToken.value = null;
 
@@ -98,18 +60,13 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   async function updateOnboardingPreference(showOnboarding) {
-
     await api.patch("/usuarios/me/", {
       show_onboarding: showOnboarding,
     });
 
-    user.value.show_onboarding =
-      showOnboarding;
+    user.value.show_onboarding = showOnboarding;
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify(user.value)
-    );
+    localStorage.setItem("user", JSON.stringify(user.value));
   }
 
   return {
