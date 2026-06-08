@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'vue-router';
 
 import api from '@/services/api';
+import { googleTokenLogin } from "vue3-google-login";
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
@@ -67,6 +68,24 @@ async function handleRegister() {
 
     loading.value = false;
 
+  }
+}
+
+async function handleGoogleRegister() {
+  try {
+    const response = await googleTokenLogin();
+
+    await authStore.loginWithGoogle(response.access_token);
+
+    if (authStore.user.show_onboarding) {
+      router.push("/onboarding");
+    } else {
+      router.push("/home");
+    }
+  } catch (error) {
+    console.error(error);
+
+    errorMessage.value = "Erro ao cadastrar com Google.";
   }
 }
 </script>
@@ -166,7 +185,7 @@ async function handleRegister() {
           <span>ou</span>
         </div>
 
-        <button class="btn-google">
+        <button class="btn-google" @click="handleGoogleRegister">
           <img
             src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
             alt="Google"
