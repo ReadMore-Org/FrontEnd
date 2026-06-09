@@ -321,7 +321,7 @@ p.esqueceu {
   color: #4a3120;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 650px) {
   .lado-marca {
     padding: 40px 20px;
   }

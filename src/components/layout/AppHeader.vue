@@ -97,6 +97,9 @@ const active = ref("home");
           </div>
 
           <button @click="handleLogout">Sair</button>
+          <button>
+            <RouterLink to="/profile">Perfil</RouterLink>
+          </button>
         </div>
 
         <div class="intro_mobile">
@@ -109,6 +112,10 @@ const active = ref("home");
 </template>
 
 <style scoped>
+button a {
+  text-decoration: none;
+  color: #654321;
+}
 .app-header {
   display: flex;
   justify-content: space-around;
@@ -210,6 +217,7 @@ button {
 
 .menu-usuario {
   position: absolute;
+  
 
   top: 65px;
   left: 25px;
@@ -217,8 +225,8 @@ button {
   transform: translateX(-50%);
 
   background: white;
-  border: 1px solid #e8d8c3;
-  border-radius: 10px;
+  
+  border-radius: 15px;
 
   min-width: 140px;
 
@@ -228,12 +236,13 @@ button {
 }
 
 .menu-usuario button {
+  text-decoration: none;
   width: 100%;
 
   padding: 12px 16px;
 
-  border: none;
-  border-radius: 8px;
+  border: 1px solid #e8d8c3;
+ 
 
   background: #f5e6d3;
 
