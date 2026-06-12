@@ -3,17 +3,18 @@ import HomeView from "../views/HomeView.vue";
 import ProdutoView from "@/views/ProdutoView.vue";
 import OnBoardingView from "@/views/OnBoardingView.vue";
 
-import SignUpView from '@/views/signUpView.vue'
-import LogInView from '@/views/logInView.vue'
+import SignUpView from "@/views/signUpView.vue";
+import LogInView from "@/views/logInView.vue";
 
-import ProfileView from '@/views/ProfileView.vue'
+import ProfileView from "@/views/ProfileView.vue";
+import EditProfileView from "@/views/EditProfileView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'login',
+      path: "/",
+      name: "login",
       component: LogInView,
     },
     {
@@ -32,13 +33,18 @@ const router = createRouter({
       component: ProfileView,
     },
     {
+      path: "/profile/edit",
+      name: "profile-edit",
+      component: EditProfileView,
+    },
+    {
       path: "/livro/:id",
       name: "livro",
       component: ProdutoView,
     },
     {
-      path: '/signup',
-      name: 'signup',
+      path: "/signup",
+      name: "signup",
       component: SignUpView,
     },
   ],

@@ -14,8 +14,7 @@ import barraProgresso from "@/components/home/barraProgresso.vue";
 import ProdutoView from "@/views/ProdutoView.vue";
 import ListaRecursos from "@/components/home/listaRecursos.vue";
 
-import { LibraryBig, TicketPlusIcon, BookOpenCheck, BookOpenText } from 'lucide-vue-next'
-
+import { LibraryBig, TicketPlusIcon, BookOpenCheck, BookOpenText } from "lucide-vue-next";
 
 import { computed, ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
@@ -44,40 +43,55 @@ const userPhoto = computed(() => {
 </script>
 
 <template>
-    <div id="me">
-        <div class="info">
+  <div id="me">
+    <div class="topo-perfil">
+      <div class="info">
         <div class="img">
-        <img
-          :src="userPhoto"
-          alt="avatar"
-          class="avatar"
-          @error="($event) => $event.target.src = '/imgs/avatar.jpeg'"
-          @click="menuAberto = !menuAberto"
-        />
+          <img
+            :src="userPhoto"
+            alt="avatar"
+            class="avatar"
+            @error="($event) => ($event.target.src = '/imgs/avatar.jpeg')"
+          />
         </div>
 
         <div class="menu-info">
-            <strong>{{ authStore.user?.name }}</strong>
-            <p>{{ userEmail }}</p>
+          <strong>{{ authStore.user?.name }}</strong>
+          <p>{{ userEmail }}</p>
         </div>
-        </div>
+      </div>
 
-        <div class="stats">
-            <p>
-                <span><LibraryBig :size="24" />25</span> <br>
-                Livros
-            </p>
-            <p id="center">
-                <span><BookOpenCheck :size="24" />15</span> <br>
-                Lidos
-            </p>
-            <p>
-                <span><BookOpenText :size="24" />4</span> <br>
-                Lendo
-            </p>
-        </div>
-
+      <button class="btn-editar" @click="$router.push('/profile/edit')">
+        Editar perfil
+      </button>
     </div>
+
+    <div class="stats">
+      <p>
+        <span>
+          <LibraryBig :size="22" />
+          25
+        </span>
+        Livros
+      </p>
+
+      <p id="center">
+        <span>
+          <BookOpenCheck :size="22" />
+          15
+        </span>
+        Lidos
+      </p>
+
+      <p>
+        <span>
+          <BookOpenText :size="22" />
+          4
+        </span>
+        Lendo
+      </p>
+    </div>
+  </div>
 
   <div id="livros">
     <div class="meus">
@@ -107,132 +121,261 @@ const userPhoto = computed(() => {
       </div>
     </div>
     <div>
-        <div class="favoritos">
-      <h1 class="titulo-secao">Meus Livros</h1>
-      <div class="lista-livros">
-        <Splide
-          :options="{
-            perPage: 3,
-            gap: '0px' /* Reduzido o gap padrão */,
-            breakpoints: {
-              640: {
-                perPage: 1,
-                gap: '30px',
+      <div class="favoritos">
+        <h1 class="titulo-secao">Meus Livros</h1>
+        <div class="lista-livros">
+          <Splide
+            :options="{
+              perPage: 3,
+              gap: '0px' /* Reduzido o gap padrão */,
+              breakpoints: {
+                640: {
+                  perPage: 1,
+                  gap: '30px',
+                },
               },
-            },
-            arrows: true,
-            pagination: false,
-            drag: 'free',
-          }"
-        >
-          <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
-            <RouterLink :to="`/livro/${livro.id}`">
-              <BookCard :livro="livro" />
-            </RouterLink>
-          </SplideSlide>
-        </Splide>
+              arrows: true,
+              pagination: false,
+              drag: 'free',
+            }"
+          >
+            <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
+              <RouterLink :to="`/livro/${livro.id}`">
+                <BookCard :livro="livro" />
+              </RouterLink>
+            </SplideSlide>
+          </Splide>
+        </div>
       </div>
-    </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* =====================
+   PERFIL
+===================== */
+
 #me {
-    align-items: center;
+  background: #f3e7d7;
+  padding: 40px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
 }
+
+.topo-perfil {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .info {
-    display: flex;
-    gap: 12px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
-.stats {
-    display: flex;
-    gap: 18px;
-    align-items: center;
-    text-align: center;
-}
-#center{
-    padding: 9px;
-    border-right: solid #654321 1px;
-    border-left: solid #654321 1px;
-}
+
 .avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 500px;
-  border: solid 2px #654321;
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  border: 2px solid #7b5638;
+  object-fit: cover;
   cursor: pointer;
 }
 
-.imagem {
-  position: relative;
+.menu-info {
   display: flex;
-  align-items: center;
-  gap: 13px;
+  flex-direction: column;
 }
 
-#livros {
-    padding: 50px;
+.menu-info strong {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2d2d2d;
 }
-.lista-cards {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
+
+.menu-info p {
+  color: #666;
+  margin: 4px 0 0;
+}
+
+.btn-editar {
+  padding: 12px 24px;
+  border: 1px solid #7b5638;
+  border-radius: 12px;
+  background: white;
+  color: #7b5638;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-editar:hover {
+  background: #faf7f4;
+  transform: translateY(-1px);
+}
+
+/* =====================
+   ESTATÍSTICAS
+===================== */
+
+.stats {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.stats p {
+  margin: 0;
+  color: #6d6d6d;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.stats span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 2rem;
+  font-weight: 600;
+  color: #6b4226;
+
+  margin-bottom: 4px;
+}
+
+#center {
+  padding: 0 30px;
+  border-left: 1px solid #8a6a52;
+  border-right: 1px solid #8a6a52;
+}
+
+/* =====================
+   SEÇÕES DE LIVROS
+===================== */
+
+#livros {
+  padding: 50px 60px;
+}
+
+.meus,
+.favoritos {
+  margin-bottom: 60px;
 }
 
 .titulo-secao {
-    position: relative;
-    display: inline-block;
-    padding-bottom: 5px;
-    color: #2C2C2C;
-    font-weight: 500;
-    margin: 60px 0 30px 0;
-    font-size: 25px;
+  position: relative;
+  display: inline-block;
+
+  margin-bottom: 30px;
+
+  font-size: 2rem;
+  font-weight: 500;
+  color: #2d2d2d;
 }
 
 .titulo-secao::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 50%;
-    height: 4px;
-    border-radius: 50px;
-    background: #6B4226;
+  content: "";
+  position: absolute;
+
+  left: 0;
+  bottom: -8px;
+
+  width: 50%;
+  height: 3px;
+
+  background: #6b4226;
+  border-radius: 999px;
+}
+
+/* =====================
+   SPLIDE
+===================== */
+
+.lista-livros {
+  width: 100%;
+}
+
+:deep(.splide__track) {
+  padding: 10px 0;
+}
+
+:deep(.splide__arrow) {
+  background: #f3e7d7;
+  opacity: 1;
+}
+
+:deep(.splide__arrow svg) {
+  fill: #6b4226;
 }
 
 .splide__slide {
-    border-radius: 12px;
-    overflow: hidden;
-    transition: transform 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  transition: transform 0.25s ease;
 }
 
 .splide__slide:hover {
-    transform: scale(1.05);
+  transform: translateY(-4px);
 }
-@media (max-width: 650px) {
-    .splide__slide {
-        transition: none;
-    }
 
-    .splide__slide:hover {
-        transform: none;
-    }
+/* =====================
+   RESPONSIVO
+===================== */
 
-    .lista-cards {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        justify-content: center;
-    }
+@media (max-width: 768px) {
+  #me {
+    padding: 25px 20px;
+  }
 
-    .titulo-secao {
-        font-size: 20px;
-        margin-top: 50px;
-    }
+  #livros {
+    padding: 30px 20px;
+  }
 
+  .topo-perfil {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .info {
+    width: 100%;
+    align-items: center;
+  }
+
+  .avatar {
+    width: 70px;
+    height: 70px;
+  }
+
+  .menu-info strong {
+    font-size: 1.4rem;
+  }
+
+  .btn-editar {
+    width: 100%;
+  }
+
+  .stats {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .stats span {
+    font-size: 1.4rem;
+  }
+
+  #center {
+    padding: 0 15px;
+  }
+
+  .titulo-secao {
+    font-size: 1.6rem;
+  }
+
+  .splide__slide:hover {
+    transform: none;
+  }
 }
 </style>
