@@ -30,9 +30,6 @@ function handleLogout() {
   authStore.logout();
 }
 
-console.log(authStore.user);
-console.log(userPhoto.value);
-
 const active = ref("home");
 </script>
 
@@ -46,17 +43,11 @@ const active = ref("home");
             <RouterLink to="/home">Home</RouterLink>
           </li>
 
-          <li
-            :class="{ active: active === 'livros' }"
-            @click="active = 'livros'"
-          >
+          <li :class="{ active: active === 'livros' }" @click="active = 'livros'">
             <RouterLink to="/home">Meus Livros</RouterLink>
           </li>
 
-          <li
-            :class="{ active: active === 'market' }"
-            @click="active = 'market'"
-          >
+          <li :class="{ active: active === 'market' }" @click="active = 'market'">
             <RouterLink to="/home">Marketplace</RouterLink>
           </li>
         </ul>
@@ -91,6 +82,7 @@ const active = ref("home");
           :src="userPhoto"
           alt="avatar"
           class="avatar"
+          @error="($event) => $event.target.src = '/imgs/avatar.jpeg'"
           @click="menuAberto = !menuAberto"
         />
 
@@ -99,12 +91,15 @@ const active = ref("home");
             <img :src="userPhoto" alt="avatar" class="menu-avatar" />
 
             <div class="menu-info">
-              <strong>{{ user?.name }}</strong>
+              <strong>{{ authStore.user?.name }}</strong>
               <p>{{ userEmail }}</p>
             </div>
           </div>
 
           <button @click="handleLogout">Sair</button>
+          <button>
+            <RouterLink to="/profile">Perfil</RouterLink>
+          </button>
         </div>
 
         <div class="intro_mobile">
@@ -117,6 +112,10 @@ const active = ref("home");
 </template>
 
 <style scoped>
+button a {
+  text-decoration: none;
+  color: #654321;
+}
 .app-header {
   display: flex;
   justify-content: space-around;
@@ -218,6 +217,7 @@ button {
 
 .menu-usuario {
   position: absolute;
+  
 
   top: 65px;
   left: 25px;
@@ -225,8 +225,8 @@ button {
   transform: translateX(-50%);
 
   background: white;
-  border: 1px solid #e8d8c3;
-  border-radius: 10px;
+  
+  border-radius: 15px;
 
   min-width: 140px;
 
@@ -236,12 +236,13 @@ button {
 }
 
 .menu-usuario button {
+  text-decoration: none;
   width: 100%;
 
   padding: 12px 16px;
 
-  border: none;
-  border-radius: 8px;
+  border: 1px solid #e8d8c3;
+ 
 
   background: #f5e6d3;
 
@@ -427,141 +428,141 @@ button {
     font-size: 12px;
   }
 
-.deslogado {
-  width: 100%;
+  .deslogado {
+    width: 100%;
 
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-  gap: 16px;
+    gap: 16px;
 
-  padding: 0;
-}
+    padding: 0;
+  }
 
-.deslogado .intro_deslogado {
-  display: flex;
-  flex-direction: column;
+  .deslogado .intro_deslogado {
+    display: flex;
+    flex-direction: column;
 
-  flex: 1;
+    flex: 1;
 
-  gap: 4px;
+    gap: 4px;
 
-  text-align: left;
-}
+    text-align: left;
+  }
 
-.deslogado .intro_deslogado h1 {
-  font-size: 15px;
-  font-weight: 600;
+  .deslogado .intro_deslogado h1 {
+    font-size: 15px;
+    font-weight: 600;
 
-  color: #654321;
+    color: #654321;
 
-  margin: 0;
-}
+    margin: 0;
+  }
 
-.deslogado .intro_deslogado h2 {
-  font-size: 12px;
-  font-weight: 400;
+  .deslogado .intro_deslogado h2 {
+    font-size: 12px;
+    font-weight: 400;
 
-  color: #7a6a5c;
+    color: #7a6a5c;
 
-  margin: 0;
+    margin: 0;
 
-  display: block;
-}
+    display: block;
+  }
 
-.deslogado .botoes {
-  display: flex;
+  .deslogado .botoes {
+    display: flex;
 
-  gap: 8px;
+    gap: 8px;
 
-  flex-shrink: 0;
-}
+    flex-shrink: 0;
+  }
 
-.deslogado .botoes button {
-  padding: 10px 16px;
+  .deslogado .botoes button {
+    padding: 10px 16px;
 
-  font-size: 13px;
+    font-size: 13px;
 
-  border-radius: 10px;
+    border-radius: 10px;
 
-  white-space: nowrap;
-}
+    white-space: nowrap;
+  }
 
-.deslogado .botoes #entrar {
-  background: white;
+  .deslogado .botoes #entrar {
+    background: white;
 
-  border: 1px solid #e8d8c3;
+    border: 1px solid #e8d8c3;
 
-  color: #654321;
-}
+    color: #654321;
+  }
 
-.deslogado .botoes #criar {
-  background: #654321;
+  .deslogado .botoes #criar {
+    background: #654321;
 
-  color: white;
-}
+    color: white;
+  }
 
-.menu-usuario {
-  position: fixed;
+  .menu-usuario {
+    position: fixed;
 
-  top: 85px;
-  left: 16px;
-  right: 16px;
+    top: 85px;
+    left: 16px;
+    right: 16px;
 
-  transform: none;
+    transform: none;
 
-  min-width: auto;
+    min-width: auto;
 
-  background: white;
+    background: white;
 
-  border-radius: 16px;
+    border-radius: 16px;
 
-  padding: 16px;
+    padding: 16px;
 
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 
-  z-index: 999;
-}
+    z-index: 999;
+  }
 
-.menu-header {
-  display: flex;
+  .menu-header {
+    display: flex;
 
-  align-items: center;
+    align-items: center;
 
-  gap: 12px;
+    gap: 12px;
 
-  padding-bottom: 12px;
+    padding-bottom: 12px;
 
-  margin-bottom: 12px;
+    margin-bottom: 12px;
 
-  border-bottom: 1px solid #eee;
-}
+    border-bottom: 1px solid #eee;
+  }
 
-.menu-info strong {
-  color: #654321;
-  font-size: 14px;
-}
+  .menu-info strong {
+    color: #654321;
+    font-size: 14px;
+  }
 
-.menu-info p {
-  color: #777;
-  font-size: 12px;
-}
+  .menu-info p {
+    color: #777;
+    font-size: 12px;
+  }
 
-.menu-usuario button {
-  width: 100%;
+  .menu-usuario button {
+    width: 100%;
 
-  justify-content: center;
+    justify-content: center;
 
-  padding: 14px;
+    padding: 14px;
 
-  border-radius: 10px;
+    border-radius: 10px;
 
-  background: #654321;
+    background: #654321;
 
-  color: white;
+    color: white;
 
-  font-weight: 600;
-}
+    font-weight: 600;
+  }
 }
 </style>

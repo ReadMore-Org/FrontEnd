@@ -63,10 +63,10 @@ const active = ref('home')
                 <ul id="navegacao">
                     <li>
                         <h1>Navegação</h1>
-                        <p><a href="home"></a>Home</p>
-                        <p><a href="estante"></a>Estante</p>
-                        <p><a href="marketplace"></a>Marketplace</p>
-                        <p><a href="perfil"></a>Perfil</p>
+                        <p @click="$router.push('/home')">Home</p>
+                        <p @click="$router.push('/profile/edit')">Estante</p>
+                        <p @click="$router.push('/profile/edit')">Marketplace</p>
+                        <p @click="$router.push('/profile')">Perfil</p>
                     </li>
                 </ul>
             </div>
@@ -175,6 +175,9 @@ ul li h1 {
     width: 20px;
 }
 
+#navegacao {
+    cursor: pointer;
+}
 
 #navegacao li p {
     margin-bottom: 17px;
