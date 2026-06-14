@@ -1,78 +1,74 @@
 <script setup>
-import { ref, watch } from "vue";
-import { Check } from 'lucide-vue-next'
 const props = defineProps({
-  modelValue: String,
-});
+  modelValue: {
+    type: String,
+    required: true
+  }
+})
 
-const emit = defineEmits(["update:modelValue"]);
+defineEmits(['update:modelValue'])
 
-const statusOpcoes = ["quero-ler", "lendo", "lido"];
-
-const status = ref(props.modelValue || "quero-ler");
-
-watch(status, (novo) => {
-  emit("update:modelValue", novo);
-});
+const statusOpcoes = [
+  { value: 'quero_ler', label: 'Quero ler' },
+  { value: 'lendo', label: 'Lendo' },
+  { value: 'lido', label: 'Lido' },
+]
 </script>
-
 <template>
-  <div class="secao-status">
-    <p class="label-status">Status</p>
+  <div class="field">
+  <label>Status de leitura</label>
 
-    <div class="botoes-status">
-      <button
-        v-for="st in statusOpcoes"
-        :key="st"
-        @click="status = st"
-        class="btn-status"
-        :class="{ ativo: status === st }"
-      >
-        <span v-if="status === st"><Check :size="18"/></span>
-        {{
-          st === "quero-ler"
-            ? "Quero ler"
-            : st === "lendo"
-            ? "Lendo"
-            : "Lido"
-        }}
-      </button>
-    </div>
+  <div class="toggle-group">
+    <button
+      v-for="s in statusOpcoes"
+      :key="s.value"
+      :class="['toggle-btn', { active: props.modelValue === s.value }]"
+    >
+      {{ s.label }}
+    </button>
   </div>
+</div>
 </template>
-
 <style scoped>
-.secao-status {
-  margin-top: 15px;
+.field {
+  margin-bottom: 12px;
+  position: relative;
 }
 
-.label-status {
-  font-size: 14px;
-  margin-bottom: 6px;
-  color: #2c2c2c;
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #5A4636;
+  margin-bottom: 5px;
 }
 
-.botoes-status {
+.toggle-group {
   display: flex;
-
-  gap: 10px;
+  gap: 8px;
 }
 
-.btn-status {
-  padding: 8px 18px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background-color: #eee;
+.toggle-btn {
+  flex: 1;
+  padding: 7px 4px;
+  border: 1px solid #E8D8C3;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #FFFFFF;
+  color: #5A4636;
   cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  transition: all 0.15s;
+  text-align: center;
 }
 
-.btn-status.ativo {
-  background-color: #6b4226; /* marrom da imagem */
-  color: white;
-  border: none;
+.toggle-btn:hover:not(.active) {
+  background: #FAF3E0;
+}
+
+.toggle-btn.active {
+  background: #6B4226;
+  color: #FFFFFF;
+  border-color: #6B4226;
 }
 </style>
