@@ -1,10 +1,12 @@
 <script setup>
 import { ref } from 'vue'
-
+import { useAuthStore } from '@/stores/auth';
 import OnboardingSlide from '@/components/onboarding/OnboardingSlide.vue'
 import router from '@/router'
 
 const currentSlide = ref(0)
+
+const authStore = useAuthStore();
 
 const slides = [
   {
@@ -45,9 +47,19 @@ function skipOnboarding() {
   finishOnboarding()
 }
 
-function finishOnboarding() {
-  router.push('/signup');
+async function finishOnboarding() {
+  try {
+    await authStore.updateOnboardingPreference(
+      !dontShowAgain.value
+    )
+
+    router.push('/home')
+  } catch (err) {
+    console.error(err)
+  }
 }
+
+const dontShowAgain = ref(false)
 </script>
 
 <template>
@@ -59,15 +71,17 @@ function finishOnboarding() {
     </div>
 
     <transition name="fade" mode="out-in">
-      <OnboardingSlide
-        :key="currentSlide"
-        :slide="slides[currentSlide]"
-        :current="currentSlide"
-        :total="slides.length"
-        @next="nextSlide"
-        @back="previousSlide"
-      />
+      <OnboardingSlide :key="currentSlide" :slide="slides[currentSlide]" :current="currentSlide" :total="slides.length"
+        @next="nextSlide" @back="previousSlide" />
     </transition>
+
+    <div class="preferences">
+      <label class="checkbox">
+        <input type="checkbox" v-model="dontShowAgain" />
+
+        Não mostrar novamente
+      </label>
+    </div>
   </div>
 </template>
 
@@ -126,9 +140,38 @@ function finishOnboarding() {
   opacity: 0;
   transform: translateX(-30px);
 }
+
+.preferences {
+  display: flex;
+  justify-content: center;
+
+  padding-bottom: 24px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 15px;
+  color: #5c4033;
+}
+
+.checkbox input[type="checkbox"] {
+  accent-color: #654321;
+}
+
 @media (max-width: 480px) {
-  button.skip-button{
+  button.skip-button {
     padding-right: 10px;
+  }
+
+  .checkbox {
+    font-size: 18px;
+  }
+
+  .checkbox input[type="checkbox"] {
+    transform: scale(1.5);
   }
 }
 </style>

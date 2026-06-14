@@ -1,14 +1,16 @@
 <script setup>
-import { ref } from 'vue';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-vue-next';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
+import { ref } from "vue";
+import { Mail, Lock, Eye, EyeOff } from "lucide-vue-next";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+
+import { googleTokenLogin } from "vue3-google-login";
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 const loading = ref(false);
-const errorMessage = ref('');
+const errorMessage = ref("");
 
 const showPassword = ref(false);
 
@@ -17,27 +19,45 @@ const togglePassword = () => {
 };
 
 const form = ref({
-  email: '',
-  senha: ''
+  email: "",
+  senha: "",
 });
 
 async function handleLogin() {
   loading.value = true;
-  errorMessage.value = '';
+  errorMessage.value = "";
 
   try {
-    await authStore.login(
-      form.value.email,
-      form.value.senha
-    );
+    await authStore.login(form.value.email, form.value.senha);
 
-    router.push('/home');
+    if (authStore.user.show_onboarding) {
+      router.push("/onboarding");
+    } else {
+      router.push("/home");
+    }
   } catch (err) {
     errorMessage.value =
-      err.response?.data?.detail ||
-      'Erro ao entrar. Verifique suas credenciais.';
+      err.response?.data?.detail || "Erro ao entrar. Verifique suas credenciais.";
   } finally {
     loading.value = false;
+  }
+}
+
+async function handleGoogleLogin() {
+  try {
+    const response = await googleTokenLogin();
+
+    await authStore.loginWithGoogle(response.access_token);
+
+    if (authStore.user.show_onboarding) {
+      router.push("/onboarding");
+    } else {
+      router.push("/home");
+    }
+  } catch (error) {
+    console.error(error);
+
+    errorMessage.value = "Erro ao entrar com Google.";
   }
 }
 </script>
@@ -45,7 +65,6 @@ async function handleLogin() {
 <template>
   <div class="todo">
     <div class="signup">
-
       <div class="lado-marca">
         <header class="info-marca">
           <h1>Bem-<span>vindo</span></h1>
@@ -53,16 +72,10 @@ async function handleLogin() {
         </header>
 
         <form @submit.prevent="handleLogin" class="form">
-
           <div class="campo">
             <Mail :size="20" class="input-icon" />
 
-            <input
-              v-model="form.email"
-              type="email"
-              placeholder="E-mail"
-              required
-            />
+            <input v-model="form.email" type="email" placeholder="E-mail" required />
           </div>
 
           <div class="campo">
@@ -75,38 +88,28 @@ async function handleLogin() {
               required
             />
 
-            <button
-              type="button"
-              class="eye-btn"
-              @click="togglePassword"
-            >
+            <button type="button" class="eye-btn" @click="togglePassword">
               <Eye v-if="!showPassword" :size="20" />
               <EyeOff v-else :size="20" />
             </button>
           </div>
 
-          <button
-            type="submit"
-            class="btn-submit"
-            :disabled="loading"
-          >
-            {{ loading ? 'Entrando...' : 'Entrar' }}
+          <button type="submit" class="btn-submit" :disabled="loading">
+            {{ loading ? "Entrando..." : "Entrar" }}
           </button>
 
           <p v-if="errorMessage" class="error">
             {{ errorMessage }}
           </p>
 
-          <p class="esqueceu">
-            Esqueceu a senha?
-          </p>
+          <p class="esqueceu">Esqueceu a senha?</p>
         </form>
 
         <div class="divider">
           <span>ou</span>
         </div>
 
-        <button class="btn-google">
+        <button class="btn-google" @click="handleGoogleLogin">
           <img
             src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
             alt="Google"
@@ -115,6 +118,14 @@ async function handleLogin() {
           Entrar com Google
         </button>
 
+        <footer class="form-footer">
+          <RouterLink to="/signup">
+            <p>
+              Não possui uma conta?
+              <span>Cadastre-se</span>
+            </p>
+          </RouterLink>
+        </footer>
       </div>
     </div>
   </div>
@@ -127,7 +138,7 @@ async function handleLogin() {
   align-items: center;
   justify-content: center;
   background-color: #f5e6d3;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   padding: 20px;
 }
 
@@ -250,7 +261,7 @@ input:focus {
 
 .divider::before,
 .divider::after {
-  content: '';
+  content: "";
   flex: 1;
   border-bottom: 1px solid #e8e1da;
 }
@@ -294,7 +305,23 @@ p.esqueceu {
   cursor: pointer;
 }
 
-@media (max-width: 768px) {
+.form-footer {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.form-footer a {
+  color: #2c2c2c;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.form-footer a span {
+  color: #4a3120;
+}
+
+@media (max-width: 650px) {
   .lado-marca {
     padding: 40px 20px;
   }

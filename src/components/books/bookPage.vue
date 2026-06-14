@@ -129,11 +129,13 @@ const categoriaNome = computed(() => {
 </template>
 
 <style scoped>
+.livroTodo {
+  padding: 4vw 20vw;
+}
 .livro {
   display: flex;
   gap: 30px;
-  align-items: flex-start;
-  justify-content: center;
+
 }
 
 .imagem-capa {
@@ -211,9 +213,8 @@ const categoriaNome = computed(() => {
 div.infoMaior {
     display: flex;
     width: 50%;
-    margin: 60px auto;
-}
-div.secao-sinopse {
+    margin: 5vw 0;
+    gap: 5vw;
 }
 div.secao-sinopse h2 {
     margin: 0 0 20px 0;
@@ -221,11 +222,8 @@ div.secao-sinopse h2 {
     font-weight: 500;
 }
 div.secao-sinopse p {
-    width: 80%;
     color: #5A4636;
-}
-div.secao-detalhess {
-
+    min-width: 30vw;
 }
 div.secao-detalhes h2 {
     margin: 0 0 20px 0;

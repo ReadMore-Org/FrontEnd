@@ -96,6 +96,10 @@ h1 {
   font-weight: 500;
 }
 
+.secao-sinopse{
+  padding: 0;
+}
+
 @media (max-width: 650px) {
   .card-livro {
     gap: 16px;

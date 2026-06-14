@@ -1,57 +1,105 @@
 <script setup>
-import { BellDot } from 'lucide-vue-next'
-import { Plus } from 'lucide-vue-next'
-import { MoonStar } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
-import { useAuthStore } from '@/stores/auth'
+import { BellDot } from "lucide-vue-next";
+import { Plus } from "lucide-vue-next";
+import { MoonStar } from "lucide-vue-next";
+import { computed, ref } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
+const authStore = useAuthStore();
+const user = computed(() => authStore.user);
 
-const authStore = useAuthStore()
+const menuAberto = ref(false);
 
-const active = ref('home')
+const userEmail = computed(() => user.value?.email || "");
 
+const userPhoto = computed(() => {
+  if (authStore.user?.foto?.url) {
+    return `http://127.0.0.1:8000${authStore.user.foto.url}`;
+  }
+
+  if (authStore.user?.google_picture) {
+    return authStore.user.google_picture;
+  }
+
+  return "/imgs/avatar.jpeg";
+});
+
+function handleLogout() {
+  authStore.logout();
+}
+
+const active = ref("home");
 </script>
 
 <template>
-    <header class="app-header">
+  <header class="app-header">
+    <div class="left">
+      <h1>ReadMore</h1>
+      <nav>
+        <ul>
+          <li :class="{ active: active === 'home' }" @click="active = 'home'">
+            <RouterLink to="/home">Home</RouterLink>
+          </li>
 
-        <div class="left">
-            <h1>ReadMore</h1>
-            <nav>
-                <ul>
-                    <li :class="{ active: active === 'home' }" @click="active = 'home'">
-                        <RouterLink to="/home">Home</RouterLink>
-                    </li>
+          <li :class="{ active: active === 'livros' }" @click="active = 'livros'">
+            <RouterLink to="/home">Meus Livros</RouterLink>
+          </li>
 
-                    <li :class="{ active: active === 'livros' }" @click="active = 'livros'">
-                        <RouterLink to="/home">Meus Livros</RouterLink>
-                    </li>
+          <li :class="{ active: active === 'market' }" @click="active = 'market'">
+            <RouterLink to="/home">Marketplace</RouterLink>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    <div class="deslogado" v-if="!authStore.isAuthenticated">
+      <div class="intro_deslogado">
+        <h1>Seja bem-vindo</h1>
+        <h2>Organize seus livros e acompanhe sua leitura</h2>
+      </div>
 
-                    <li :class="{ active: active === 'market' }" @click="active = 'market'">
-                        <RouterLink to="/home">Marketplace</RouterLink>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-        <div class="deslogado" v-if="!authStore.isAuthenticated">
-            <div class="intro_deslogado">
-                <h1>Seja bem-vindo</h1>
-                <h2>Organize seus livros e acompanhe sua leitura</h2>
+      <div class="botoes">
+        <RouterLink to="/">
+          <button id="entrar">Entrar</button>
+        </RouterLink>
+
+        <RouterLink to="/signup">
+          <button id="criar">Criar conta</button>
+        </RouterLink>
+      </div>
+    </div>
+    <div class="right" v-if="authStore.isAuthenticated">
+      <div class="icones">
+        <button id="Mais"><Plus :size="24" />Adicionar Livro</button>
+        <button id="Sino">
+          <BellDot :size="24" />
+        </button>
+      </div>
+
+      <div class="imagem">
+        <img
+          :src="userPhoto"
+          alt="avatar"
+          class="avatar"
+          @error="($event) => $event.target.src = '/imgs/avatar.jpeg'"
+          @click="menuAberto = !menuAberto"
+        />
+
+        <div v-if="menuAberto" class="menu-usuario">
+          <div class="menu-header">
+            <img :src="userPhoto" alt="avatar" class="menu-avatar" />
+
+            <div class="menu-info">
+              <strong>{{ authStore.user?.name }}</strong>
+              <p>{{ userEmail }}</p>
             </div>
-            
-            <div class="botoes">
-                <RouterLink to="/login">
-                <button id="entrar">
-                    Entrar
-                </button>
-            </RouterLink>
+          </div>
 
-                <RouterLink to="/signup">
-                    <button id="criar">
-                        Criar conta
-                    </button>
-                </RouterLink>
-            </div>
+          <button @click="handleLogout">Sair</button>
+          <button>
+            <RouterLink to="/profile">Perfil</RouterLink>
+          </button>
         </div>
         <div class="right" v-if="authStore.isAuthenticated">
             <div class="icones">
@@ -72,279 +120,463 @@ const active = ref('home')
                 </div>
             </div>
         </div>
-    </header>
+      </div>
+    </div>
+  </header>
 </template>
 
 <style scoped>
+button a {
+  text-decoration: none;
+  color: #654321;
+}
 .app-header {
-    display: flex;
-    justify-content: space-around;
-    background-color: white;
-    margin: 0;
-    width: 100% !important;
-    padding: 16px 0;
-    align-items: center;
+  display: flex;
+  justify-content: space-around;
+  background-color: white;
+  margin: 0;
+  width: 100% !important;
+  padding: 16px 0;
+  align-items: center;
 }
 
 .app-header h1 {
-    font-size: 30px;
-    color: #654321;
-    cursor: pointer;
-    font-family: 'inter', sans-serif;
-    font-weight: 600;
+  font-size: 30px;
+  color: #654321;
+  cursor: pointer;
+  font-family: "inter", sans-serif;
+  font-weight: 600;
 }
 
 nav ul {
-    display: flex;
-    gap: 56px;
-    text-decoration: none;
-    color: #9C8A7A;
-    font-weight: 500;
-    font-size: 17px;
-    list-style: none;
-    cursor: pointer;
+  display: flex;
+  gap: 56px;
+  text-decoration: none;
+  color: #9c8a7a;
+  font-weight: 500;
+  font-size: 17px;
+  list-style: none;
+  cursor: pointer;
 }
 
 nav ul li a {
-    text-decoration: none;
-    color: #9C8A7A;
+  text-decoration: none;
+  color: #9c8a7a;
 }
 
 nav ul li.active a {
-    color: #654321;
+  color: #654321;
 }
 
 .left {
-    display: flex;
-    align-items: center;
-    gap: 192px
+  display: flex;
+  align-items: center;
+  gap: 192px;
 }
 
 .right {
-    display: flex;
-    align-items: center;
-    gap: 45px;
+  display: flex;
+  align-items: center;
+  gap: 45px;
 }
 
 button {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 #Mais {
-    background: #654321;
-    border: none;
-    color: white;
-    border-radius: 65px;
-    padding: 8px 17px;
-    font-size: 18px;
-    font-weight: 500;
-    cursor: pointer;
+  background: #654321;
+  border: none;
+  color: white;
+  border-radius: 65px;
+  padding: 8px 17px;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
 }
 
 #Lua {
-    display: none;
+  display: none;
 }
 
 #Sino {
-    border: none;
-    background: none;
-    cursor: pointer;
-    color: #6B4226;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #6b4226;
 }
 
 .icones {
-    display: flex;
-    align-items: center;
-    gap: 45px;
+  display: flex;
+  align-items: center;
+  gap: 45px;
 }
 
 .avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 500px;
-    border: solid 2px #654321;
-    cursor: pointer;
+  width: 50px;
+  height: 50px;
+  border-radius: 500px;
+  border: solid 2px #654321;
+  cursor: pointer;
+}
+
+.imagem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.menu-usuario {
+  position: absolute;
+  
+
+  top: 65px;
+  left: 25px;
+
+  transform: translateX(-50%);
+
+  background: white;
+  
+  border-radius: 15px;
+
+  min-width: 140px;
+
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
+  z-index: 100;
+}
+
+.menu-usuario button {
+  text-decoration: none;
+  width: 100%;
+
+  padding: 12px 16px;
+
+  border: 1px solid #e8d8c3;
+ 
+
+  background: #f5e6d3;
+
+  cursor: pointer;
+
+  color: #654321;
+  font-size: 15px;
+  font-weight: 600;
+
+  justify-content: center;
+
+  transition: all 0.2s ease;
+}
+
+.menu-usuario button:hover {
+  background: #e8d8c3;
+}
+
+.menu-header {
+  display: none;
+}
+
+.menu-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+}
+
+.menu-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-info p {
+  margin: 0;
 }
 
 .intro_mobile {
-    display: flex;
-    flex-direction: column;
-    display: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.intro_mobile p {
+  display: none;
+
+  max-width: 140px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.intro_mobile span {
+  display: none;
+}
+
+.intro_mobile h2 {
+  font-weight: 100;
+  font-size: 20px;
 }
 
 .deslogado {
-    display: flex;
-    gap: 30px;
+  display: flex;
+  gap: 30px;
 }
 
 .deslogado .intro_deslogado {
-    display: none;
+  display: none;
 }
 
 .deslogado .botoes {
-    display: flex;
-    gap: 30px;
+  display: flex;
+  gap: 30px;
 }
 
 .deslogado button {
-    background: none;
-    border: none;
-    font-size: 16px;
-    padding: 10px 36px;
-    font-family: 'inter', sans-serif;
-    cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 16px;
+  padding: 10px 36px;
+  font-family: "inter", sans-serif;
+  cursor: pointer;
 }
 
 .deslogado #entrar {
-    color: #6B4226;
-    border: 2px #E8D8C3 solid;
-    border-radius: 8px;
-    cursor: pointer;
+  color: #6b4226;
+  border: 2px #e8d8c3 solid;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .deslogado #criar {
-    color: white;
-    background: #6B4226;
-    border-radius: 6px;
+  color: white;
+  background: #6b4226;
+  border-radius: 6px;
 }
 
-@media(max-width:650px) {
-    .left {
-        gap: 0;
-    }
+@media (max-width: 650px) {
+  .left {
+    gap: 0;
+  }
 
-    #Mais,
-    .app-header h1,
-    nav ul {
-        display: none;
+  #Mais,
+  .app-header h1,
+  nav ul {
+    display: none;
+  }
 
-    }
+  .intro_mobile {
+    display: flex;
+    line-height: 18px;
+    font-family: "inter", sans-serif;
+  }
 
-    .intro_mobile {
-        display: flex;
-        line-height: 18px;
-        font-family: 'inter', sans-serif;
+  .intro_mobile p {
+    display: inline;
+  }
 
-    }
+  .intro_mobile span {
+    display: inline;
+  }
 
-    .intro_mobile h2 {
-        display: flex;
-        line-height: 18px;
-        font-family: 'inter', sans-serif;
-        min-width: 120px;
-    }
+  .intro_mobile h2 {
+    display: flex;
+    line-height: 18px;
+    font-family: "inter", sans-serif;
+    min-width: 120px;
+  }
 
+  .app-header {
+    display: flex;
+    background: #f5e6d3;
+    border: none;
+    margin: 0;
+    padding: 20px 25px;
+  }
 
-    .app-header {
-        display: flex;
-        background: #F5E6D3;
-        border: none;
-        margin: 0;
-        padding: 20px 25px;
-    }
+  .right {
+    width: 100%;
+    justify-content: space-between;
+    flex-direction: row-reverse;
+  }
 
-    .right {
-        width: 100%;
-        justify-content: space-between;
-        flex-direction: row-reverse;
-    }
+  .imagem {
+    display: flex;
+    align-items: center;
+    text-align: left;
+    gap: 16px;
+  }
 
-    .imagem {
-        display: flex;
-        align-items: center;
-        text-align: left;
-        gap: 16px;
-    }
+  div.imagem img.avatar {
+    width: 50px;
+    height: 50px !important;
+    border-radius: 1000px;
+    border: solid 2px #654321;
+    cursor: pointer;
+  }
 
-    div.imagem img.avatar {
-        width: 50px;
-        height: 50px !important;
-        border-radius: 1000px;
-        border: solid 2px #654321;
-        cursor: pointer;
-    }
+  .icones {
+    gap: 10px;
+  }
 
-    .icones {
-        gap: 10px;
-    }
+  #Sino {
+    color: #5a4636;
+    background-color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    #Sino {
-        color: #5A4636;
-        background-color: white;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    border: none;
+    cursor: pointer;
+  }
 
-        border: none;
-        cursor: pointer;
-    }
+  .intro_mobile h2 {
+    font-size: 13px;
+  }
 
-    .intro_mobile h2 {
-        font-size: 13px;
-    }
+  .intro_mobile h2 span {
+    color: #5a4636;
+    font-size: 12px;
+  }
 
-    .intro_mobile h2 span {
-        color: #5A4636;
-        font-size: 12px;
-    }
+  .deslogado {
+    width: 100%;
 
-    .deslogado {
-        display: flex;
-        flex-direction: column;
-        padding: 40px;
-    }
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-    .deslogado button {
-        background: none;
-        border: none;
-        font-size: 12px;
-        padding: 12px 38px;
-        font-family: 'inter', sans-serif;
-    }
+    gap: 16px;
 
-    .deslogado .intro_deslogado {
-        display: flex;
-        flex-direction: column;
-        text-align: left;
-        gap: 6px;
-    }
+    padding: 0;
+  }
 
-    .deslogado .intro_deslogado h1 {
-        display: flex;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: auto;
-    }
+  .deslogado .intro_deslogado {
+    display: flex;
+    flex-direction: column;
 
-    .deslogado .intro_deslogado h2 {
-        display: contents;
-        flex-wrap: wrap;
-        font-size: 16px;
-        font-weight: 500;
-    }
+    flex: 1;
 
-    .deslogado .botoes {
-        display: flex;
-        justify-content: space-between;
-        margin: 0;
-    }
+    gap: 4px;
 
-    .deslogado .botoes #entrar {
-        font-size: 16px;
-        padding: 15px 40px;
-        background-color: white;
-        border: none;
-    }
+    text-align: left;
+  }
 
-    .deslogado .botoes #criar {
-        font-size: 16px;
-        padding: 15px 40px;
-        white-space: nowrap;
-    }
+  .deslogado .intro_deslogado h1 {
+    font-size: 15px;
+    font-weight: 600;
+
+    color: #654321;
+
+    margin: 0;
+  }
+
+  .deslogado .intro_deslogado h2 {
+    font-size: 12px;
+    font-weight: 400;
+
+    color: #7a6a5c;
+
+    margin: 0;
+
+    display: block;
+  }
+
+  .deslogado .botoes {
+    display: flex;
+
+    gap: 8px;
+
+    flex-shrink: 0;
+  }
+
+  .deslogado .botoes button {
+    padding: 10px 16px;
+
+    font-size: 13px;
+
+    border-radius: 10px;
+
+    white-space: nowrap;
+  }
+
+  .deslogado .botoes #entrar {
+    background: white;
+
+    border: 1px solid #e8d8c3;
+
+    color: #654321;
+  }
+
+  .deslogado .botoes #criar {
+    background: #654321;
+
+    color: white;
+  }
+
+  .menu-usuario {
+    position: fixed;
+
+    top: 85px;
+    left: 16px;
+    right: 16px;
+
+    transform: none;
+
+    min-width: auto;
+
+    background: white;
+
+    border-radius: 16px;
+
+    padding: 16px;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+
+    z-index: 999;
+  }
+
+  .menu-header {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding-bottom: 12px;
+
+    margin-bottom: 12px;
+
+    border-bottom: 1px solid #eee;
+  }
+
+  .menu-info strong {
+    color: #654321;
+    font-size: 14px;
+  }
+
+  .menu-info p {
+    color: #777;
+    font-size: 12px;
+  }
+
+  .menu-usuario button {
+    width: 100%;
+
+    justify-content: center;
+
+    padding: 14px;
+
+    border-radius: 10px;
+
+    background: #654321;
+
+    color: white;
+
+    font-weight: 600;
+  }
 }
 </style>

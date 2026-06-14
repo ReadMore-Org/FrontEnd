@@ -3,8 +3,11 @@ import HomeView from "../views/HomeView.vue";
 import ProdutoView from "@/views/ProdutoView.vue";
 import OnBoardingView from "@/views/OnBoardingView.vue";
 
-import SignUpView from '@/views/signUpView.vue'
-import LogInView from '@/views/logInView.vue'
+import SignUpView from "@/views/signUpView.vue";
+import LogInView from "@/views/logInView.vue";
+
+import ProfileView from "@/views/ProfileView.vue";
+import EditProfileView from "@/views/EditProfileView.vue";
 
 import AddBookView from "@/views/AddBookView.vue";
 import ScanCodeView from "@/views/ScanCodeView.vue";
@@ -15,6 +18,11 @@ const router = createRouter({
   routes: [
     {
       path: "/",
+      name: "login",
+      component: LogInView,
+    },
+    {
+      path: "/onboarding",
       name: "onboarding",
       component: OnBoardingView,
     },
@@ -24,13 +32,23 @@ const router = createRouter({
       component: HomeView,
     },
     {
+      path: "/profile",
+      name: "profile",
+      component: ProfileView,
+    },
+    {
+      path: "/profile/edit",
+      name: "profile-edit",
+      component: EditProfileView,
+    },
+    {
       path: "/livro/:id",
       name: "livro",
       component: ProdutoView,
     },
     {
-      path: '/signup',
-      name: 'signup',
+      path: "/signup",
+      name: "signup",
       component: SignUpView,
     },
     {
