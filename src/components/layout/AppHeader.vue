@@ -101,10 +101,24 @@ const active = ref("home");
             <RouterLink to="/profile">Perfil</RouterLink>
           </button>
         </div>
-
-        <div class="intro_mobile">
-          <h2><span>Bem-vindo de volta</span></h2>
-          <p>{{ userEmail }}</p>
+        <div class="right" v-if="authStore.isAuthenticated">
+            <div class="icones">
+                <RouterLink to="/adicionar">
+                <button id="Mais">
+                    <Plus :size="24" />Adicionar Livro
+                </button>
+                </RouterLink>
+                <button id="Sino">
+                    <BellDot :size="24" />
+                </button>
+            </div>
+            <div class="imagem">
+                <img src="/public/imgs/macaco.png" alt="avatar" class="avatar">
+                <div class="intro_mobile">
+                    <h2><span>Bem-vindo de volta</span></h2>
+                    <h2>Macaco</h2>
+                </div>
+            </div>
         </div>
       </div>
     </div>

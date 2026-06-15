@@ -9,6 +9,10 @@ import LogInView from "@/views/logInView.vue";
 import ProfileView from "@/views/ProfileView.vue";
 import EditProfileView from "@/views/EditProfileView.vue";
 
+import AddBookView from "@/views/AddBookView.vue";
+import ScanCodeView from "@/views/ScanCodeView.vue";
+import ManualBookView from "@/views/ManualBookView.vue";
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -46,6 +50,27 @@ const router = createRouter({
       path: "/signup",
       name: "signup",
       component: SignUpView,
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: LogInView,
+    },
+    ,
+    {
+      path: '/adicionar',
+      name: 'adicionar',
+      component: AddBookView,
+    },
+    {
+      path: '/scan',
+      name: 'scan',
+      component: ScanCodeView,
+    },
+    {
+      path: '/manual',
+      name: 'manual',
+      component: ManualBookView,
     },
   ],
 });
