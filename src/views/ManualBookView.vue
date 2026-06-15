@@ -3,6 +3,9 @@ import { ref, reactive, onMounted } from "vue";
 import { Image } from "lucide-vue-next";
 import StatusSelect from "@/components/common/statusSelect.vue";
 import { useLivrosStore } from "@/stores/livros";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const livrosStore = useLivrosStore();
 
@@ -61,10 +64,17 @@ async function salvar() {
     return;
   }
 
-  await livrosStore.addLivro({
-    ...form,
-    capaFile: capaFile.value,
-  });
+  try {
+    await livrosStore.addLivro({
+      ...form,
+      capaFile: capaFile.value,
+    });
+
+    router.push("/home");
+  } catch (error) {
+    console.error(error);
+    alert("Erro ao salvar livro.");
+  }
 }
 </script>
 

@@ -43,11 +43,17 @@ const active = ref("home");
             <RouterLink to="/home">Home</RouterLink>
           </li>
 
-          <li :class="{ active: active === 'livros' }" @click="active = 'livros'">
+          <li
+            :class="{ active: active === 'livros' }"
+            @click="active = 'livros'"
+          >
             <RouterLink to="/home">Meus Livros</RouterLink>
           </li>
 
-          <li :class="{ active: active === 'market' }" @click="active = 'market'">
+          <li
+            :class="{ active: active === 'market' }"
+            @click="active = 'market'"
+          >
             <RouterLink to="/home">Marketplace</RouterLink>
           </li>
         </ul>
@@ -72,8 +78,8 @@ const active = ref("home");
     <div class="right" v-if="authStore.isAuthenticated">
       <div class="icones">
         <RouterLink to="/adicionar">
-        <button id="Mais"><Plus :size="24" />Adicionar Livro</button>
-      </RouterLink>
+          <button id="Mais"><Plus :size="24" />Adicionar Livro</button>
+        </RouterLink>
         <button id="Sino">
           <BellDot :size="24" />
         </button>
@@ -84,7 +90,7 @@ const active = ref("home");
           :src="userPhoto"
           alt="avatar"
           class="avatar"
-          @error="($event) => $event.target.src = '/imgs/avatar.jpeg'"
+          @error="($event) => ($event.target.src = '/imgs/avatar.jpeg')"
           @click="menuAberto = !menuAberto"
         />
 
@@ -102,6 +108,10 @@ const active = ref("home");
           <button>
             <RouterLink to="/profile">Perfil</RouterLink>
           </button>
+        </div>
+        <div class="intro_mobile">
+          <p>Bem-vindo,</p>
+          <h2>{{ authStore.user?.email }}</h2>
         </div>
       </div>
     </div>
@@ -214,7 +224,6 @@ button {
 
 .menu-usuario {
   position: absolute;
-  
 
   top: 65px;
   left: 25px;
@@ -222,7 +231,7 @@ button {
   transform: translateX(-50%);
 
   background: white;
-  
+
   border-radius: 15px;
 
   min-width: 140px;
@@ -239,7 +248,6 @@ button {
   padding: 12px 16px;
 
   border: 1px solid #e8d8c3;
- 
 
   background: #f5e6d3;
 
@@ -278,7 +286,7 @@ button {
 }
 
 .intro_mobile {
-  display: flex;
+  display: none;
   flex-direction: column;
 }
 
@@ -352,6 +360,7 @@ button {
     display: flex;
     line-height: 18px;
     font-family: "inter", sans-serif;
+    gap: 5px;
   }
 
   .intro_mobile p {
@@ -504,12 +513,12 @@ button {
     position: fixed;
 
     top: 85px;
-    left: 16px;
-    right: 16px;
+    left: 50%;
 
-    transform: none;
+    transform: translateX(-50%);
 
-    min-width: auto;
+    width: calc(100vw - 32px);
+    max-width: 350px;
 
     background: white;
 
@@ -527,39 +536,85 @@ button {
 
     align-items: center;
 
-    gap: 12px;
+    gap: 14px;
 
-    padding-bottom: 12px;
-
-    margin-bottom: 12px;
+    padding-bottom: 14px;
 
     border-bottom: 1px solid #eee;
   }
 
+  .menu-avatar {
+    width: 56px;
+    height: 56px;
+
+    border-radius: 50%;
+
+    border: 2px solid #654321;
+  }
+
+  .menu-info {
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+
+    min-width: 0;
+  }
+
   .menu-info strong {
+    font-size: 15px;
     color: #654321;
-    font-size: 14px;
   }
 
   .menu-info p {
-    color: #777;
+    margin: 0;
+
     font-size: 12px;
+
+    color: #777;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .menu-usuario button {
     width: 100%;
 
+    height: 48px;
+
+    border: none;
+
+    border-radius: 12px;
+
+    background: #f5e6d3;
+
+    color: #654321;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    display: flex;
+    align-items: center;
     justify-content: center;
 
-    padding: 14px;
+    cursor: pointer;
 
-    border-radius: 10px;
+    transition: 0.2s;
+  }
 
+  .menu-usuario button:hover {
+    background: #e8d8c3;
+  }
+
+  .menu-usuario button:last-child {
     background: #654321;
-
     color: white;
+  }
 
-    font-weight: 600;
+  .menu-usuario button:last-child a {
+    color: white;
+    text-decoration: none;
   }
 }
 </style>
