@@ -81,10 +81,10 @@ async function salvar() {
           :class="{ visto: capaPreview }"
           @click="selecionarCapa"
         >
-          <div v-if="!capaPreview">
+          <div v-if="!capaPreview" class="info">
             <Image :size="24" />
             <span>Adicionar imagem da capa</span>
-          </div>
+          </div>  
         </div>
         <input
           ref="fileInput"
@@ -316,7 +316,13 @@ async function salvar() {
 .adicionarCapa:hover {
   background-color: #faf3e0;
 }
-
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+} 
 .adicionarCapa.visto {
   border-style: solid;
   border-color: #6b4226;

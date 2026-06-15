@@ -128,6 +128,7 @@ export const useLivrosStore = defineStore("livros", () => {
       error.value = "Erro ao adicionar livro.";
     }
   }
+
   async function updateLivroStore(id, data) {
     error.value = null;
 
