@@ -31,6 +31,11 @@ function handleLogout() {
 }
 
 const active = ref("home");
+
+console.log(authStore.user);
+console.log(authStore.user?.google_picture);
+console.log(userPhoto.value);
+console.count("AppHeader");
 </script>
 
 <template>
@@ -66,7 +71,7 @@ const active = ref("home");
       </div>
 
       <div class="botoes">
-        <RouterLink to="/login">
+        <RouterLink to="/">
           <button id="entrar">Entrar</button>
         </RouterLink>
 
@@ -90,8 +95,9 @@ const active = ref("home");
           :src="userPhoto"
           alt="avatar"
           class="avatar"
-          @error="($event) => ($event.target.src = '/imgs/avatar.jpeg')"
           @click="menuAberto = !menuAberto"
+          @load="console.log('imagem carregada')"
+          @error="console.log('imagem falhou')"
         />
 
         <div v-if="menuAberto" class="menu-usuario">
@@ -105,9 +111,8 @@ const active = ref("home");
           </div>
 
           <button @click="handleLogout">Sair</button>
-          <button>
-            <RouterLink to="/profile">Perfil</RouterLink>
-          </button>
+
+          <RouterLink to="/profile" class="menu-btn">Perfil </RouterLink>
         </div>
         <div class="intro_mobile">
           <p>Bem-vindo,</p>
@@ -260,6 +265,24 @@ button {
   justify-content: center;
 
   transition: all 0.2s ease;
+}
+.menu-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 5  00;
+
+  padding: 12px 16px;
+
+  text-decoration: none;
+
+  background: #f5e6d3;
+  color: #654321;
+
+  border: 1px solid #e8d8c3;
+
+
 }
 
 .menu-usuario button:hover {
