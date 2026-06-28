@@ -12,6 +12,10 @@ export const useAuthStore = defineStore("auth", () => {
   const error = ref(null);
 
   const isAuthenticated = computed(() => !!accessToken.value);
+  const userFirstName = computed(() => {
+    if (!user.value?.name) return "";
+    return user.value.name.trim().split(" ")[0];
+  });
 
   async function login(email, password) {
     const { data } = await auth.login(email, password);
@@ -87,6 +91,7 @@ export const useAuthStore = defineStore("auth", () => {
     user,
     error,
     isAuthenticated,
+    userFirstName,
     login,
     loginWithGoogle,
     logout,

@@ -1,18 +1,28 @@
 <script setup>
-import { computed, ref } from "vue";
-import { useAuthStore } from "@/stores/auth";
-import { uploadImagem } from "@/services/upload";
+import { ref, computed, onMounted } from 'vue';
+import { useAuthStore } from '../stores/auth'; 
+import { Camera } from 'lucide-vue-next'; 
+import { useToast } from 'vue-toastification';
 
-import { Camera } from "lucide-vue-next";
+const toast = useToast(); 
 
 const authStore = useAuthStore();
 
+const nome = ref('');
+const sobrenome = ref('');
+
 const form = ref({
-  nome: authStore.user?.name || "",
-  sobrenome: "",
   username: authStore.user?.username || "",
   bio: authStore.user?.bio || "",
   email: authStore.user?.email || "",
+});
+
+onMounted(() => {
+  const fullName = authStore.user?.name || '';
+  const nameParts = fullName.trim().split(' ');
+  
+  nome.value = nameParts[0] || '';
+  sobrenome.value = nameParts.slice(1).join(' ') || '';
 });
 
 const previewUrl = ref(null);
@@ -20,12 +30,8 @@ const imgAttachmentKey = ref(null);
 const uploading = ref(false);
 
 const userPhoto = computed(() => {
-  // 1. Se houver um preview local de uma foto recém-escolhida, mostra ela primeiro
-  if (previewUrl.value) {
-    return previewUrl.value;
-  }
+  if (previewUrl.value) return previewUrl.value;
 
-  // 2. Se a foto do backend for uma string (URL) direta ou objeto com url
   if (authStore.user?.foto) {
     if (typeof authStore.user.foto === "string") {
       return authStore.user.foto.startsWith("http")
@@ -37,12 +43,8 @@ const userPhoto = computed(() => {
     }
   }
 
-  // 3. Se não tiver foto customizada, tenta a do Google
-  if (authStore.user?.google_picture) {
-    return authStore.user.google_picture;
-  }
+  if (authStore.user?.google_picture) return authStore.user.google_picture;
 
-  // 4. Fallback padrão
   return "/imgs/avatar.jpeg";
 });
 
@@ -61,9 +63,7 @@ const fotoSelecionada = async (event) => {
   uploading.value = true;
 
   try {
-    const data = await uploadImagem(file, "Avatar do usuário");
-
-    // Pega o ID ou a chave gerada pelo POST de uploads
+    const data = await uploadImagem(file, "Avatar do usuário"); // Certifique-se que essa função está importada
     imgAttachmentKey.value = data.attachment_key;
   } catch (err) {
     console.error("Erro ao fazer upload da imagem", err);
@@ -76,23 +76,26 @@ const fotoSelecionada = async (event) => {
 
 const salvarPerfil = async () => {
   if (uploading.value) return;
+  
+  const nomeCompleto = `${nome.value.trim()} ${sobrenome.value.trim()}`.trim();
 
   try {
-    // Dispara a atualização passando a chave identificada como 'imgAttachmentKey'
-    // (A store se encarregará de mapear isso para o campo 'foto' esperado pelo PATCH)
     await authStore.updateProfile({
-      name: form.value.nome.trim(),
+      name: nomeCompleto,
       bio: form.value.bio,
       imgAttachmentKey: imgAttachmentKey.value,
     });
 
-    alert("Perfil atualizado com sucesso!");
+    // Corrigido para português aqui!
+    toast.success("Perfil atualizado com sucesso!", {
+      timeout: 2000
+    });
 
-    // ATENÇÃO: previewUrl NÃO é zerado aqui para manter a imagem visível na tela
-    // enquanto o estado global se estabiliza.
+    previewUrl.value = null; 
     imgAttachmentKey.value = null;
   } catch (err) {
     console.error("Erro ao salvar perfil", err);
+    toast.error("Erro ao salvar o perfil. Tente novamente.");
   }
 };
 </script>
@@ -141,12 +144,12 @@ const salvarPerfil = async () => {
           <div class="grid-2">
             <div class="campo">
               <label>Nome</label>
-              <input v-model="form.nome" type="text" />
+              <input v-model="nome" type="text" />
             </div>
 
             <div class="campo">
               <label>Sobrenome</label>
-              <input v-model="form.sobrenome" type="text" />
+              <input v-model="sobrenome" type="text" />
             </div>
           </div>
 

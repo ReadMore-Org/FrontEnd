@@ -15,6 +15,8 @@ const menuAberto = ref(false);
 const userEmail = computed(() => user.value?.email || "");
 
 const userPhoto = computed(() => {
+  console.count("userPhoto");
+
   if (authStore.user?.foto?.url) {
     return `http://127.0.0.1:8000${authStore.user.foto.url}`;
   }
