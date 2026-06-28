@@ -81,7 +81,6 @@ export const useLivrosStore = defineStore("livros", () => {
 
       delete payload.capaFile;
 
-      // transforma "José Saramago, Outro Autor" em ["José Saramago", "Outro Autor"]
       if (typeof payload.autores === "string") {
         payload.autores_nomes = payload.autores
           .split(",")

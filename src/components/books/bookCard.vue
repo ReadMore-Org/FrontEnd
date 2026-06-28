@@ -1,19 +1,30 @@
 <script setup>
-import { Check } from 'lucide-vue-next'
+import { Check } from "lucide-vue-next";
 defineProps({
-  livro: Object
-})
+  livro: Object,
+});
 
+const getBookCover = (livro) => {
+  const url = livro.capa?.url;
+
+  if (url) {
+    return url.startsWith("http")
+      ? url
+      : `http://127.0.0.1:8000${url}`;
+  }
+
+  return "/imgs/livro_sem_capa.png";
+};
 </script>
 
 <template>
   <div class="card-livro">
-    <img class="imagem" :src="livro.capa?.url || 'https://via.placeholder.com/200x300'" alt="Capa do livro" />
+    <img class="imagem" :src="getBookCover(livro)" alt="Capa do livro" />
 
     <div class="detalhes">
       <h1>{{ livro.titulo }}</h1>
       <p class="autor" v-if="livro.autores?.length">
-        por {{livro.autores.map(a => a.nome).join(', ')}}
+        por {{ livro.autores.map((a) => a.nome).join(", ") }}
       </p>
       <div class="info">
         <div class="publicado">
@@ -32,7 +43,6 @@ defineProps({
       </button>
     </div>
   </div>
-
 </template>
 
 <style scoped>
@@ -50,14 +60,14 @@ defineProps({
 }
 
 h1 {
-  color: #2C2C2C;
+  color: #2c2c2c;
   font-size: 20px;
   max-width: 200px;
   font-weight: 500;
 }
 
 .autor {
-  color: #5A4636;
+  color: #5a4636;
   font-weight: 500;
   margin: 10px 0;
 }
@@ -69,19 +79,19 @@ h1 {
 }
 
 .info .tituloInfo {
-  color: #9C8A7A;
+  color: #9c8a7a;
   font-weight: 400;
 }
 
 .info .detalheInfo {
-  color: #5A4636;
+  color: #5a4636;
   font-weight: 500;
 }
 
 .detalhes button {
   display: flex;
   align-items: center;
-  background-color: #6B4226;
+  background-color: #6b4226;
   color: white;
   gap: 5px;
   border: none;
@@ -96,7 +106,7 @@ h1 {
   font-weight: 500;
 }
 
-.secao-sinopse{
+.secao-sinopse {
   padding: 0;
 }
 

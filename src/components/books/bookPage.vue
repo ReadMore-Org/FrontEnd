@@ -8,7 +8,7 @@ const route = useRoute();
 const livroStore = useLivrosStore();
 const id = Number(route.params.id);
 
-const status = ref('quero_ler')
+const status = ref("quero_ler");
 const statusOpcoes = ["quero-ler", "lendo", "lido"];
 
 const livro = computed(() => {
@@ -23,15 +23,26 @@ const formatarData = (data) => {
 const voltar = () => {
   window.history.back();
 };
+
+const getBookCover = (livro) => {
+  const url = livro.capa?.url;
+
+  if (url) {
+    return url.startsWith("http")
+      ? url
+      : `http://127.0.0.1:8000${url}`;
+  }
+
+  return "/imgs/livro_sem_capa.png";
+};
+
 const categoriaNome = computed(() => {
   const livroAtual = livro.value;
   const categorias = livroStore.categorias;
 
   if (!livroAtual || !categorias.length) return "";
 
-  const categoria = categorias.find(
-    (c) => Number(c.id) === Number(livroAtual.categoria),
-  );
+  const categoria = categorias.find((c) => Number(c.id) === Number(livroAtual.categoria));
 
   return categoria?.descricao || "Sem categoria";
 });
@@ -43,11 +54,7 @@ const categoriaNome = computed(() => {
   </button>
   <div v-if="livro" class="livroTodo">
     <div class="livro">
-      <img
-        :src="livro.capa?.url || 'https://via.placeholder.com/300x450'"
-        :alt="livro.titulo"
-        class="imagem-capa"
-      />
+      <img class="imagem-capa" :src="getBookCover(livro)" alt="Capa do livro" />
       <div class="info">
         <h1 class="titulo">{{ livro.titulo }}</h1>
         <p v-if="livro.autores && livro.autores.length" class="autores">
@@ -81,10 +88,10 @@ const categoriaNome = computed(() => {
       <div>
         <ul>
           <li>
-            <Heart :size="40"/>
+            <Heart :size="40" />
           </li>
           <li>
-            <Share2 :size="40"/>
+            <Share2 :size="40" />
           </li>
           <li>
             <Settings />
@@ -135,7 +142,6 @@ const categoriaNome = computed(() => {
 .livro {
   display: flex;
   gap: 30px;
-
 }
 
 .imagem-capa {
@@ -211,32 +217,32 @@ const categoriaNome = computed(() => {
   cursor: pointer;
 }
 div.infoMaior {
-    display: flex;
-    width: 50%;
-    margin: 5vw 0;
-    gap: 5vw;
+  display: flex;
+  width: 50%;
+  margin: 5vw 0;
+  gap: 5vw;
 }
 div.secao-sinopse h2 {
-    margin: 0 0 20px 0;
-    color: #2C2C2C;
-    font-weight: 500;
+  margin: 0 0 20px 0;
+  color: #2c2c2c;
+  font-weight: 500;
 }
 div.secao-sinopse p {
-    color: #5A4636;
-    min-width: 30vw;
+  color: #5a4636;
+  min-width: 30vw;
 }
 div.secao-detalhes h2 {
-    margin: 0 0 20px 0;
-    color: #2C2C2C;
-    font-weight: 500;
+  margin: 0 0 20px 0;
+  color: #2c2c2c;
+  font-weight: 500;
 }
 div.secao-detalhes div.detalhe-item {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 div.secao-detalhes p {
-    color: #5A4636;
+  color: #5a4636;
 }
 
 .btn-voltar {
@@ -249,13 +255,12 @@ div.secao-detalhes p {
   border: none;
   border-radius: 100px;
   background: white;
-  color: #2C2C2C;
+  color: #2c2c2c;
 
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
 }
-
 
 .btn-voltar svg {
   width: 18px;

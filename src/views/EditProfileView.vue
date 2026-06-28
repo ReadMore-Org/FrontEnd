@@ -1,15 +1,22 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useAuthStore } from '../stores/auth'; 
-import { Camera } from 'lucide-vue-next'; 
-import { useToast } from 'vue-toastification';
+import { ref, computed, onMounted } from "vue";
+import { useAuthStore } from "../stores/auth";
+import { Camera } from "lucide-vue-next";
+import { useToast } from "vue-toastification";
+import { uploadImagem } from "@/services/upload";
+import { useRouter } from "vue-router";
+import AppHeader from '@/components/layout/AppHeader.vue'
+import AppFooter from '@/components/layout/AppFooter.vue'
+import voltar from  "@/components/common/voltar.vue"
 
-const toast = useToast(); 
+const router = useRouter();
+
+const toast = useToast();
 
 const authStore = useAuthStore();
 
-const nome = ref('');
-const sobrenome = ref('');
+const nome = ref("");
+const sobrenome = ref("");
 
 const form = ref({
   username: authStore.user?.username || "",
@@ -18,11 +25,11 @@ const form = ref({
 });
 
 onMounted(() => {
-  const fullName = authStore.user?.name || '';
-  const nameParts = fullName.trim().split(' ');
-  
-  nome.value = nameParts[0] || '';
-  sobrenome.value = nameParts.slice(1).join(' ') || '';
+  const fullName = authStore.user?.name || "";
+  const nameParts = fullName.trim().split(" ");
+
+  nome.value = nameParts[0] || "";
+  sobrenome.value = nameParts.slice(1).join(" ") || "";
 });
 
 const previewUrl = ref(null);
@@ -30,20 +37,15 @@ const imgAttachmentKey = ref(null);
 const uploading = ref(false);
 
 const userPhoto = computed(() => {
-  if (previewUrl.value) return previewUrl.value;
-
-  if (authStore.user?.foto) {
-    if (typeof authStore.user.foto === "string") {
-      return authStore.user.foto.startsWith("http")
-        ? authStore.user.foto
-        : `http://127.0.0.1:8000${authStore.user.foto}`;
-    }
-    if (authStore.user.foto.url) {
-      return `http://127.0.0.1:8000${authStore.user.foto.url}`;
-    }
+  if (previewUrl.value) {
+    return previewUrl.value;
   }
 
-  if (authStore.user?.google_picture) return authStore.user.google_picture;
+  const url = authStore.user?.foto?.url;
+
+  if (url) {
+    return url.startsWith("http") ? url : `http://127.0.0.1:8000${url}`;
+  }
 
   return "/imgs/avatar.jpeg";
 });
@@ -76,7 +78,7 @@ const fotoSelecionada = async (event) => {
 
 const salvarPerfil = async () => {
   if (uploading.value) return;
-  
+
   const nomeCompleto = `${nome.value.trim()} ${sobrenome.value.trim()}`.trim();
 
   try {
@@ -88,10 +90,11 @@ const salvarPerfil = async () => {
 
     // Corrigido para português aqui!
     toast.success("Perfil atualizado com sucesso!", {
-      timeout: 2000
+      timeout: 2000,
     });
+    router.push('/profile')
 
-    previewUrl.value = null; 
+    previewUrl.value = null;
     imgAttachmentKey.value = null;
   } catch (err) {
     console.error("Erro ao salvar perfil", err);
@@ -101,6 +104,8 @@ const salvarPerfil = async () => {
 </script>
 
 <template>
+  <voltar/>
+  <AppHeader class="header-principal"/>
   <div class="perfil-page">
     <div class="perfil-container">
       <div class="perfil-header">
@@ -166,11 +171,7 @@ const salvarPerfil = async () => {
           </div>
 
           <div class="acoes">
-            <button
-              class="btn-salvar"
-              :disabled="uploading"
-              @click="salvarPerfil"
-            >
+            <button class="btn-salvar" :disabled="uploading" @click="salvarPerfil">
               {{ uploading ? "Aguarde o upload..." : "Salvar alterações" }}
             </button>
           </div>
@@ -178,6 +179,7 @@ const salvarPerfil = async () => {
       </div>
     </div>
   </div>
+    <AppFooter/>
 </template>
 
 <style scoped>
@@ -313,6 +315,7 @@ const salvarPerfil = async () => {
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
+  
 }
 .btn-salvar:disabled {
   background: #a1836f;
@@ -322,8 +325,10 @@ const salvarPerfil = async () => {
   opacity: 0.9;
 }
 @media (max-width: 900px) {
+
   .perfil-page {
     padding: 20px;
+    margin-bottom: 110px;
   }
   .perfil-container {
     padding: 25px;
@@ -343,6 +348,7 @@ const salvarPerfil = async () => {
   }
   .btn-salvar {
     width: 100%;
+
   }
 }
 </style>

@@ -5,10 +5,16 @@ import { MoonStar } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 
+const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const user = computed(() => authStore.user);
+
+const isHome = computed(() => route.path === "/home");
+const isLivros = computed(() => route.path === "/meus-livros");
+const isMarketplace = computed(() => route.path === "/marketplace");
 
 const menuAberto = ref(false);
 
@@ -17,15 +23,9 @@ const userEmail = computed(() => user.value?.email || "");
 const userPhoto = computed(() => {
   console.count("userPhoto");
 
-  if (authStore.user?.foto?.url) {
-    return `http://127.0.0.1:8000${authStore.user.foto.url}`;
-  }
-
-  if (authStore.user?.google_picture) {
-    return authStore.user.google_picture;
-  }
-
-  return "/imgs/avatar.jpeg";
+  return authStore.user?.foto?.url
+    ? `http://127.0.0.1:8000${authStore.user.foto.url}`
+    : "/imgs/avatar.jpeg";
 });
 
 function handleLogout() {
@@ -43,25 +43,19 @@ console.count("AppHeader");
 <template>
   <header class="app-header">
     <div class="left">
-      <h1>ReadMore</h1>
+      <h1 @click="router.push('/home')">ReadMore</h1>
       <nav>
         <ul>
-          <li :class="{ active: active === 'home' }" @click="active = 'home'">
+          <li :class="{ active: isHome }">
             <RouterLink to="/home">Home</RouterLink>
           </li>
 
-          <li
-            :class="{ active: active === 'livros' }"
-            @click="active = 'livros'"
-          >
-            <RouterLink to="/home">Meus Livros</RouterLink>
+          <li :class="{ active: isLivros }">
+            <RouterLink to="/meus-livros">Meus Livros</RouterLink>
           </li>
 
-          <li
-            :class="{ active: active === 'market' }"
-            @click="active = 'market'"
-          >
-            <RouterLink to="/home">Marketplace</RouterLink>
+          <li :class="{ active: isMarketplace }">
+            <RouterLink to="/marketplace">Marketplace</RouterLink>
           </li>
         </ul>
       </nav>
@@ -113,8 +107,7 @@ console.count("AppHeader");
           </div>
 
           <button @click="handleLogout">Sair</button>
-
-          <RouterLink to="/profile" class="menu-btn">Perfil </RouterLink>
+          <button @click="router.push('/profile')">Perfil</button>
         </div>
         <div class="intro_mobile">
           <p>Bem-vindo,</p>
@@ -273,7 +266,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 5  00;
+  font-weight: 5 00;
 
   padding: 12px 16px;
 
@@ -283,8 +276,6 @@ button {
   color: #654321;
 
   border: 1px solid #e8d8c3;
-
-
 }
 
 .menu-usuario button:hover {

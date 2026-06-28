@@ -1,7 +1,14 @@
 <script setup>
 import { ScanLine } from "lucide-vue-next";
+
+import AppHeader from '@/components/layout/AppHeader.vue'
+import AppFooter from '@/components/layout/AppFooter.vue'
+import voltar from  "@/components/common/voltar.vue"
+
 </script>
 <template>
+  <voltar/>
+  <AppHeader/>
   <div class="container">
     <div class="content">
       <h1>Adicionar livro</h1>
@@ -36,6 +43,7 @@ import { ScanLine } from "lucide-vue-next";
       </RouterLink>
     </div>
   </div>
+  <AppFooter/>
 </template>
 
 <style scoped>

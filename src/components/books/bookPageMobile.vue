@@ -7,6 +7,18 @@ defineProps({
   categoriaNome: String,
 });
 
+const getBookCover = (livro) => {
+  const url = livro.capa?.url;
+
+  if (url) {
+    return url.startsWith("http")
+      ? url
+      : `http://127.0.0.1:8000${url}`;
+  }
+
+  return "/imgs/livro_sem_capa.png";
+};
+
 const voltar = () => {
   window.history.back();
 };
@@ -24,7 +36,7 @@ const formatarData = (data) => {
         <ArrowLeft />
       </button>
 
-      <p>detalhes</p>
+      <p>Detalhes</p>
       <div class="acoes">
         <Share2 />
         <Settings />
@@ -34,7 +46,7 @@ const formatarData = (data) => {
     <!-- CAPA -->
     <div class="capa">
       <img
-        :src="livro.capa?.url || 'https://via.placeholder.com/300x450'"
+        :src="getBookCover(livro)"
         class="imagem"
       />
       <div class="coracao">
