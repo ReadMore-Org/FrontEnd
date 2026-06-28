@@ -3,6 +3,15 @@ import { ref, reactive, onMounted } from "vue";
 import { Image } from "lucide-vue-next";
 import StatusSelect from "@/components/common/statusSelect.vue";
 import { useLivrosStore } from "@/stores/livros";
+import { useRouter } from "vue-router";
+import { useToast } from 'vue-toastification';
+
+import AppHeader from '@/components/layout/AppHeader.vue'
+import AppFooter from '@/components/layout/AppFooter.vue'
+
+const toast = useToast(); 
+
+const router = useRouter();
 
 const livrosStore = useLivrosStore();
 
@@ -57,18 +66,33 @@ const capaOpcoes = [
 
 async function salvar() {
   if (!form.titulo) {
-    alert("O título é obrigatório.");
+    toast.error("Erro ao cadastrar livro. O campo 'título' é obrigatório.");
+    return;
+  }
+  else if (!form.autores) {
+    toast.error("Erro ao cadastrar livro. o campo 'autores' é obrigatório.");
     return;
   }
 
-  await livrosStore.addLivro({
-    ...form,
-    capaFile: capaFile.value,
-  });
+  try {
+    await livrosStore.addLivro({
+      ...form,
+      capaFile: capaFile.value,
+    });
+
+    toast.success("Livro cadastrado com sucesso!", {
+    timeout: 2000
+    });
+    router.push("/home");
+  } catch (error) {
+    console.error(error);
+    toast.error("Erro ao cadastrar livro.");
+  }
 }
 </script>
 
 <template>
+  <AppHeader/>
   <div class="todo">
     <h1 class="titulo-secao">Adicionar livro</h1>
 
@@ -248,6 +272,7 @@ async function salvar() {
     </button>
     <button class="btn-save" @click="salvar" type="button">Salvar livro</button>
   </div>
+<AppFooter/>
 </template>
 
 <style scoped>
