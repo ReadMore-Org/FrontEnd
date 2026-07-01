@@ -44,7 +44,13 @@ const userPhoto = computed(() => {
   const url = authStore.user?.foto?.url;
 
   if (url) {
-    return url.startsWith("http") ? url : `http://127.0.0.1:8000${url}`;
+    return url.startsWith("http")
+      ? url
+      : `https://readmoreback.class.fabricadesoftware.ifc.edu.br${url}`;
+  }
+
+  if (authStore.user?.google_picture) {
+    return authStore.user.google_picture;
   }
 
   return "/imgs/avatar.jpeg";
@@ -65,7 +71,7 @@ const fotoSelecionada = async (event) => {
   uploading.value = true;
 
   try {
-    const data = await uploadImagem(file, "Avatar do usuário"); // Certifique-se que essa função está importada
+    const data = await uploadImagem(file, "Avatar do usuário");
     imgAttachmentKey.value = data.attachment_key;
   } catch (err) {
     console.error("Erro ao fazer upload da imagem", err);

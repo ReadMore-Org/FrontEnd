@@ -32,7 +32,7 @@ onMounted(() => {
 
 const userPhoto = computed(() => {
   if (authStore.user?.foto?.url) {
-    return `http://127.0.0.1:8000${authStore.user.foto.url}`;
+    return `https://readmoreback.class.fabricadesoftware.ifc.edu.br${authStore.user.foto.url}`;
   }
 
   if (authStore.user?.google_picture) {

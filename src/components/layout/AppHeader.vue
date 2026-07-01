@@ -21,11 +21,15 @@ const menuAberto = ref(false);
 const userEmail = computed(() => user.value?.email || "");
 
 const userPhoto = computed(() => {
-  console.count("userPhoto");
+  if (authStore.user?.foto?.url) {
+    return `https://readmoreback.class.fabricadesoftware.ifc.edu.br${authStore.user.foto.url}`;
+  }
 
-  return authStore.user?.foto?.url
-    ? `http://127.0.0.1:8000${authStore.user.foto.url}`
-    : "/imgs/avatar.jpeg";
+  if (authStore.user?.google_picture) {
+    return authStore.user.google_picture;
+  }
+
+  return "/imgs/avatar.jpeg";
 });
 
 function handleLogout() {
