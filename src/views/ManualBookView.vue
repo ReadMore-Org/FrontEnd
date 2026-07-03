@@ -94,11 +94,12 @@ async function salvar() {
 <template>
   <AppHeader/>
   <div class="todo">
-    <h1 class="titulo-secao">Adicionar livro</h1>
+    <h1 class="titulo-secao" id="top2">Adicionar livro</h1>
 
     <div class="linha">
       <div class="card">
         <p class="card-label">Capa & status</p>
+        <div class="repartir">
         <div
           class="adicionarCapa"
           :style="capaPreview ? `background-image: url(${capaPreview})` : ''"
@@ -118,10 +119,12 @@ async function salvar() {
           @change="previewCover"
         />
 
-        <StatusSelect v-model="form.status" />
+        
 
-        <div class="field">
-          <label>Faixa etária</label>
+        <div id="ladoCapa">
+        <StatusSelect v-model="form.status" />
+        <div class="field1">
+          <label id="faixa">Faixa etária</label>
           <div class="toggle-group">
             <button
               v-for="f in faixaOpcoes"
@@ -135,7 +138,7 @@ async function salvar() {
           </div>
         </div>
 
-        <div class="field">
+        <div class="field1">
           <label>Tipo de capa</label>
           <div class="capa-btns">
             <button
@@ -148,7 +151,11 @@ async function salvar() {
               {{ c.label }}
             </button>
           </div>
+        </div> 
         </div>
+ 
+        </div>
+        
       </div>
 
       <div class="card">
@@ -286,6 +293,10 @@ async function salvar() {
   font-size: 25px;
 }
 
+#top2 {
+  margin-top: 0;
+}
+
 .titulo-secao::after {
   content: "";
   position: absolute;
@@ -315,17 +326,29 @@ async function salvar() {
   padding: 20px;
 }
 
+.repartir {
+  display: flex;
+}
+
+#ladoCapa {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-left: 40px;
+}
+
 .card-label {
-  font-size: 11px;
+  font-size: 20px;
   font-weight: 600;
   color: #9c8a7a;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .adicionarCapa {
   border: 1.5px dashed #e8d8c3;
   border-radius: 10px;
-  height: 168px;
+  height: 500px;
+  width: 300px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -361,6 +384,7 @@ async function salvar() {
 .field {
   margin-bottom: 12px;
   position: relative;
+  
 }
 
 .field label {
@@ -432,7 +456,7 @@ async function salvar() {
 
 /* Toggle buttons (status / faixa) */
 .toggle-group {
-  display: flex;
+  display: block;
   gap: 8px;
 }
 
@@ -448,6 +472,13 @@ async function salvar() {
   cursor: pointer;
   transition: all 0.15s;
   text-align: center;
+  display: block;
+  height: 35px;
+  width: 150px;
+  margin-bottom: 5px;
+  padding: 0px 0px 0px 5px;
+  margin-top: 5px;
+  text-align: left;
 }
 
 .toggle-btn:hover:not(.active) {
@@ -462,7 +493,7 @@ async function salvar() {
 
 /* Capa type buttons */
 .capa-btns {
-  display: flex;
+  display: flex[];
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -477,6 +508,13 @@ async function salvar() {
   color: #5a4636;
   cursor: pointer;
   transition: all 0.15s;
+  display: block;
+    height: 35px;
+  width: 150px;
+  margin-bottom: 5px;
+  padding: 0px 0px 0px 5px;
+  margin-top: 5px;
+  text-align: left;
 }
 
 .capa-btn:hover:not(.active) {

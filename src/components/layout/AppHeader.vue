@@ -38,9 +38,11 @@ console.log(authStore.user);
 console.log(authStore.user?.google_picture);
 console.log(userPhoto.value);
 console.count("AppHeader");
+
 </script>
 
 <template>
+
   <header class="app-header">
     <div class="left">
       <h1 @click="router.push('/home')">ReadMore</h1>
@@ -116,13 +118,16 @@ console.count("AppHeader");
       </div>
     </div>
   </header>
+
 </template>
 
 <style scoped>
+
 button a {
   text-decoration: none;
   color: #654321;
 }
+
 .app-header {
   display: flex;
   justify-content: space-around;
@@ -134,7 +139,7 @@ button a {
 }
 
 .app-header h1 {
-  font-size: 30px;
+  font-size: 20px;
   color: #654321;
   cursor: pointer;
   font-family: "inter", sans-serif;
@@ -184,8 +189,8 @@ button {
   border: none;
   color: white;
   border-radius: 65px;
-  padding: 8px 17px;
-  font-size: 18px;
+  padding: 10px 17px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
 }
@@ -204,12 +209,12 @@ button {
 .icones {
   display: flex;
   align-items: center;
-  gap: 45px;
+  gap: 55px;
 }
 
 .avatar {
-  width: 50px;
-  height: 50px;
+  width: 38px;
+  height: 38px;
   border-radius: 500px;
   border: solid 2px #654321;
   cursor: pointer;
@@ -220,61 +225,55 @@ button {
   display: flex;
   align-items: center;
   gap: 13px;
+  display: flex;
+  align-items: center;
+  text-align: left;
+}
+
+.imagem img.avatar {
+  width: 38px;
+  height: 38px !important;
+  border-radius: 1000px;
+  border: solid 2px #654321;
+  cursor: pointer;
 }
 
 .menu-usuario {
   position: absolute;
-
   top: 65px;
   left: 25px;
-
   transform: translateX(-50%);
-
   background: white;
-
   border-radius: 15px;
-
   min-width: 140px;
-
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-
   z-index: 100;
 }
 
 .menu-usuario button {
   text-decoration: none;
   width: 100%;
-
   padding: 12px 16px;
-
   border: 1px solid #e8d8c3;
-
   background: #f5e6d3;
-
   cursor: pointer;
-
   color: #654321;
   font-size: 15px;
   font-weight: 600;
-
   justify-content: center;
-
   transition: all 0.2s ease;
 }
+
 .menu-btn {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 5 00;
-
   padding: 12px 16px;
-
   text-decoration: none;
-
   background: #f5e6d3;
   color: #654321;
-
   border: 1px solid #e8d8c3;
 }
 
@@ -308,9 +307,7 @@ button {
 
 .intro_mobile p {
   display: none;
-
   max-width: 140px;
-
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -406,25 +403,6 @@ button {
     width: 100%;
     justify-content: space-between;
     flex-direction: row-reverse;
-  }
-
-  .imagem {
-    display: flex;
-    align-items: center;
-    text-align: left;
-    gap: 16px;
-  }
-
-  div.imagem img.avatar {
-    width: 50px;
-    height: 50px !important;
-    border-radius: 1000px;
-    border: solid 2px #654321;
-    cursor: pointer;
-  }
-
-  .icones {
-    gap: 10px;
   }
 
   #Sino {

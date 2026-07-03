@@ -27,7 +27,7 @@ onMounted(() => {
 <cardMarketplace />
 <ListaRecursos />
     <div class="margin">
-        <h1 class="titulo-secao">Lendo atualmente</h1>
+        <h1 class="titulo-secao" id="top1">Lendo atualmente</h1>
         <div class="lista-livros">
             <Splide :options="{
                 perPage: 3,
@@ -103,6 +103,10 @@ onMounted(() => {
     font-weight: 500;
     margin: 60px 0 30px 0;
     font-size: 25px;
+}
+
+#top1 {
+    margin-top: 120px;
 }
 
 .titulo-secao::after {

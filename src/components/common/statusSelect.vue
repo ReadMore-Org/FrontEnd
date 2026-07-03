@@ -30,36 +30,37 @@ const statusOpcoes = [
 </div>
 </template>
 <style scoped>
+
 .field {
   margin-bottom: 12px;
   position: relative;
+  display: block;
 }
 
 .field label {
   display: block;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
-  color: #5A4636;
+  color: #333;
   margin-bottom: 5px;
-}
-
-.toggle-group {
-  display: flex;
-  gap: 8px;
 }
 
 .toggle-btn {
   flex: 1;
-  padding: 7px 4px;
   border: 1px solid #E8D8C3;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 500;
   background: #FFFFFF;
   color: #5A4636;
   cursor: pointer;
   transition: all 0.15s;
-  text-align: center;
+  text-align: left;
+  display: block;
+  height: 35px;
+  width: 150px;
+  margin-bottom: 5px;
+  padding: 0px 0px 0px 5px;
 }
 
 .toggle-btn:hover:not(.active) {
