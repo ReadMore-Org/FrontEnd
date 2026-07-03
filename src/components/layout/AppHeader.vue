@@ -22,7 +22,7 @@ const userEmail = computed(() => user.value?.email || "");
 
 const userPhoto = computed(() => {
   if (authStore.user?.foto?.url) {
-    return `https://readmoreback.class.fabricadesoftware.ifc.edu.br${authStore.user.foto.url}`;
+    return `${import.meta.env.VITE_BACKEND_URL}${authStore.user.foto.url}`;
   }
 
   if (authStore.user?.google_picture) {
@@ -115,7 +115,7 @@ console.count("AppHeader");
         </div>
         <div class="intro_mobile">
           <p>Bem-vindo,</p>
-          <h2>{{ authStore.user?.email }}</h2>
+          <h2>{{ authStore.user?.name }}</h2>
         </div>
       </div>
     </div>
@@ -265,22 +265,6 @@ button {
 
   transition: all 0.2s ease;
 }
-.menu-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 5 00;
-
-  padding: 12px 16px;
-
-  text-decoration: none;
-
-  background: #f5e6d3;
-  color: #654321;
-
-  border: 1px solid #e8d8c3;
-}
 
 .menu-usuario button:hover {
   background: #e8d8c3;
@@ -392,7 +376,13 @@ button {
   }
 
   .intro_mobile h2 {
-    display: flex;
+    display: block;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    max-width: 120px;
     line-height: 18px;
     font-family: "inter", sans-serif;
     min-width: 120px;
@@ -529,28 +519,6 @@ button {
     color: white;
   }
 
-  .menu-usuario {
-    position: fixed;
-
-    top: 85px;
-    left: 50%;
-
-    transform: translateX(-50%);
-
-    width: calc(100vw - 32px);
-    max-width: 350px;
-
-    background: white;
-
-    border-radius: 16px;
-
-    padding: 16px;
-
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-
-    z-index: 999;
-  }
-
   .menu-header {
     display: flex;
 
@@ -597,6 +565,31 @@ button {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  
+  .menu-usuario {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    top: 85px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: calc(100vw - 32px);
+    max-width: 350px;
+
+    background: white;
+
+    border-radius: 16px;
+
+    padding: 16px;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+
+    z-index: 999;
+  }
 
   .menu-usuario button {
     width: 100%;
@@ -625,11 +618,6 @@ button {
 
   .menu-usuario button:hover {
     background: #e8d8c3;
-  }
-
-  .menu-usuario button:last-child {
-    background: #654321;
-    color: white;
   }
 
   .menu-usuario button:last-child a {

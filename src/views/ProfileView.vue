@@ -32,7 +32,7 @@ onMounted(() => {
 
 const userPhoto = computed(() => {
   if (authStore.user?.foto?.url) {
-    return `https://readmoreback.class.fabricadesoftware.ifc.edu.br${authStore.user.foto.url}`;
+    return `${import.meta.env.VITE_BACKEND_URL}${authStore.user.foto.url}`;
   }
 
   if (authStore.user?.google_picture) {

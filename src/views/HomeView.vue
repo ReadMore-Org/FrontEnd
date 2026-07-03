@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 
 import { useLivrosStore } from '@/stores/livros'
+import { useGoogleBooksStore } from '@/stores/googleBooks'
 
 import { Splide, SplideSlide } from '@splidejs/vue-splide'
 import '@splidejs/vue-splide/css'
@@ -15,11 +16,15 @@ import barraProgresso from "@/components/home/barraProgresso.vue";
 import ProdutoView from '@/views/ProdutoView.vue'
 import ListaRecursos from '@/components/home/listaRecursos.vue';
 
+const googleBooksStore = useGoogleBooksStore();
 const livroStore = useLivrosStore()
 
 onMounted(() => {
     livroStore.fetchLivros()
+    googleBooksStore.buscarRecomendados();
 })
+
+console.log("LIVROS BACKEND:", livroStore.livros);
 </script>
 
 <template>
@@ -42,8 +47,8 @@ onMounted(() => {
                 pagination: false,
                 drag: 'free'
             }">
-                <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
-                <RouterLink :to="`/livro/${livro.id}`">
+                <SplideSlide v-for="livro in googleBooksStore.resultados" :key="livro.id">
+                <RouterLink :to="`/livro/google/${livro.id}`">
                     <BookCard :livro="livro" />
                 </RouterLink>
                 </SplideSlide>

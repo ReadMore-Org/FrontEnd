@@ -4,25 +4,47 @@ import BookPageMobile from "@/components/books/bookPageMobile.vue";
 
 import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
-import { useLivrosStore } from "@/stores/livros";
 
+import { useLivrosStore } from "@/stores/livros";
+import { useGoogleBooksStore } from "@/stores/googleBooks";
 
 const route = useRoute();
-const livroStore = useLivrosStore();
-const id = Number(route.params.id);
 
+const livroStore = useLivrosStore();
+const googleBooksStore = useGoogleBooksStore();
+
+const id = route.params.id;
+
+// verifica se é um livro da Google Books
+const isGoogleBook = computed(() => route.name === "livro-google");
+
+// livro exibido na página
 const livro = computed(() => {
-  return livroStore.livros.find((l) => l.id === id);
+  if (isGoogleBook.value) {
+    return googleBooksStore.livroSelecionado;
+  }
+
+  return livroStore.livros.find((l) => l.id === Number(id));
 });
 
 onMounted(async () => {
-  await Promise.all([
-    livroStore.fetchLivros(),
-    livroStore.fetchCategorias()
-  ]);
+  if (isGoogleBook.value) {
+    await googleBooksStore.buscarLivro(id);
+  } else {
+    await Promise.all([
+      livroStore.fetchLivros(),
+      livroStore.fetchCategorias(),
+    ]);
+  }
+
+  window.addEventListener("resize", checkScreen);
 });
 
 const categoriaNome = computed(() => {
+  if (isGoogleBook.value) {
+    return "";
+  }
+
   const livroAtual = livro.value;
   const categorias = livroStore.categorias;
 
@@ -41,28 +63,25 @@ const checkScreen = () => {
   isMobile.value = window.innerWidth <= 650;
 };
 
-onMounted(() => {
-  window.addEventListener("resize", checkScreen);
-});
-
 onUnmounted(() => {
   window.removeEventListener("resize", checkScreen);
 });
 </script>
+
 <template>
   <div class="margin">
-<BookPageMobile
-    v-if="isMobile"
-    :livro="livro"
-    :categoriaNome="categoriaNome"
-  />
+    <BookPageMobile
+      v-if="isMobile"
+      :livro="livro"
+      :categoriaNome="categoriaNome"
+    />
 
-  <BookPage
-    v-else
-    :livro="livro"
-    :categoriaNome="categoriaNome"
-  />
+    <BookPage
+      v-else
+      :livro="livro"
+      :categoriaNome="categoriaNome"
+    />
   </div>
-  
 </template>
+
 <style scoped></style>

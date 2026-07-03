@@ -46,7 +46,7 @@ const userPhoto = computed(() => {
   if (url) {
     return url.startsWith("http")
       ? url
-      : `https://readmoreback.class.fabricadesoftware.ifc.edu.br${url}`;
+      : `${import.meta.env.VITE_BACKEND_URL}${url}`;
   }
 
   if (authStore.user?.google_picture) {

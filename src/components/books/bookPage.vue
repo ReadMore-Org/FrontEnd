@@ -2,21 +2,37 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useLivrosStore } from "@/stores/livros";
+import { useGoogleBooksStore } from "@/stores/googleBooks";
 import { Star, Heart, Share2, Settings, ArrowLeft } from "lucide-vue-next";
 import statusSelect from "@/components/common/statusSelect.vue";
+
 const route = useRoute();
+
+const googleBooksStore = useGoogleBooksStore();
+const isGoogleBook = computed(() => route.path.startsWith("/livro/google"));
+
+const id = route.params.id;
 const livroStore = useLivrosStore();
-const id = Number(route.params.id);
 
 const status = ref("quero_ler");
 const statusOpcoes = ["quero-ler", "lendo", "lido"];
 
 const livro = computed(() => {
-  return livroStore.livros.find((livro) => livro.id === id);
+  if (isGoogleBook.value) {
+    return googleBooksStore.livroSelecionado;
+  }
+
+  return livroStore.livros.find((l) => l.id === Number(id));
 });
+
 onMounted(async () => {
-  await Promise.all([livroStore.fetchLivros(), livroStore.fetchCategorias()]);
+  if (isGoogleBook.value) {
+    await googleBooksStore.buscarLivro(id);
+  } else {
+    await Promise.all([livroStore.fetchLivros(), livroStore.fetchCategorias()]);
+  }
 });
+
 const formatarData = (data) => {
   return new Date(data).toLocaleDateString("pt-BR");
 };
@@ -25,12 +41,14 @@ const voltar = () => {
 };
 
 const getBookCover = (livro) => {
-  const url = livro.capa?.url;
+  if (!livro) return "/imgs/livro_sem_capa.png";
 
-  if (url) {
-    return url.startsWith("http")
-      ? url
-      : `https://readmoreback.class.fabricadesoftware.ifc.edu.br${url}`;
+  const capa = typeof livro.capa === "string" ? livro.capa : livro.capa?.url;
+
+  if (capa) {
+    return capa.startsWith("http")
+      ? capa
+      : `${import.meta.env.VITE_API_BASE_URL}${capa}`;
   }
 
   return "/imgs/livro_sem_capa.png";
@@ -42,7 +60,9 @@ const categoriaNome = computed(() => {
 
   if (!livroAtual || !categorias.length) return "";
 
-  const categoria = categorias.find((c) => Number(c.id) === Number(livroAtual.categoria));
+  const categoria = categorias.find(
+    (c) => Number(c.id) === Number(livroAtual.categoria),
+  );
 
   return categoria?.descricao || "Sem categoria";
 });
@@ -60,7 +80,9 @@ const categoriaNome = computed(() => {
         <p v-if="livro.autores && livro.autores.length" class="autores">
           por
           <span class="autores-nome">{{
-            livro.autores.map((a) => a.nome).join(", ")
+            livro.autores
+              ?.map((a) => (typeof a === "string" ? a : a.nome))
+              .join(", ")
           }}</span>
         </p>
         <div class="nota">
@@ -74,8 +96,8 @@ const categoriaNome = computed(() => {
             /></span>
           </div>
           <div class="nota-info">
-            <p class="nota-valor">{{ livro.nota }}</p>
-            <p class="nota-texto">({{ livro.avaliacoes }} avaliações)</p>
+            <p class="nota-valor">{{ livro.nota ?? "N/A" }}</p>
+            <p class="nota-texto">({{ livro.avaliacoes ?? "0" }} avaliações)</p>
           </div>
         </div>
 
@@ -102,7 +124,7 @@ const categoriaNome = computed(() => {
     <div class="infoMaior">
       <div class="secao-sinopse">
         <h2 class="titulo-secao">Sinopse</h2>
-        <p class="texto-sinopse">{{ livro.sinopse }}</p>
+        <p class="texto-sinopse" v-html="livro.sinopse"></p>
       </div>
       <div class="secao-detalhes">
         <h2 class="titulo-secao">Detalhes</h2>
@@ -123,7 +145,7 @@ const categoriaNome = computed(() => {
           </div>
           <div class="detalhe-item">
             <p class="detalhe-label">Faixa Etária:</p>
-            <p class="detalhe-valor">{{ livro.faixa_etaria }}</p>
+            <p class="detalhe-valor">{{ livro.faixa_etaria ?? "-" }}</p>
           </div>
           <div class="detalhe-item">
             <p class="detalhe-label">ISBN:</p>
