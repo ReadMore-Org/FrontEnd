@@ -1,6 +1,5 @@
 export function googleBookToLivro(book) {
   const volumeInfo = book.volumeInfo ?? {};
-
   const ids = volumeInfo.industryIdentifiers ?? [];
 
   const isbn =
@@ -8,8 +7,16 @@ export function googleBookToLivro(book) {
     ids.find((i) => i.type === "ISBN_10")?.identifier ||
     null;
 
+  // Trata o maturityRating do Google para o formato do seu sistema
+  let faixaEtaria = "-";
+  if (volumeInfo.maturityRating === "MATURE") {
+    faixaEtaria = "Adulto (18+)";
+  } else if (volumeInfo.maturityRating === "NOT_MATURE") {
+    faixaEtaria = "Livre / Juvenil";
+  }
+
   return {
-    id: book.id, // 👈 ESSENCIAL
+    id: book.id,
     titulo: volumeInfo.title ?? "",
     subtitulo: volumeInfo.subtitle ?? "",
 
@@ -26,5 +33,8 @@ export function googleBookToLivro(book) {
     sinopse: volumeInfo.description ?? "",
 
     capa: volumeInfo.imageLinks?.thumbnail ?? null,
+    
+    // 👈 Adiciona o campo mapeado aqui para bater com o seu componente
+    faixa_etaria: faixaEtaria, 
   };
 }

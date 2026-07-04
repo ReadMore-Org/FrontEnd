@@ -8,16 +8,24 @@ defineProps({
 });
 
 const getBookCover = (livro) => {
-  const url = livro.capa?.url;
+  if (!livro) return "/imgs/livro_sem_capa.png";
 
-  if (url) {
-    return url.startsWith("http")
-      ? url
-      : `${import.meta.env.VITE_API_BASE_URL}${url}`;
+  let capa = typeof livro.capa === "string" ? livro.capa : livro.capa?.url;
+
+  if (capa) {
+    // Se a capa vem do Google (começa com http)
+    if (capa.startsWith("http")) {
+      // Força o uso de https:// trocando o início se necessário
+      return capa.replace(/^http:\/\//i, "https://");
+    }
+    
+    // Se for uma capa interna da sua API
+    return `${import.meta.env.VITE_API_BASE_URL}${capa}`;
   }
 
   return "/imgs/livro_sem_capa.png";
 };
+
 
 const voltar = () => {
   window.history.back();
@@ -60,7 +68,7 @@ const formatarData = (data) => {
     </div>
 
     <!-- STATUS -->
-    <statusSelect />
+    <statusSelect v-model="status" variante="livro" />
 
     <!-- DETALHES RESUMIDOS -->
     <div class="detalhes">

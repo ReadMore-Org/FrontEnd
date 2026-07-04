@@ -61,10 +61,17 @@ const voltar = () => {
 const getBookCover = (livro) => {
   if (!livro) return "/imgs/livro_sem_capa.png";
 
-  const capa = typeof livro.capa === "string" ? livro.capa : livro.capa?.url;
+  let capa = typeof livro.capa === "string" ? livro.capa : livro.capa?.url;
 
   if (capa) {
-    return capa.startsWith("http") ? capa : `${import.meta.env.VITE_API_BASE_URL}${capa}`;
+    // Se a capa vem do Google (começa com http)
+    if (capa.startsWith("http")) {
+      // Força o uso de https:// trocando o início se necessário
+      return capa.replace(/^http:\/\//i, "https://");
+    }
+    
+    // Se for uma capa interna da sua API
+    return `${import.meta.env.VITE_API_BASE_URL}${capa}`;
   }
 
   return "/imgs/livro_sem_capa.png";
@@ -330,6 +337,15 @@ div.secao-detalhes h2 {
   color: #2c2c2c;
   font-weight: 500;
 }
+.detalhe-item {
+  display: flex;
+  align-items: center; 
+  
+  gap: 8px;            
+}
+.detalhe-label, .detalhe-valor {
+  white-space: nowrap; 
+}
 div.secao-detalhes div.detalhe-item {
   display: flex;
   gap: 10px;
@@ -370,4 +386,5 @@ div.secao-detalhes p {
   width: 18px;
   height: 18px;
 }
+
 </style>

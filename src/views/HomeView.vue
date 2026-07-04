@@ -180,6 +180,10 @@ console.log("LIVROS BACKEND:", livroStore.livros);
   font-size: 25px;
 }
 
+#top1 {
+    margin-top: 120px;
+}
+
 .titulo-secao::after {
   content: "";
   position: absolute;

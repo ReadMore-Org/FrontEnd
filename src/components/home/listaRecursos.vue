@@ -43,7 +43,6 @@ import { BookOpen } from 'lucide-vue-next'
 .todo {
   display: flex;
   justify-content: center;
-
   position: absolute;
   left: 50%;
   top: 50;

@@ -4,12 +4,12 @@ import { Image } from "lucide-vue-next";
 import StatusSelect from "@/components/common/statusSelect.vue";
 import { useLivrosStore } from "@/stores/livros";
 import { useRouter } from "vue-router";
-import { useToast } from 'vue-toastification';
+import { useToast } from "vue-toastification";
 
-import AppHeader from '@/components/layout/AppHeader.vue'
-import AppFooter from '@/components/layout/AppFooter.vue'
+import AppHeader from "@/components/layout/AppHeader.vue";
+import AppFooter from "@/components/layout/AppFooter.vue";
 
-const toast = useToast(); 
+const toast = useToast();
 
 const router = useRouter();
 
@@ -33,6 +33,11 @@ function previewCover(event) {
   if (!file) return;
   capaFile.value = file;
   capaPreview.value = URL.createObjectURL(file);
+}
+
+function cleanCover() {
+  capaFile.value = "";
+  capaPreview.value = "";
 }
 
 const form = reactive({
@@ -68,8 +73,7 @@ async function salvar() {
   if (!form.titulo) {
     toast.error("Erro ao cadastrar livro. O campo 'título' é obrigatório.");
     return;
-  }
-  else if (!form.autores) {
+  } else if (!form.autores) {
     toast.error("Erro ao cadastrar livro. o campo 'autores' é obrigatório.");
     return;
   }
@@ -81,7 +85,7 @@ async function salvar() {
     });
 
     toast.success("Livro cadastrado com sucesso!", {
-    timeout: 2000
+      timeout: 2000,
     });
     router.push("/home");
   } catch (error) {
@@ -92,61 +96,68 @@ async function salvar() {
 </script>
 
 <template>
-  <AppHeader/>
+  <AppHeader />
   <div class="todo">
-    <h1 class="titulo-secao">Adicionar livro</h1>
+    <h1 class="titulo-secao" id="top2">Adicionar livro</h1>
 
     <div class="linha">
       <div class="card">
-        <p class="card-label">Capa & status</p>
-        <div
-          class="adicionarCapa"
-          :style="capaPreview ? `background-image: url(${capaPreview})` : ''"
-          :class="{ visto: capaPreview }"
-          @click="selecionarCapa"
-        >
-          <div v-if="!capaPreview" class="info">
-            <Image :size="24" />
-            <span>Adicionar imagem da capa</span>
-          </div>  
-        </div>
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          style="display: none"
-          @change="previewCover"
-        />
-
-        <StatusSelect v-model="form.status" />
-
-        <div class="field">
-          <label>Faixa etária</label>
-          <div class="toggle-group">
-            <button
-              v-for="f in faixaOpcoes"
-              :key="f.value"
-              :class="['toggle-btn', { active: form.faixa_etaria === f.value }]"
-              @click="form.faixa_etaria = f.value"
-              type="button"
+        <p class="card-label">Capa e status</p>
+        <div class="repartir">
+          <div class="img_limpar">
+            <div
+              class="adicionarCapa"
+              :style="capaPreview ? `background-image: url(${capaPreview})` : ''"
+              :class="{ visto: capaPreview }"
+              @click="selecionarCapa"
             >
-              {{ f.label }}
-            </button>
+              <div v-if="!capaPreview" class="info">
+                <Image :size="24" />
+                <span>Adicionar imagem da capa</span>
+              </div>
+            </div>
+
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/*"
+              style="display: none"
+              @change="previewCover"
+            />
+            <button @click="cleanCover()" class="btn-cancel">Limpar Capa</button>
           </div>
-        </div>
 
-        <div class="field">
-          <label>Tipo de capa</label>
-          <div class="capa-btns">
-            <button
-              v-for="c in capaOpcoes"
-              :key="c.value"
-              :class="['capa-btn', { active: form.tipo_capa === c.value }]"
-              @click="form.tipo_capa = c.value"
-              type="button"
-            >
-              {{ c.label }}
-            </button>
+          <div id="ladoCapa">
+            <StatusSelect v-model="form.status" />
+            <div class="field1">
+              <label id="faixa">Faixa etária</label>
+              <div class="toggle-group">
+                <button
+                  v-for="f in faixaOpcoes"
+                  :key="f.value"
+                  :class="['toggle-btn', { active: form.faixa_etaria === f.value }]"
+                  @click="form.faixa_etaria = f.value"
+                  type="button"
+                >
+                  {{ f.label }}
+                </button>
+              </div>
+            </div>
+
+            <div class="field1">
+              <label>Tipo de capa</label>
+              <div class="capa-btns">
+                <button
+                  v-for="c in capaOpcoes"
+                  :key="c.value"
+                  :class="['capa-btn', { active: form.tipo_capa === c.value }]"
+                  @click="form.tipo_capa = c.value"
+                  type="button"
+                >
+                  {{ c.label }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -156,11 +167,7 @@ async function salvar() {
 
         <div class="field">
           <label>Título <span class="req">*</span></label>
-          <input
-            v-model="form.titulo"
-            type="text"
-            placeholder="Digite o título"
-          />
+          <input v-model="form.titulo" type="text" placeholder="Digite o título" />
         </div>
 
         <div class="field">
@@ -172,19 +179,19 @@ async function salvar() {
           />
         </div>
         <div class="field">
-  <label>Autor(es) <span class="req">*</span></label>
-  <input v-model="form.autores" type="text" placeholder="Ex: José Saramago, Outro Autor" />
-</div>    
+          <label>Autor(es) <span class="req">*</span></label>
+          <input
+            v-model="form.autores"
+            type="text"
+            placeholder="Ex: José Saramago, Outro Autor"
+          />
+        </div>
 
         <div class="field">
           <label>Editora</label>
           <select v-model="form.editora">
             <option :value="null">Selecione...</option>
-            <option
-              v-for="ed in livrosStore.editoras"
-              :key="ed.id"
-              :value="ed.id"
-            >
+            <option v-for="ed in livrosStore.editoras" :key="ed.id" :value="ed.id">
               {{ ed.nome }}
             </option>
           </select>
@@ -194,11 +201,7 @@ async function salvar() {
           <label>Categoria</label>
           <select v-model="form.categoria">
             <option :value="null">Selecione...</option>
-            <option
-              v-for="cat in livrosStore.categorias"
-              :key="cat.id"
-              :value="cat.id"
-            >
+            <option v-for="cat in livrosStore.categorias" :key="cat.id" :value="cat.id">
               {{ cat.descricao }}
             </option>
           </select>
@@ -227,12 +230,7 @@ async function salvar() {
           </div>
           <div class="field">
             <label>Idioma</label>
-            <input
-              v-model="form.idioma"
-              type="text"
-              placeholder="pt"
-              maxlength="2"
-            />
+            <input v-model="form.idioma" type="text" placeholder="pt" maxlength="2" />
           </div>
           <div class="field">
             <label>Publicação</label>
@@ -243,12 +241,7 @@ async function salvar() {
         <div class="field-row">
           <div class="field">
             <label>Nº de páginas</label>
-            <input
-              v-model.number="form.paginas"
-              type="number"
-              placeholder="0"
-              min="1"
-            />
+            <input v-model.number="form.paginas" type="number" placeholder="0" min="1" />
           </div>
           <div class="field">
             <label>Nota</label>
@@ -267,15 +260,29 @@ async function salvar() {
   </div>
 
   <div class="footer">
-    <button class="btn-cancel" @click="$emit('cancelar')" type="button">
-      Cancelar
-    </button>
+    <button class="btn-cancel" @click="$emit('cancelar')" type="button">Cancelar</button>
     <button class="btn-save" @click="salvar" type="button">Salvar livro</button>
   </div>
-<AppFooter/>
+  <AppFooter />
 </template>
 
 <style scoped>
+.btn-cancel {
+  margin-top: 10px;
+  padding: 9px 20px;
+  border: 1px solid #e8d8c3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #5a4636;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-cancel:hover {
+  background: #faf3e0;
+}
+
 .titulo-secao {
   position: relative;
   display: inline-block;
@@ -284,6 +291,10 @@ async function salvar() {
   font-weight: 500;
   margin: 60px 0 30px 0;
   font-size: 25px;
+}
+
+#top2 {
+  margin-top: 0;
 }
 
 .titulo-secao::after {
@@ -315,17 +326,29 @@ async function salvar() {
   padding: 20px;
 }
 
+.repartir {
+  display: flex;
+  justify-content: space-evenly;
+}
+
+#ladoCapa {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .card-label {
-  font-size: 11px;
+  font-size: 20px;
   font-weight: 600;
   color: #9c8a7a;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .adicionarCapa {
   border: 1.5px dashed #e8d8c3;
   border-radius: 10px;
-  height: 168px;
+  height: 500px;
+  width: 300px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -347,7 +370,7 @@ async function salvar() {
   align-items: center;
   justify-content: center;
   gap: 6px;
-} 
+}
 .adicionarCapa.visto {
   border-style: solid;
   border-color: #6b4226;
@@ -432,7 +455,7 @@ async function salvar() {
 
 /* Toggle buttons (status / faixa) */
 .toggle-group {
-  display: flex;
+  display: block;
   gap: 8px;
 }
 
@@ -448,6 +471,13 @@ async function salvar() {
   cursor: pointer;
   transition: all 0.15s;
   text-align: center;
+  display: block;
+  height: 35px;
+  width: 150px;
+  margin-bottom: 5px;
+  padding: 0px 0px 0px 5px;
+  margin-top: 5px;
+  text-align: left;
 }
 
 .toggle-btn:hover:not(.active) {
@@ -462,7 +492,7 @@ async function salvar() {
 
 /* Capa type buttons */
 .capa-btns {
-  display: flex;
+  display: flex[];
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -477,6 +507,13 @@ async function salvar() {
   color: #5a4636;
   cursor: pointer;
   transition: all 0.15s;
+  display: block;
+  height: 35px;
+  width: 150px;
+  margin-bottom: 5px;
+  padding: 0px 0px 0px 5px;
+  margin-top: 5px;
+  text-align: left;
 }
 
 .capa-btn:hover:not(.active) {
@@ -493,9 +530,7 @@ async function salvar() {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  padding: 14px 32px;
-  border-top: 1px solid #e8d8c3;
-  background: #ffffff;
+  margin-right: 80px;
 }
 
 .btn-cancel {
