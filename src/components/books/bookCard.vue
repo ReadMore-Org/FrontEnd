@@ -5,12 +5,14 @@ defineProps({
 });
 
 const getBookCover = (livro) => {
-  const url = livro.capa?.url;
+  const capa = livro.capa;
+
+  const url = typeof capa === "string" ? capa : capa?.url;
 
   if (url) {
     return url.startsWith("http")
       ? url
-      : `http://127.0.0.1:8000${url}`;
+      : `${import.meta.env.VITE_API_BASE_URL}${url}`;
   }
 
   return "/imgs/livro_sem_capa.png";
@@ -23,8 +25,13 @@ const getBookCover = (livro) => {
 
     <div class="detalhes">
       <h1>{{ livro.titulo }}</h1>
-      <p class="autor" v-if="livro.autores?.length">
-        por {{ livro.autores.map((a) => a.nome).join(", ") }}
+      <p class="autor" v-if="livro.autores && livro.autores.length">
+        por
+        {{
+          livro.autores
+            .map((a) => (typeof a === "string" ? a : a.nome))
+            .join(", ")
+        }}
       </p>
       <div class="info">
         <div class="publicado">

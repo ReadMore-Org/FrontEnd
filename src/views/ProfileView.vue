@@ -32,7 +32,7 @@ onMounted(() => {
 
 const userPhoto = computed(() => {
   if (authStore.user?.foto?.url) {
-    return `http://127.0.0.1:8000${authStore.user.foto.url}`;
+    return `${import.meta.env.VITE_BACKEND_URL}${authStore.user.foto.url}`;
   }
 
   if (authStore.user?.google_picture) {
