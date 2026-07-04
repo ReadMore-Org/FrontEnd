@@ -43,7 +43,12 @@ const router = createRouter({
     },
     {
       path: "/livro/:id",
-      name: "livro",
+      name: "livro-backend",
+      component: ProdutoView,
+    },
+    {
+      path: "/livro/google/:id",
+      name: "livro-google",
       component: ProdutoView,
     },
     {
@@ -52,18 +57,18 @@ const router = createRouter({
       component: SignUpView,
     },
     {
-      path: '/adicionar',
-      name: 'adicionar',
+      path: "/adicionar",
+      name: "adicionar",
       component: AddBookView,
     },
     {
-      path: '/scan',
-      name: 'scan',
+      path: "/scan",
+      name: "scan",
       component: ScanCodeView,
     },
     {
-      path: '/manual',
-      name: 'manual',
+      path: "/manual",
+      name: "manual",
       component: ManualBookView,
     },
   ],

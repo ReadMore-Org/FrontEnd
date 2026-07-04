@@ -13,7 +13,7 @@ const getBookCover = (livro) => {
   if (url) {
     return url.startsWith("http")
       ? url
-      : `http://127.0.0.1:8000${url}`;
+      : `${import.meta.env.VITE_API_BASE_URL}${url}`;
   }
 
   return "/imgs/livro_sem_capa.png";
