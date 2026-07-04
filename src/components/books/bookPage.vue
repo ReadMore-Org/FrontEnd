@@ -17,6 +17,15 @@ const livroStore = useLivrosStore();
 const status = ref("quero_ler");
 const statusOpcoes = ["quero-ler", "lendo", "lido"];
 
+// Estado para controlar a tela de loading do livro
+const isLoading = ref(true);
+
+const isFavorito = ref(false);
+
+const toggleFavorito = () => {
+  isFavorito.value = !isFavorito.value;
+};
+
 const livro = computed(() => {
   if (isGoogleBook.value) {
     return googleBooksStore.livroSelecionado;
@@ -26,16 +35,25 @@ const livro = computed(() => {
 });
 
 onMounted(async () => {
-  if (isGoogleBook.value) {
-    await googleBooksStore.buscarLivro(id);
-  } else {
-    await Promise.all([livroStore.fetchLivros(), livroStore.fetchCategorias()]);
+  try {
+    if (isGoogleBook.value) {
+      await googleBooksStore.buscarLivro(id);
+    } else {
+      await Promise.all([livroStore.fetchLivros(), livroStore.fetchCategorias()]);
+    }
+  } catch (error) {
+    console.error("Erro ao carregar detalhes do livro:", error);
+  } finally {
+    // Desativa o loading assim que as requisições terminarem
+    isLoading.value = false;
   }
 });
 
 const formatarData = (data) => {
+  if (!data) return "-";
   return new Date(data).toLocaleDateString("pt-BR");
 };
+
 const voltar = () => {
   window.history.back();
 };
@@ -46,9 +64,7 @@ const getBookCover = (livro) => {
   const capa = typeof livro.capa === "string" ? livro.capa : livro.capa?.url;
 
   if (capa) {
-    return capa.startsWith("http")
-      ? capa
-      : `${import.meta.env.VITE_API_BASE_URL}${capa}`;
+    return capa.startsWith("http") ? capa : `${import.meta.env.VITE_API_BASE_URL}${capa}`;
   }
 
   return "/imgs/livro_sem_capa.png";
@@ -60,19 +76,24 @@ const categoriaNome = computed(() => {
 
   if (!livroAtual || !categorias.length) return "";
 
-  const categoria = categorias.find(
-    (c) => Number(c.id) === Number(livroAtual.categoria),
-  );
+  const categoria = categorias.find((c) => Number(c.id) === Number(livroAtual.categoria));
 
   return categoria?.descricao || "Sem categoria";
 });
 </script>
+
 <template>
   <button @click="voltar" class="btn-voltar">
     <ArrowLeft />
     <span>Voltar</span>
   </button>
-  <div v-if="livro" class="livroTodo">
+
+  <div v-if="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Buscando detalhes do livro...</p>
+  </div>
+
+  <div v-else-if="livro" class="livroTodo">
     <div class="livro">
       <img class="imagem-capa" :src="getBookCover(livro)" alt="Capa do livro" />
       <div class="info">
@@ -80,9 +101,7 @@ const categoriaNome = computed(() => {
         <p v-if="livro.autores && livro.autores.length" class="autores">
           por
           <span class="autores-nome">{{
-            livro.autores
-              ?.map((a) => (typeof a === "string" ? a : a.nome))
-              .join(", ")
+            livro.autores?.map((a) => (typeof a === "string" ? a : a.nome)).join(", ")
           }}</span>
         </p>
         <div class="nota">
@@ -110,7 +129,11 @@ const categoriaNome = computed(() => {
       <div>
         <ul>
           <li>
-            <Heart :size="40" />
+            <Heart
+              :size="40"
+              @click="toggleFavorito"
+              :class="['icone-coracao', { favoritado: isFavorito }]"
+            />
           </li>
           <li>
             <Share2 :size="40" />
@@ -155,9 +178,59 @@ const categoriaNome = computed(() => {
       </div>
     </div>
   </div>
+
+  <div v-else class="erro-container">
+    <p>Não foi possível encontrar as informações deste livro.</p>
+  </div>
 </template>
 
 <style scoped>
+.loading-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  background-color: #fcfbf9;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e0d7d0;
+  border-top: 4px solid #8b5e3c; 
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+.loading-container p {
+  color: #8b5e3c;
+  font-weight: 500;
+  font-size: 18px;
+}
+
+.erro-container {
+  text-align: center;
+  padding: 40px;
+  color: #c9a227;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .livroTodo {
   padding: 4vw 20vw;
 }
@@ -169,7 +242,6 @@ const categoriaNome = computed(() => {
 .imagem-capa {
   width: 270px;
   height: auto;
-
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
@@ -263,6 +335,18 @@ div.secao-detalhes div.detalhe-item {
   gap: 10px;
   margin-bottom: 10px;
 }
+
+.icone-coracao {
+  transition: all 0.2s ease;
+  color: #555; 
+  fill: transparent; 
+}
+
+.icone-coracao.favoritado {
+  color: #e53e3e;
+  fill: #e53e3e; 
+}
+
 div.secao-detalhes p {
   color: #5a4636;
 }
@@ -272,13 +356,11 @@ div.secao-detalhes p {
   align-items: center;
   margin: 20px 20px;
   gap: 8px;
-
   padding: 10px 20px;
   border: none;
   border-radius: 100px;
   background: white;
   color: #2c2c2c;
-
   cursor: pointer;
   transition: all 0.2s ease;
   font-weight: 500;
