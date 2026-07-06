@@ -5,7 +5,7 @@ import { storeToRefs } from "pinia";
 import { useGoogleBooksStore } from "@/stores/googleBooks";
 import BarraBusca from "@/components/explore/BarraBusca.vue";
 import FiltrosBusca from "@/components/explore/FiltrosBusca.vue";
-import OrdenarDropdown from "@/components/explore/OrdenarDropdown.vue";
+import OrdenarDropdown from "@/components/explore/OrdenarDropDown.vue";
 import GradeLivros from "@/components/books/GradeBook.vue";
 import BookCard from "@/components/books/otherBookCard.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
