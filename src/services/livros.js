@@ -24,12 +24,21 @@ export function importarLivroGoogle(livro, status) {
     sinopse: livro.sinopse || null,
     idioma: livro.idioma || null,
     paginas: livro.paginas || null,
-    avaliacoes: livro.avaliacoes ?? null,
-    nota: livro.nota ?? null,
+    nota: livro.nota || null,
     publicacao: livro.publicacao || null,
-    editora: livro.editora || null,
-    autores: (livro.autores || []).map((a) => (typeof a === 'string' ? a : a.nome)),
-    categorias: livro.categorias || [],
+
+    editora: typeof livro.editora === "object"
+      ? livro.editora.id
+      : livro.editora || null,
+
+    autores: (livro.autores || []).map((a) =>
+      typeof a === "string" ? a : a.nome
+    ),
+
+    categoria: (livro.categorias || livro.categoria || []).map((c) =>
+      typeof c === "number" ? c : c.id
+    ),
+
     capa: livro.capa || null,
     status,
   };
