@@ -4,17 +4,23 @@ export function getLivros(page = 1) {
   return api.get(`/livros/?page=${page}`);
 }
 
-export const getLivro = (id) => api.get(`/livros/${id}/`)
+export const getLivro = (id) =>
+  api.get(`/livros/${id}/`);
 
-export const createLivro = (data) => api.post('/livros/', data)
+export const createLivro = (data) =>
+  api.post('/livros/', data);
 
-export const updateLivro = (id, data) => api.put(`/livros/${id}/`, data)
+export const updateLivro = (id, data) =>
+  api.put(`/livros/${id}/`, data);
 
-export const deleteLivro = (id) => api.delete(`/livros/${id}/`)
+export const deleteLivro = (id) =>
+  api.delete(`/livros/${id}/`);
 
-export const getCategorias = () => api.get('/categorias/')
+export const getCategorias = () =>
+  api.get('/categorias/');
 
-export const getEditoras = () => api.get('/editoras/')
+export const getEditoras = () =>
+  api.get('/editoras/');
 
 export function importarLivroGoogle(livro, status) {
   const payload = {
@@ -24,19 +30,19 @@ export function importarLivroGoogle(livro, status) {
     sinopse: livro.sinopse || null,
     idioma: livro.idioma || null,
     paginas: livro.paginas || null,
-    nota: livro.nota || null,
+    nota: livro.nota ?? null,
     publicacao: livro.publicacao || null,
 
-    editora: typeof livro.editora === "object"
+    editora: typeof livro.editora === 'object'
       ? livro.editora.id
       : livro.editora || null,
 
     autores: (livro.autores || []).map((a) =>
-      typeof a === "string" ? a : a.nome
+      typeof a === 'string' ? a : a.nome
     ),
 
-    categoria: (livro.categorias || livro.categoria || []).map((c) =>
-      typeof c === "number" ? c : c.id
+    categorias: (livro.categorias || []).map((c) =>
+      typeof c === 'object' ? c.id : c
     ),
 
     capa: livro.capa || null,
