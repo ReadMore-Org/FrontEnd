@@ -1,5 +1,7 @@
 <script setup>
 import { Heart, Share2, Settings, ArrowLeft } from "lucide-vue-next";
+import AppHeader from "@/components/layout/AppHeader.vue"
+import AppFooter from "@/components/layout/AppFooter.vue"
 import StatusSelect from "../common/statusSelect.vue";
 
 defineProps({
@@ -34,6 +36,7 @@ const formatarData = (data) => {
 </script>
 
 <template>
+  <AppHeader/>
   <div v-if="livro" class="mobile">
     <!-- TOPO -->
     <div class="topo">
@@ -91,6 +94,7 @@ const formatarData = (data) => {
       <p>{{ livro.sinopse }}</p>
     </div>
   </div>
+<AppFooter/>
 </template>
 
 <style scoped>

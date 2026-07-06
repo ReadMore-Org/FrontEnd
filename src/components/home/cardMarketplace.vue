@@ -69,13 +69,17 @@ import { Store } from 'lucide-vue-next'
     border-radius: 20px;
     justify-content: flex-start; 
     border-radius: 10px;
+    padding: 10px;
   }
 
 .esquerda {
+  display: flex;
+  flex-direction: column;
   margin: 10px 0 0 0;
   padding: 10px;
   width: 100%;
   flex: 1;
+  gap: 20px;
   min-width: 0;
 }
 
@@ -101,7 +105,7 @@ import { Store } from 'lucide-vue-next'
     padding: 0 10px 0 0;
   }
  .direita img {
-  width: 100px;
+  width: 175px;
   height: auto;
 }
   .livros {

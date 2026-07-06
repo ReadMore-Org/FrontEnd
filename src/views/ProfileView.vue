@@ -31,8 +31,12 @@ onMounted(() => {
 });
 
 const userPhoto = computed(() => {
-  if (authStore.user?.foto?.url) {
-    return `${import.meta.env.VITE_BACKEND_URL}${authStore.user.foto.url}`;
+  const url = authStore.user?.foto?.url;
+
+  if (url) {
+    return url.startsWith("http")
+      ? url
+      : `${import.meta.env.VITE_BACKEND_URL}${url}`;
   }
 
   if (authStore.user?.google_picture) {

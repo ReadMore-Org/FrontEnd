@@ -82,7 +82,7 @@ console.log("LIVROS BACKEND:", livroStore.livros);
       <h1 class="titulo-secao">Meta 2026</h1>
       <barraProgresso />
 
-      <h1 class="titulo-secao">testando</h1>
+      <h1 class="titulo-secao">Recomendados</h1>
       <GradeBook titulo="testando" :livros="googleBooksStore.resultados">
         <template #default="{ livro }">
           <OtherBookCard :livro="livro" />

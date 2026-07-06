@@ -37,7 +37,7 @@ async function handleLogin() {
     }
   } catch (err) {
     errorMessage.value =
-      err.response?.data?.detail || "Erro ao entrar. Verifique suas credenciais.";
+      "Erro ao entrar. Verifique suas credenciais.";
   } finally {
     loading.value = false;
   }

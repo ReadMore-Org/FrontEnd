@@ -1,25 +1,19 @@
 <script setup>
-import { ref } from 'vue';
+import { ref } from "vue";
 
-import {
-  Mail,
-  Lock,
-  User,
-  Eye,
-  EyeOff
-} from 'lucide-vue-next';
+import { Mail, Lock, User, Eye, EyeOff } from "lucide-vue-next";
 
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 
-import api from '@/services/api';
+import api from "@/services/api";
 import { googleTokenLogin } from "vue3-google-login";
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 const loading = ref(false);
-const errorMessage = ref('');
+const errorMessage = ref("");
 
 const showPassword = ref(false);
 
@@ -28,46 +22,39 @@ const togglePassword = () => {
 };
 
 const form = ref({
-  nome: '',
-  email: '',
-  senha: ''
+  nome: "",
+  email: "",
+  senha: "",
 });
 
 async function handleRegister() {
-
   loading.value = true;
-  errorMessage.value = '';
+  errorMessage.value = "";
 
   try {
-
     // cria usuário
-    await api.post('/registro/', {
+    await api.post("/registro/", {
       name: form.value.nome,
       email: form.value.email,
-      password: form.value.senha
+      password: form.value.senha,
     });
 
     // faz login automático
-    await authStore.login(
-      form.value.email,
-      form.value.senha
-    );
+    await authStore.login(form.value.email, form.value.senha);
 
-    // redireciona já autenticado
-    router.push('/home');
-
+    if (authStore.user.show_onboarding) {
+      router.push("/onboarding");
+    } else {
+      router.push("/home");
+    }
   } catch (err) {
-
     errorMessage.value =
       err.response?.data?.detail ||
       err.response?.data?.email?.[0] ||
       err.response?.data?.password?.[0] ||
-      'Erro ao cadastrar usuário.';
-
+      "Erro ao cadastrar usuário.";
   } finally {
-
     loading.value = false;
-
   }
 }
 
@@ -93,24 +80,15 @@ async function handleGoogleRegister() {
 <template>
   <div class="todo">
     <div class="signup">
-
       <section class="lado-marca">
-
         <header class="info-marca">
           <h1>Crie sua <span>conta</span></h1>
           <p>Seu cantinho de leitura começa aqui.</p>
         </header>
 
-        <form
-          @submit.prevent="handleRegister"
-          class="form"
-        >
-
+        <form @submit.prevent="handleRegister" class="form">
           <div class="campo">
-            <User
-              :size="20"
-              class="input-icon"
-            />
+            <User :size="20" class="input-icon" />
 
             <input
               v-model="form.nome"
@@ -121,10 +99,7 @@ async function handleGoogleRegister() {
           </div>
 
           <div class="campo">
-            <Mail
-              :size="20"
-              class="input-icon"
-            />
+            <Mail :size="20" class="input-icon" />
 
             <input
               v-model="form.email"
@@ -135,10 +110,7 @@ async function handleGoogleRegister() {
           </div>
 
           <div class="campo">
-            <Lock
-              :size="20"
-              class="input-icon"
-            />
+            <Lock :size="20" class="input-icon" />
 
             <input
               v-model="form.senha"
@@ -147,38 +119,20 @@ async function handleGoogleRegister() {
               required
             />
 
-            <button
-              type="button"
-              class="eye-btn"
-              @click="togglePassword"
-            >
-              <Eye
-                v-if="!showPassword"
-                :size="20"
-              />
+            <button type="button" class="eye-btn" @click="togglePassword">
+              <Eye v-if="!showPassword" :size="20" />
 
-              <EyeOff
-                v-else
-                :size="20"
-              />
+              <EyeOff v-else :size="20" />
             </button>
           </div>
 
-          <button
-            type="submit"
-            class="btn-submit"
-            :disabled="loading"
-          >
-            {{ loading ? 'Cadastrando...' : 'Cadastrar' }}
+          <button type="submit" class="btn-submit" :disabled="loading">
+            {{ loading ? "Cadastrando..." : "Cadastrar" }}
           </button>
 
-          <p
-            v-if="errorMessage"
-            class="error"
-          >
+          <p v-if="errorMessage" class="error">
             {{ errorMessage }}
           </p>
-
         </form>
 
         <div class="divider">
@@ -195,16 +149,13 @@ async function handleGoogleRegister() {
         </button>
 
         <footer class="form-footer">
-
           <RouterLink to="/">
             <p>
               Já tem uma conta?
               <span>Entre aqui</span>
             </p>
           </RouterLink>
-
         </footer>
-
       </section>
     </div>
   </div>
@@ -217,7 +168,7 @@ async function handleGoogleRegister() {
   align-items: center;
   justify-content: center;
   background-color: #f5e6d3;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   padding: 20px;
 }
 
@@ -340,7 +291,7 @@ input:focus {
 
 .divider::before,
 .divider::after {
-  content: '';
+  content: "";
   flex: 1;
   border-bottom: 1px solid #e8e1da;
 }
@@ -385,7 +336,7 @@ input:focus {
 }
 
 .form-footer a {
-  color: #2C2C2C;
+  color: #2c2c2c;
   text-decoration: none;
   font-weight: bold;
 }
@@ -395,7 +346,6 @@ input:focus {
 }
 
 @media (max-width: 768px) {
-
   .lado-marca {
     padding: 40px 20px;
   }

@@ -12,19 +12,24 @@ const router = useRouter();
 const authStore = useAuthStore();
 const user = computed(() => authStore.user);
 
+const avatarLoaded = ref(false);
+
 const isHome = computed(() => route.path === "/home");
 const isLivros = computed(() => route.path === "/meus-livros");
 const isMarketplace = computed(() => route.path === "/marketplace");
 const isExplore = computed(() => route.path === "/explore");
-
 
 const menuAberto = ref(false);
 
 const userEmail = computed(() => user.value?.email || "");
 
 const userPhoto = computed(() => {
-  if (authStore.user?.foto?.url) {
-    return `${import.meta.env.VITE_BACKEND_URL}${authStore.user.foto.url}`;
+  const url = authStore.user?.foto?.url;
+
+  if (url) {
+    return url.startsWith("http")
+      ? url
+      : `${import.meta.env.VITE_BACKEND_URL}${url}`;
   }
 
   if (authStore.user?.google_picture) {
@@ -44,11 +49,9 @@ console.log(authStore.user);
 console.log(authStore.user?.google_picture);
 console.log(userPhoto.value);
 console.count("AppHeader");
-
 </script>
 
 <template>
-
   <header class="app-header">
     <div class="left">
       <h1 @click="router.push('/home')">ReadMore</h1>
@@ -104,9 +107,11 @@ console.count("AppHeader");
           alt="avatar"
           class="avatar"
           @click="menuAberto = !menuAberto"
-          @load="console.log('imagem carregada')"
-          @error="console.log('imagem falhou')"
+          @load="avatarLoaded = true"
+          @error="avatarLoaded = true"
+          :style="{ opacity: avatarLoaded ? 1 : 0 }"
         />
+        <div v-if="!avatarLoaded" class="avatar-skeleton"></div>
 
         <div v-if="menuAberto" class="menu-usuario">
           <div class="menu-header">
@@ -128,14 +133,23 @@ console.count("AppHeader");
       </div>
     </div>
   </header>
-
 </template>
 
 <style scoped>
-
 button a {
   text-decoration: none;
   color: #654321;
+}
+
+.avatar-skeleton {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #e5e5e5;
+}
+
+img {
+  transition: opacity .2s;
 }
 
 .app-header {
@@ -552,7 +566,7 @@ button {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  
+
   .menu-usuario {
     position: fixed;
     display: flex;
