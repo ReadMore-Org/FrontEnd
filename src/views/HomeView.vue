@@ -15,6 +15,8 @@ import StatsCard from "@/components/home/statsCard.vue";
 import barraProgresso from "@/components/home/barraProgresso.vue";
 import ProdutoView from "@/views/ProdutoView.vue";
 import ListaRecursos from "@/components/home/listaRecursos.vue";
+import OtherBookCard from "@/components/books/otherBookCard.vue";
+import GradeBook from "@/components/books/GradeBook.vue";
 
 const googleBooksStore = useGoogleBooksStore();
 const livroStore = useLivrosStore();
@@ -45,48 +47,22 @@ console.log("LIVROS BACKEND:", livroStore.livros);
     <cardMarketplace />
     <ListaRecursos />
     <div class="margin">
-      <h1 class="titulo-secao">Recomendados</h1>
-      <div class="lista-livros">
-        <Splide
-          :options="{
-            perPage: 3,
-            gap: '0px',
-            breakpoints: {
-              640: {
-                perPage: 1,
-                gap: '30px',
-              },
-            },
-            arrows: true,
-            pagination: false,
-            drag: 'free',
-          }"
-        >
-          <SplideSlide v-for="livro in googleBooksStore.resultados" :key="livro.id">
-            <RouterLink :to="`/livro/google/${livro.id}`">
-              <BookCard :livro="livro" />
-            </RouterLink>
-          </SplideSlide>
-        </Splide>
-      </div>
 
       <h1 class="titulo-secao">Meus livros</h1>
       <div class="lista-livros">
-        <Splide
-          :options="{
-            perPage: 3,
-            gap: '0px',
-            breakpoints: {
-              640: {
-                perPage: 1,
-                gap: '30px',
-              },
+        <Splide :options="{
+          perPage: 3,
+          gap: '0px',
+          breakpoints: {
+            640: {
+              perPage: 1,
+              gap: '30px',
             },
-            arrows: true,
-            pagination: false,
-            drag: 'free',
-          }"
-        >
+          },
+          arrows: true,
+          pagination: false,
+          drag: 'free',
+        }">
           <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
             <RouterLink :to="`/livro/${livro.id}`">
               <BookCard :livro="livro" />
@@ -106,64 +82,58 @@ console.log("LIVROS BACKEND:", livroStore.livros);
       <h1 class="titulo-secao">Meta 2026</h1>
       <barraProgresso />
 
-      <h1 class="titulo-secao">Recomendados para você</h1>
-      <div class="lista-livros">
-        <Splide
-          :options="{
-            perPage: 3,
-            gap: '0px',
-            breakpoints: {
-              640: {
-                perPage: 1,
-                gap: '30px',
-              },
-            },
-            arrows: true,
-            pagination: false,
-            drag: 'free',
-          }"
-        >
-          <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
-            <BookCard :livro="livro" />
-          </SplideSlide>
-        </Splide>
-      </div>
+      <h1 class="titulo-secao">testando</h1>
+      <GradeBook titulo="testando" :livros="googleBooksStore.resultados">
+        <template #default="{ livro }">
+          <OtherBookCard :livro="livro" />
+        </template>
+      </GradeBook>
     </div>
+
     <AppFooter />
   </template>
 </template>
 
 <style scoped>
 .loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background-color: #fcfbf9; /* Um fundo levemente off-white combinando com estética de livros */
-    font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #fcfbf9;
+  /* Um fundo levemente off-white combinando com estética de livros */
+  font-family: sans-serif;
 }
 
 .spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #E0D7D0; /* Cor suave de fundo */
-    border-top: 5px solid #6B4226; /* A cor marrom que você usou nos títulos */
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
+  width: 50px;
+  height: 50px;
+  border: 5px solid #E0D7D0;
+  /* Cor suave de fundo */
+  border-top: 5px solid #6B4226;
+  /* A cor marrom que você usou nos títulos */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
 }
 
 .loading-container p {
-    color: #6B4226;
-    font-weight: 500;
-    font-size: 18px;
+  color: #6B4226;
+  font-weight: 500;
+  font-size: 18px;
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
+
 .lista-cards {
   display: flex;
   justify-content: space-between;
@@ -181,7 +151,7 @@ console.log("LIVROS BACKEND:", livroStore.livros);
 }
 
 #top1 {
-    margin-top: 120px;
+  margin-top: 120px;
 }
 
 .titulo-secao::after {

@@ -10,20 +10,17 @@ defineProps({
 const getBookCover = (livro) => {
   if (!livro) return "/imgs/livro_sem_capa.png";
 
-  let capa = typeof livro.capa === "string" ? livro.capa : livro.capa?.url;
+  const capa = livro.capa;
+  const url = typeof capa === "string" ? capa : capa?.url;
 
-  if (capa) {
-    // Se a capa vem do Google (começa com http)
-    if (capa.startsWith("http")) {
-      // Força o uso de https:// trocando o início se necessário
-      return capa.replace(/^http:\/\//i, "https://");
-    }
-    
-    // Se for uma capa interna da sua API
-    return `${import.meta.env.VITE_API_BASE_URL}${capa}`;
+  if (!url) return "/imgs/livro_sem_capa.png";
+
+  if (url.startsWith("http")) {
+    const isLocal = /^https?:\/\/(127\.0\.0\.1|localhost)/i.test(url);
+    return isLocal ? url : url.replace(/^http:\/\//i, "https://");
   }
 
-  return "/imgs/livro_sem_capa.png";
+  return `${import.meta.env.VITE_API_BASE_URL}${url}`;
 };
 
 

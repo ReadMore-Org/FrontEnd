@@ -27,6 +27,15 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
   const error = ref(null);
 
   // =========================
+  // ESTADO DA BUSCA (persiste entre navegações)
+  // =========================
+  const termoBusca = ref("");
+  const idiomasSelecionados = ref([]);
+  const categoriasSelecionadas = ref([]);
+  const ordenacao = ref("relevance");
+  const jaBuscou = ref(false);
+
+  // =========================
   // PESQUISAR LIVROS
   // =========================
   async function pesquisarLivros(query) {
@@ -150,6 +159,13 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
     livroSelecionado,
     loading,
     error,
+
+    // estado de busca
+    termoBusca,
+    idiomasSelecionados,
+    categoriasSelecionadas,
+    ordenacao,
+    jaBuscou,
 
     pesquisarLivros,
     buscarRecomendados,

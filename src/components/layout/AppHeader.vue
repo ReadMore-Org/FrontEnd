@@ -15,6 +15,8 @@ const user = computed(() => authStore.user);
 const isHome = computed(() => route.path === "/home");
 const isLivros = computed(() => route.path === "/meus-livros");
 const isMarketplace = computed(() => route.path === "/marketplace");
+const isExplore = computed(() => route.path === "/explore");
+
 
 const menuAberto = ref(false);
 
@@ -62,6 +64,10 @@ console.count("AppHeader");
 
           <li :class="{ active: isMarketplace }">
             <RouterLink to="/marketplace">Marketplace</RouterLink>
+          </li>
+
+          <li :class="{ active: isExplore }">
+            <RouterLink to="/explore">Explore</RouterLink>
           </li>
         </ul>
       </nav>
