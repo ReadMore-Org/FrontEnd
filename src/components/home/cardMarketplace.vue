@@ -9,7 +9,7 @@ import { Store } from 'lucide-vue-next'
         <button> <p>Ver mercado</p><Store /></button>
     </div>
     <div class="direita">
-        <img src="/public/imgs/imagemCard.png" alt="livros" class="livros">
+        <img src="/imgs/imagemCard.png" alt="livros" class="livros">
     </div>
 </div>
 </template>

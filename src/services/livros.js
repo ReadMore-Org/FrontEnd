@@ -15,3 +15,24 @@ export const deleteLivro = (id) => api.delete(`/livros/${id}/`)
 export const getCategorias = () => api.get('/categorias/')
 
 export const getEditoras = () => api.get('/editoras/')
+
+export function importarLivroGoogle(livro, status) {
+  const payload = {
+    titulo: livro.titulo,
+    subtitulo: livro.subtitulo || null,
+    isbn: livro.isbn || null,
+    sinopse: livro.sinopse || null,
+    idioma: livro.idioma || null,
+    paginas: livro.paginas || null,
+    avaliacoes: livro.avaliacoes ?? null,
+    nota: livro.nota ?? null,
+    publicacao: livro.publicacao || null,
+    editora: livro.editora || null,
+    autores: (livro.autores || []).map((a) => (typeof a === 'string' ? a : a.nome)),
+    categorias: livro.categorias || [],
+    capa: livro.capa || null,
+    status,
+  };
+
+  return api.post('/livros/importar-google/', payload);
+}

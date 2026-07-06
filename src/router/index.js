@@ -12,7 +12,7 @@ import EditProfileView from "@/views/EditProfileView.vue";
 import AddBookView from "@/views/AddBookView.vue";
 import ScanCodeView from "@/views/ScanCodeView.vue";
 import ManualBookView from "@/views/ManualBookView.vue";
-
+import ExploreView from "@/views/ExploreView.vue";
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -70,6 +70,12 @@ const router = createRouter({
       path: "/manual",
       name: "manual",
       component: ManualBookView,
+    },
+    ,
+    {
+      path: "/explore",
+      name: "explore",
+      component: ExploreView,
     },
   ],
 });
