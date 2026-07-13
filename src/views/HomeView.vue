@@ -23,14 +23,19 @@ const livroStore = useLivrosStore();
 
 const isLoading = ref(true);
 
-onMounted(async () => {
-  try {
-    await Promise.all([livroStore.fetchLivros(), googleBooksStore.buscarRecomendados()]);
-  } catch (error) {
-    console.error("Erro ao carregar dados:", error);
-  } finally {
-    isLoading.value = false;
-  }
+onMounted(() => {
+  // Busca os livros locais do seu backend (geralmente rápido)
+  livroStore
+    .fetchLivros()
+    .catch((err) => console.error("Erro livros locais:", err));
+
+  // Busca os recomendados do Google Books sem travar o resto do fluxo principal
+  googleBooksStore
+    .buscarRecomendados()
+    .catch((err) => console.error("Erro recomendados:", err))
+    .finally(() => {
+      isLoading.value = false; // Desativa o spinner principal da página
+    });
 });
 
 console.log("LIVROS BACKEND:", livroStore.livros);
@@ -47,22 +52,23 @@ console.log("LIVROS BACKEND:", livroStore.livros);
     <cardMarketplace />
     <ListaRecursos />
     <div class="margin">
-
       <h1 class="titulo-secao">Meus livros</h1>
       <div class="lista-livros">
-        <Splide :options="{
-          perPage: 3,
-          gap: '0px',
-          breakpoints: {
-            640: {
-              perPage: 1,
-              gap: '30px',
+        <Splide
+          :options="{
+            perPage: 3,
+            gap: '0px',
+            breakpoints: {
+              640: {
+                perPage: 1,
+                gap: '30px',
+              },
             },
-          },
-          arrows: true,
-          pagination: false,
-          drag: 'free',
-        }">
+            arrows: true,
+            pagination: false,
+            drag: 'free',
+          }"
+        >
           <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
             <RouterLink :to="`/livro/${livro.id}`">
               <BookCard :livro="livro" />
@@ -83,7 +89,12 @@ console.log("LIVROS BACKEND:", livroStore.livros);
       <barraProgresso />
 
       <h1 class="titulo-secao">Recomendados</h1>
-      <GradeBook titulo="testando" :livros="googleBooksStore.resultados">
+      <GradeBook
+        titulo="testando"
+        :livros="googleBooksStore.recomendados"
+        :carregandoMais="googleBooksStore.loading"
+        @buscarMaisDados="googleBooksStore.carregarMaisRecomendados"
+      >
         <template #default="{ livro }">
           <OtherBookCard :livro="livro" />
         </template>
@@ -109,9 +120,9 @@ console.log("LIVROS BACKEND:", livroStore.livros);
 .spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid #E0D7D0;
+  border: 5px solid #e0d7d0;
   /* Cor suave de fundo */
-  border-top: 5px solid #6B4226;
+  border-top: 5px solid #6b4226;
   /* A cor marrom que você usou nos títulos */
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -119,7 +130,7 @@ console.log("LIVROS BACKEND:", livroStore.livros);
 }
 
 .loading-container p {
-  color: #6B4226;
+  color: #6b4226;
   font-weight: 500;
   font-size: 18px;
 }

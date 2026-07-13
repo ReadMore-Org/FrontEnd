@@ -14,7 +14,15 @@ const props = defineProps({
     type: Number,
     default: 3,
   },
+  // Adicionamos uma prop para sabermos se a store ainda está a carregar dados da API
+  carregandoMais: {
+    type: Boolean,
+    default: false,
+  }
 });
+
+// Definimos o evento personalizado que vai avisar o componente pai que precisamos de mais livros da API
+const emit = defineEmits(["buscarMaisDados"]);
 
 const ITEM_WIDTH = 180;
 const GAP = 24;
@@ -50,10 +58,19 @@ const livrosVisiveis = computed(() =>
   props.livros.slice(0, quantidadeVisivel.value)
 );
 
-const temMais = computed(() => quantidadeVisivel.value < props.livros.length);
+// O botão vai aparecer se ainda existirem linhas escondidas no array OU se a API tiver mais a entregar
+const temMaisNaGrade = computed(() => quantidadeVisivel.value < props.livros.length);
 
 function carregarMais() {
-  linhasVisiveis.value += props.linhasPorClique;
+  if (temMaisNaGrade.value) {
+    // Se ainda há livros guardados no array local que vieram da store, apenas expande as linhas
+    linhasVisiveis.value += props.linhasPorClique;
+  } else {
+    // 🔥 Se o array local acabou, dispara o evento para a Home chamar a API e trazer mais autores!
+    emit("buscarMaisDados");
+    // Aumentamos as linhas preventivamente para que os novos dados que vão entrar no array sejam exibidos
+    linhasVisiveis.value += props.linhasPorClique;
+  }
 }
 </script>
 
@@ -66,9 +83,13 @@ function carregarMais() {
       </div>
     </div>
 
-    <div class="acoes-grade" v-if="temMais">
-      <button class="btn-carregar-mais" @click="carregarMais">
-        Carregar mais
+    <div class="acoes-grade">
+      <button 
+        class="btn-carregar-mais" 
+        @click="carregarMais"
+        :disabled="carregandoMais"
+      >
+        {{ carregandoMais ? "Buscando mais livros..." : "Carregar mais" }}
       </button>
     </div>
   </section>
@@ -108,16 +129,23 @@ function carregarMais() {
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.btn-carregar-mais:hover {
+.btn-carregar-mais:hover:not(:disabled) {
   background-color: #6b4226;
   color: #fff;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(107, 66, 38, 0.25);
 }
 
-.btn-carregar-mais:active {
+.btn-carregar-mais:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: none;
+}
+
+.btn-carregar-mais:disabled {
+  background-color: #e8d8c3;
+  color: #9c8a7a;
+  border-color: #e8d8c3;
+  cursor: not-allowed;
 }
 
 @media (max-width: 650px) {
