@@ -1,42 +1,37 @@
 import axios from "axios";
 
-const API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY;
+const API_KEY = "AIzaSyBsS5MT1KT9j3XPcqnm_q7-wxx6kdQzZDU"; // Sua chave atual
+const BASE_URL = "https://www.googleapis.com/books/v1/volumes";
 
-const googleBooksApi = axios.create({
-  baseURL: "https://www.googleapis.com/books/v1",
-});
-
-export async function searchBooks(query) {
-  const response = await googleBooksApi.get("/volumes", {
+export async function searchBooks(query, startIndex = 0, maxResults = 20) {
+  const response = await axios.get(BASE_URL, {
     params: {
       q: query,
-      key: API_KEY,
-      maxResults: 20,
+      startIndex,
+      maxResults,
       langRestrict: "pt",
-      orderBy: "relevance", 
+      orderBy: "relevance",
+      key: API_KEY,
     },
   });
-
   return response.data;
 }
 
 export async function searchBookByISBN(isbn) {
-  const response = await googleBooksApi.get("/volumes", {
+  const response = await axios.get(BASE_URL, {
     params: {
       q: `isbn:${isbn}`,
       key: API_KEY,
     },
   });
-
   return response.data;
 }
 
 export async function getBookById(id) {
-  const response = await googleBooksApi.get(`/volumes/${id}`, {
+  const response = await axios.get(`${BASE_URL}/${id}`, {
     params: {
       key: API_KEY,
     },
   });
-
   return response.data;
-} 
+}

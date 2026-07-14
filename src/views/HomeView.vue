@@ -92,7 +92,7 @@ console.log("LIVROS BACKEND:", livroStore.livros);
       <GradeBook
         titulo="testando"
         :livros="googleBooksStore.recomendados"
-        :carregandoMais="googleBooksStore.loading"
+        :carregandoMais="googleBooksStore.loadingMais"
         @buscarMaisDados="googleBooksStore.carregarMaisRecomendados"
       >
         <template #default="{ livro }">

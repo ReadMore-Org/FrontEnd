@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 
-const props = defineProps({ 
+const props = defineProps({
   livros: {
     type: Array,
     required: true,
@@ -14,14 +14,12 @@ const props = defineProps({
     type: Number,
     default: 3,
   },
-  // Adicionamos uma prop para sabermos se a store ainda está a carregar dados da API
   carregandoMais: {
     type: Boolean,
     default: false,
-  }
+  },
 });
 
-// Definimos o evento personalizado que vai avisar o componente pai que precisamos de mais livros da API
 const emit = defineEmits(["buscarMaisDados"]);
 
 const ITEM_WIDTH = 180;
@@ -39,9 +37,7 @@ function calcularColunas(largura) {
 
 onMounted(() => {
   if (!gradeEl.value) return;
-
   colunas.value = calcularColunas(gradeEl.value.clientWidth);
-
   observer = new ResizeObserver((entries) => {
     colunas.value = calcularColunas(entries[0].contentRect.width);
   });
@@ -53,22 +49,20 @@ onBeforeUnmount(() => {
 });
 
 const quantidadeVisivel = computed(() => colunas.value * linhasVisiveis.value);
-
 const livrosVisiveis = computed(() =>
-  props.livros.slice(0, quantidadeVisivel.value)
+  props.livros.slice(0, quantidadeVisivel.value),
+);
+const temMaisNaGrade = computed(
+  () => quantidadeVisivel.value < props.livros.length,
 );
 
-// O botão vai aparecer se ainda existirem linhas escondidas no array OU se a API tiver mais a entregar
-const temMaisNaGrade = computed(() => quantidadeVisivel.value < props.livros.length);
-
 function carregarMais() {
+  if (props.carregandoMais) return;
+
   if (temMaisNaGrade.value) {
-    // Se ainda há livros guardados no array local que vieram da store, apenas expande as linhas
     linhasVisiveis.value += props.linhasPorClique;
   } else {
-    // 🔥 Se o array local acabou, dispara o evento para a Home chamar a API e trazer mais autores!
     emit("buscarMaisDados");
-    // Aumentamos as linhas preventivamente para que os novos dados que vão entrar no array sejam exibidos
     linhasVisiveis.value += props.linhasPorClique;
   }
 }
@@ -76,7 +70,6 @@ function carregarMais() {
 
 <template>
   <section class="grade-livros-secao">
-
     <div class="grade-livros" ref="gradeEl">
       <div v-for="livro in livrosVisiveis" :key="livro.id" class="item-livro">
         <slot :livro="livro" />
@@ -84,8 +77,8 @@ function carregarMais() {
     </div>
 
     <div class="acoes-grade">
-      <button 
-        class="btn-carregar-mais" 
+      <button
+        class="btn-carregar-mais"
         @click="carregarMais"
         :disabled="carregandoMais"
       >
@@ -99,24 +92,20 @@ function carregarMais() {
 .grade-livros-secao {
   width: 100%;
 }
-
 .grade-livros {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 24px;
 }
-
 .item-livro {
   text-decoration: none;
   color: inherit;
 }
-
 .acoes-grade {
   display: flex;
   justify-content: center;
   margin-top: 24px;
 }
-
 .btn-carregar-mais {
   background-color: #fff;
   color: #6b4226;
@@ -126,32 +115,21 @@ function carregarMais() {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
-
 .btn-carregar-mais:hover:not(:disabled) {
   background-color: #6b4226;
   color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(107, 66, 38, 0.25);
 }
-
-.btn-carregar-mais:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: none;
-}
-
 .btn-carregar-mais:disabled {
   background-color: #e8d8c3;
   color: #9c8a7a;
   border-color: #e8d8c3;
-  cursor: not-allowed;
-}
 
-@media (max-width: 650px) {
-  .grade-livros {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 16px;
-  }
+  cursor: not-allowed;
+  opacity: 0.7;
+
+  pointer-events: none;
 }
 </style>

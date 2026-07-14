@@ -1,20 +1,17 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
-
 import { googleBookToLivro } from "@/utils/googleBooksAdapter";
-
 import {
   searchBooks,
   searchBookByISBN,
   getBookById,
 } from "@/services/googleBooks";
 
-// Helper para pausar a execução
+// ============================================================================
+// HELPERS
+// ============================================================================
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// =========================
-// SHUFFLE (EMBARALHAMENTO)
-// =========================
 function shuffle(array) {
   return array
     .map((v) => ({ v, sort: Math.random() }))
@@ -23,45 +20,143 @@ function shuffle(array) {
 }
 
 export const useGoogleBooksStore = defineStore("googleBooks", () => {
-  // ESTADOS DE DADOS SEPARADOS
-  const resultados = ref([]); // Exclusivo para buscas textuais/filtros da página de pesquisa
-  const recomendados = ref([]); // Exclusivo para acumular os livros na Home Page
-  const livroSelecionado = ref(null);
+  // ============================================================================
+  // CONSTANTES (Item 13)
+  // ============================================================================
+  const MAX_RESULTS = 20;
+  const RECOMENDADOS_POR_LOTE = 12;
+  const RETRY_DELAY = 500;
 
-  const loading = ref(false);
-  const error = ref(null);
-
-  // CONTROLE DE PAGINAÇÃO DOS RECOMENDADOS
-  const indiceAutorAtual = ref(0);
-  const paginaAtualPorAutor = ref(0);
-
+  // Lista expandida com 20 autores/termos amplos para maior variedade (Item 17)
   const autoresRecomendados = [
     "inauthor:Machado de Assis",
     "inauthor:Clarice Lispector",
     "inauthor:Jorge Amado",
     "inauthor:George Orwell",
     "inauthor:J.K. Rowling",
+    "inauthor:José Saramago",
+    "inauthor:Fernando Pessoa",
+    "inauthor:Agatha Christie",
+    "inauthor:Stephen King",
+    "inauthor:J.R.R. Tolkien",
+    "livros brasileiros",
   ];
 
-  // =========================
-  // ESTADO DA BUSCA (persiste entre navegações)
-  // =========================
+  // ============================================================================
+  // STATE
+  // ============================================================================
+  const resultados = ref([]);
+  const recomendados = ref([]);
+  const livroSelecionado = ref(null);
+
+  // Loadings totalmente independentes (Item 2)
+  const loadingPesquisa = ref(false);
+  const loadingRecomendados = ref(false);
+  const loadingMais = ref(false);
+  const error = ref(null);
+
+  // Flag anti-múltiplos cliques simultâneos (Item 3)
+  const carregandoMais = ref(false);
+
+  // Paginação inteligente por autor/termo (Item 4)
+  const indiceAutorAtual = ref(0);
+  const paginasAutores = ref({});
+  const autoresSelecionados = ref([]);
+
+  // Filtros de persistência da pesquisa por texto
   const termoBusca = ref("");
   const idiomasSelecionados = ref([]);
   const categoriasSelecionadas = ref([]);
   const ordenacao = ref("relevance");
   const jaBuscou = ref(false);
 
-  // =========================
-  // PESQUISAR LIVROS
-  // =========================
-  async function pesquisarLivros(query) {
-    loading.value = true;
-    error.value = null;
+  // ============================================================================
+  // HELPER INTERNO DE REQUISIÇÃO (Item 11 / Item 6 / Item 7 / Item 10)
+  // ============================================================================
+  async function buscarAutor(autor) {
+    // Inicializa a página do autor se não existir
+    if (!paginasAutores.value[autor]) {
+      paginasAutores.value[autor] = 0;
+    }
+
+    const startIndex = paginasAutores.value[autor] * MAX_RESULTS;
+    let responseData = null;
+
+    // Função interna para controle estrito de até 2 retries (Item 6)
+    async function executarChamada(
+      queryStr,
+      tentativa = 1,
+      tempoEspera = RETRY_DELAY,
+    ) {
+      try {
+        return await searchBooks(queryStr, startIndex, MAX_RESULTS);
+      } catch (err) {
+        const status = err.response?.status;
+        if (tentativa < 2 && (status === 503 || status === 429 || !status)) {
+          console.warn(
+            `⚠️ Erro ${status || "Conexão"}. Tentativa ${tentativa} para "${queryStr}". Recuando ${tempoEspera}ms...`,
+          );
+          await delay(tempoEspera);
+          return await executarChamada(
+            queryStr,
+            tentativa + 1,
+            tempoEspera * 2,
+          );
+        }
+        throw err; // Estoura o erro se falhar na segunda tentativa
+      }
+    }
 
     try {
-      const response = await searchBooks(query);
+      // Primeira tentativa: Filtro oficial
+      responseData = await executarChamada(autor);
+    } catch (err) {
+      // Apenas uma tentativa de Fallback se for filtro estrito (Item 7 / Item 16)
+      if (autor.includes("inauthor:")) {
+        console.warn(
+          `🔄 Falha estrita de 503/Conexão para "${autor}". Executando plano B textual único...`,
+        );
+        const termoSimples = autor.replace("inauthor:", "");
+        try {
+          responseData = await executarChamada(termoSimples, 1, RETRY_DELAY);
+        } catch (fallbackErr) {
+          console.error(
+            `❌ Falha definitiva em ambas abordagens para: ${autor}`,
+          );
+          throw fallbackErr;
+        }
+      } else {
+        throw err;
+      }
+    }
 
+    const items = responseData?.items ?? [];
+    if (items.length === 0) return [];
+
+    // Processamento isolado do lote novo vindo do servidor (Item 9)
+    const novosConvertidos = items
+      .map((item) => googleBookToLivro(item))
+      .filter((livro) => livro.titulo && livro.capa);
+
+    // Controle de duplicatas simplificado via Set (Item 10)
+    const existentes = new Set(recomendados.value.map((l) => l.id));
+    const novosSemDuplicatas = novosConvertidos.filter(
+      (l) => !existentes.has(l.id),
+    );
+
+    // Embaralha unicamente as novas aquisições e corta no limite estipulado
+    const loteFinalSorteado = shuffle(novosSemDuplicatas);
+    return loteFinalSorteado.slice(0, RECOMENDADOS_POR_LOTE);
+  }
+
+  // ============================================================================
+  // BUSCAS
+  // ============================================================================
+  async function pesquisarLivros(query) {
+    loadingPesquisa.value = true;
+    error.value = null;
+    try {
+      const response = await searchBooks(query, 0, MAX_RESULTS);
       resultados.value = (response.items ?? [])
         .map((item) => googleBookToLivro(item))
         .filter((livro) => livro.titulo);
@@ -69,200 +164,133 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
       console.error(err);
       error.value = "Erro ao pesquisar livros.";
     } finally {
-      loading.value = false;
+      loadingPesquisa.value = false;
     }
   }
 
-  // =========================
-  // CARREGAR MAIS RECOMENDADOS (Com Fallback e Rotação de Fila)
-  // =========================
+  // ============================================================================
+  // RECOMENDADOS
+  // ============================================================================
   async function carregarMaisRecomendados() {
-    if (loading.value) return;
+    if (carregandoMais.value) return;
 
-    loading.value = true;
+    carregandoMais.value = true;
+    loadingMais.value = true;
     error.value = null;
 
-    async function fetchComRetry(
-      queryStr,
-      tentativasRestantes = 3,
-      tempoEspera = 800,
-    ) {
-      try {
-        return await searchBooks(queryStr);
-      } catch (err) {
-        const status = err.response?.status;
-        if (
-          tentativasRestantes > 0 &&
-          (status === 503 || status === 429 || !status)
-        ) {
-          console.warn(
-            `⚠️ API instável para "${queryStr}". Tentando novamente em ${tempoEspera}ms...`,
-          );
-          await delay(tempoEspera);
-          return await fetchComRetry(
-            queryStr,
-            tentativasRestantes - 1,
-            tempoEspera * 2,
-          );
-        }
-        throw err;
-      }
-    }
-
-    const autorOriginal = autoresRecomendados[indiceAutorAtual.value];
-
     try {
-      const itensPorPagina = 20;
-      const startIndex = paginaAtualPorAutor.value * itensPorPagina;
+      const autoresDoLote = autoresSelecionados.value;
 
-      console.log(
-        `🔍 Buscando mais livros de: ${autorOriginal} (Index: ${startIndex})`,
+      // Faz as buscas dos 4 autores ao mesmo tempo
+      const resultadosAutores = await Promise.all(
+        autoresDoLote.map(async (autor) => {
+          try {
+            const livros = await buscarAutor(autor);
+
+            if (livros.length > 0) {
+              paginasAutores.value[autor]++;
+            }
+
+            // Pega apenas 3 livros de cada autor
+            return livros.slice(0, 3);
+          } catch (err) {
+            console.warn(`Erro ao buscar ${autor}`, err);
+
+            // Se um autor falhar, os outros continuam normalmente
+            return [];
+          }
+        }),
       );
 
-      let responseData;
+      // Junta todos os livros retornados
+      let livrosNovos = resultadosAutores.flat();
 
-      try {
-        responseData = await fetchComRetry(
-          `${autorOriginal}&startIndex=${startIndex}`,
-        );
-      } catch (apiErr) {
-        console.warn(
-          `🔄 Filtro estrito falhou para "${autorOriginal}". Tentando busca textual simples como Fallback...`,
-        );
-        const termoSimples = autorOriginal.replace("inauthor:", "");
-        responseData = await fetchComRetry(
-          `${termoSimples}&startIndex=${startIndex}`,
-          2,
-          400,
-        );
-      }
+      // Mistura apenas o lote novo
+      livrosNovos = shuffle(livrosNovos);
 
-      const items = responseData?.items ?? [];
-
-      if (items.length > 0) {
-        // 1. Converte e filtra os válidos com capa do lote atual vindo da API
-        const novosLivrosFiltrados = items
-          .map((item) => googleBookToLivro(item))
-          .filter((livro) => livro.titulo && livro.capa);
-
-        // 2. 🔥 EMBARALHA APENAS OS NOVOS LIVROS QUE CHEGARAM AGORA
-        const loteNovoMisturado = shuffle(novosLivrosFiltrados);
-
-        // 3. Corta para pegar a quantidade padrão (ex: 12) desse lote novo misturado
-        const QUANTIDADE_PADRAO = 12;
-        const loteDoAutor = loteNovoMisturado.slice(0, QUANTIDADE_PADRAO);
-
-        // 4. Cria a lista estendida mantendo os livros anteriores na EXATA mesma ordem
-        const listaCombinada = [...recomendados.value, ...loteDoAutor];
-
-        // 5. Filtra duplicatas globais (se houver IDs repetidos, mantém a primeira ocorrência detectada)
-        const listaSemDuplicatas = Array.from(
-          new Map(listaCombinada.map((livro) => [livro.id, livro])).values(),
-        );
-
-        console.log(
-          `📊 Adicionados ${loteDoAutor.length} novos livros mantendo fixos os anteriores.`,
-        );
-
-        // 6. Atualiza o estado sem desordenar o histórico da tela
-        recomendados.value = listaSemDuplicatas;
-      } else {
-        console.warn(
-          `⚠️ Nenhuns itens retornados para o autor: ${autorOriginal}`,
-        );
+      // Adiciona ao final dos recomendados
+      if (livrosNovos.length > 0) {
+        recomendados.value.push(...livrosNovos);
       }
     } catch (err) {
-      console.error(
-        `❌ Falha definitiva ao carregar mais recomendações de "${autorOriginal}":`,
-        err,
-      );
-      error.value =
-        "Não foi possível carregar este autor. Clique novamente para tentar o próximo.";
+      console.error(err);
+
+      error.value = "Não foi possível carregar novos livros recomendados.";
     } finally {
-      indiceAutorAtual.value =
-        (indiceAutorAtual.value + 1) % autoresRecomendados.length;
-
-      if (indiceAutorAtual.value === 0) {
-        paginaAtualPorAutor.value += 1;
-      }
-
-      loading.value = false;
+      carregandoMais.value = false;
+      loadingMais.value = false;
     }
   }
 
-  // =========================
-  // BUSCAR RECOMENDADOS (Carregamento Inicial Robusto)
-  // =========================
   async function buscarRecomendados() {
     if (recomendados.value.length > 0) return;
 
-    console.log("🚀 Iniciando carga robusta e limpa para a Home...");
+    loadingRecomendados.value = true;
 
-    // Traz o primeiro autor
-    await carregarMaisRecomendados();
+    try {
+      // Escolhe 4 autores aleatórios apenas uma vez
+      if (autoresSelecionados.value.length === 0) {
+        autoresSelecionados.value = shuffle([...autoresRecomendados]).slice(
+          0,
+          4,
+        );
+      }
 
-    // Aumentamos para 800ms de intervalo apenas na carga inicial.
-    // Esse tempo é o suficiente para o Google limpar a cota do seu IP.
-    await delay(800);
-
-    // Traz o segundo autor de forma segura
-    await carregarMaisRecomendados();
+      await carregarMaisRecomendados();
+    } finally {
+      loadingRecomendados.value = false;
+    }
   }
 
-  // =========================
-  // PESQUISAR POR ISBN
-  // =========================
+  // ============================================================================
+  // ISBN
+  // ============================================================================
   async function pesquisarPorISBN(isbn) {
-    loading.value = true;
-    error.value = null;
-
+    // Não é bloqueado por outras requisições em andamento
     try {
       const response = await searchBookByISBN(isbn);
       const item = response.items?.[0] ?? null;
       livroSelecionado.value = item ? googleBookToLivro(item) : null;
     } catch (err) {
       console.error(err);
-      error.value = "Erro ao pesquisar ISBN.";
-    } finally {
-      loading.value = false;
     }
   }
 
-  // =========================
-  // BUSCAR LIVRO POR ID
-  // =========================
+  // ============================================================================
+  // LIVRO
+  // ============================================================================
   async function buscarLivro(id) {
-    loading.value = true;
-    error.value = null;
-
     try {
       const response = await getBookById(id);
       livroSelecionado.value = googleBookToLivro(response);
     } catch (err) {
       console.error(err);
-      error.value = "Erro ao carregar livro.";
-    } finally {
-      loading.value = false;
     }
   }
 
-  // =========================
-  // LIMPAR ESTADO
-  // =========================
+  // ============================================================================
+  // LIMPEZA
+  // ============================================================================
   function limparResultados() {
     resultados.value = [];
     recomendados.value = [];
     livroSelecionado.value = null;
     error.value = null;
     indiceAutorAtual.value = 0;
-    paginaAtualPorAutor.value = 0;
+    paginasAutores.value = {};
   }
 
+  // ============================================================================
+  // RETURN
+  // ============================================================================
   return {
     resultados,
     recomendados,
     livroSelecionado,
-    loading,
+    loadingPesquisa,
+    loadingRecomendados,
+    loadingMais,
+    carregandoMais,
     error,
     termoBusca,
     idiomasSelecionados,
