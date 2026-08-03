@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
+
 import HomeView from "../views/HomeView.vue";
+import MarketplaceView from "@/views/MarketplaceView.vue"; 
+
 import ProdutoView from "@/views/ProdutoView.vue";
 import OnBoardingView from "@/views/OnBoardingView.vue";
 
@@ -13,6 +16,8 @@ import AddBookView from "@/views/AddBookView.vue";
 import ScanCodeView from "@/views/ScanCodeView.vue";
 import ManualBookView from "@/views/ManualBookView.vue";
 import ExploreView from "@/views/ExploreView.vue";
+
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -30,6 +35,11 @@ const router = createRouter({
       path: "/home",
       name: "home",
       component: HomeView,
+    },
+    {
+      path: "/marketplace",
+      name: "marketplace",
+      component: MarketplaceView,
     },
     {
       path: "/profile",
