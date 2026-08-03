@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 import { uploadImagem } from "@/services/upload";
 import {
   getLivros,
+  getLivrosUsuario,
   createLivro,
   updateLivro,
   deleteLivro,
@@ -12,14 +13,17 @@ import {
 
 export const useLivrosStore = defineStore("livros", () => {
   const livros = ref([]);
+  const meusLivros = ref([]);
   const loading = ref(false);
   const error = ref(null);
   const categorias = ref([]);
   const editoras = ref([]);
 
   const totalLivros = computed(() => livros.value.length);
+  const totalMeusLivros = computed(() => meusLivros.value.length);
 
   let alreadyLoaded = false;
+  let meusLivrosAlreadyLoaded = false;
 
   async function fetchLivros() {
     if (alreadyLoaded) return;
@@ -44,6 +48,25 @@ export const useLivrosStore = defineStore("livros", () => {
       } while (page <= totalPages);
     } catch (err) {
       error.value = "Erro ao carregar livros.";
+      console.error(err);
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function fetchMeusLivros(status = null) {
+    meusLivrosAlreadyLoaded = false; // sempre recarrega, já que o status pode mudar entre chamadas
+    if (meusLivrosAlreadyLoaded) return;
+    meusLivrosAlreadyLoaded = true;
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await getLivrosUsuario(status);
+      meusLivros.value = response.data.results ?? response.data;
+    } catch (err) {
+      error.value = "Erro ao carregar meus livros.";
       console.error(err);
     } finally {
       loading.value = false;
@@ -158,14 +181,17 @@ export const useLivrosStore = defineStore("livros", () => {
 
   return {
     livros,
+    meusLivros,
     categorias,
     editoras,
     loading,
     error,
     totalLivros,
+    totalMeusLivros,
     fetchCategorias,
     fetchEditoras,
     fetchLivros,
+    fetchMeusLivros,
     addLivro,
     updateLivroStore,
     removeLivro,

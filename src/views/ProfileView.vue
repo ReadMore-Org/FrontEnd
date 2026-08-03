@@ -8,7 +8,7 @@ import { Splide, SplideSlide } from "@splidejs/vue-splide";
 import "@splidejs/vue-splide/css";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import AppFooter from "@/components/layout/AppFooter.vue";
-import voltar from  "@/components/common/voltar.vue"
+import voltar from "@/components/common/voltar.vue";
 import BookCard from "@/components/books/bookCard.vue";
 import StatsCard from "@/components/home/statsCard.vue";
 import barraProgresso from "@/components/home/barraProgresso.vue";
@@ -27,16 +27,14 @@ const user = computed(() => authStore.user);
 const userEmail = computed(() => user.value?.email || "");
 
 onMounted(() => {
-  livroStore.fetchLivros();
+  livroStore.fetchMeusLivros();
 });
 
 const userPhoto = computed(() => {
   const url = authStore.user?.foto?.url;
 
   if (url) {
-    return url.startsWith("http")
-      ? url
-      : `${import.meta.env.VITE_BACKEND_URL}${url}`;
+    return url.startsWith("http") ? url : `${import.meta.env.VITE_BACKEND_URL}${url}`;
   }
 
   if (authStore.user?.google_picture) {
@@ -48,8 +46,8 @@ const userPhoto = computed(() => {
 </script>
 
 <template>
-  <voltar/>
-  <AppHeader class="header-principal"/>
+  <voltar />
+  <AppHeader class="header-principal" />
   <div id="me">
     <div class="topo-perfil">
       <div class="info">
@@ -119,9 +117,9 @@ const userPhoto = computed(() => {
             drag: 'free',
           }"
         >
-          <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
-            <RouterLink :to="`/livro/${livro.id}`">
-              <BookCard :livro="livro" />
+          <SplideSlide v-for="item in livroStore.meusLivros" :key="item.id">
+            <RouterLink :to="`/livro/${item.livro.id}`">
+              <BookCard :livro="item.livro" />
             </RouterLink>
           </SplideSlide>
         </Splide>
@@ -129,7 +127,7 @@ const userPhoto = computed(() => {
     </div>
     <div>
       <div class="favoritos">
-        <h1 class="titulo-secao">Meus Livros</h1>
+        <h1 class="titulo-secao">Outros</h1>
         <div class="lista-livros">
           <Splide
             :options="{
@@ -146,9 +144,12 @@ const userPhoto = computed(() => {
               drag: 'free',
             }"
           >
-            <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
-              <RouterLink :to="`/livro/${livro.id}`">
-                <BookCard :livro="livro" />
+            <SplideSlide
+              v-for="item in livroStore.meusLivros.filter((i) => i.status !== 'lido')"
+              :key="item.id"
+            >
+              <RouterLink :to="`/livro/${item.livro.id}`">
+                <BookCard :livro="item.livro" />
               </RouterLink>
             </SplideSlide>
           </Splide>
@@ -156,7 +157,7 @@ const userPhoto = computed(() => {
       </div>
     </div>
   </div>
-    <AppFooter/>
+  <AppFooter />
 </template>
 
 <style scoped>
@@ -333,7 +334,7 @@ const userPhoto = computed(() => {
 
 @media (max-width: 768px) {
   .header-principal {
-    display: none !important; 
+    display: none !important;
   }
   #me {
     padding: 25px 20px;

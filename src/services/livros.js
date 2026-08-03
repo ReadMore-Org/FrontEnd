@@ -22,6 +22,11 @@ export const getCategorias = () =>
 export const getEditoras = () =>
   api.get('/editoras/');
 
+export function getLivrosUsuario(status = null) {
+  const query = status ? `?status=${status}` : '';
+  return api.get(`/livros-usuario/${query}`);
+}
+
 export function importarLivroGoogle(livro, status) {
   const payload = {
     titulo: livro.titulo,
