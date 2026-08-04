@@ -1,28 +1,27 @@
 <script setup>
-import { onMounted } from "vue";
+import { onMounted, computed } from "vue";
 import { RouterLink } from "vue-router";
-
 import { useLivrosStore } from "@/stores/livros";
+import { useAuthStore } from "@/stores/auth";
 
 import { Splide, SplideSlide } from "@splidejs/vue-splide";
 import "@splidejs/vue-splide/css";
+
 import AppHeader from "@/components/layout/AppHeader.vue";
 import AppFooter from "@/components/layout/AppFooter.vue";
 import voltar from "@/components/common/voltar.vue";
 import BookCard from "@/components/books/bookCard.vue";
-import StatsCard from "@/components/home/statsCard.vue";
-import barraProgresso from "@/components/home/barraProgresso.vue";
-import ProdutoView from "@/views/ProdutoView.vue";
-import ListaRecursos from "@/components/home/listaRecursos.vue";
 
-import { LibraryBig, TicketPlusIcon, BookOpenCheck, BookOpenText } from "lucide-vue-next";
-
-import { computed, ref } from "vue";
-import { useAuthStore } from "@/stores/auth";
+import {
+  LibraryBig,
+  BookOpenCheck,
+  BookOpenText,
+  Bookmark,
+} from "lucide-vue-next";
 
 const livroStore = useLivrosStore();
-
 const authStore = useAuthStore();
+
 const user = computed(() => authStore.user);
 const userEmail = computed(() => user.value?.email || "");
 
@@ -30,11 +29,48 @@ onMounted(() => {
   livroStore.fetchMeusLivros();
 });
 
+// Helper para extrair o ID do livro com segurança
+const getLivroId = (item) => {
+  if (!item) return null;
+  if (typeof item.livro === "object" && item.livro !== null) {
+    return item.livro.id;
+  }
+  return item.livro || item.id;
+};
+
+// Helper para passar o objeto do livro para o BookCard
+const getLivroObjeto = (item) => {
+  if (!item) return {};
+  if (typeof item.livro === "object" && item.livro !== null) {
+    return item.livro;
+  }
+  return item;
+};
+
+// Estatísticas reativas diretas da store
+const totalLivros = computed(() => livroStore.totalMeusLivros);
+const totalLidos = computed(() => livroStore.totalLidos);
+const totalLendo = computed(() => livroStore.totalLendo);
+const totalQueroLer = computed(() => livroStore.totalQueroLer);
+
+// Listas filtradas para as seções
+const livrosLendo = computed(() =>
+  livroStore.meusLivros.filter((i) => i.status === "lendo")
+);
+const livrosQueroLer = computed(() =>
+  livroStore.meusLivros.filter((i) => i.status === "quero_ler")
+);
+const livrosLidos = computed(() =>
+  livroStore.meusLivros.filter((i) => i.status === "lido")
+);
+
 const userPhoto = computed(() => {
   const url = authStore.user?.foto?.url;
 
   if (url) {
-    return url.startsWith("http") ? url : `${import.meta.env.VITE_BACKEND_URL}${url}`;
+    return url.startsWith("http")
+      ? url
+      : `${import.meta.env.VITE_BACKEND_URL}${url}`;
   }
 
   if (authStore.user?.google_picture) {
@@ -43,11 +79,24 @@ const userPhoto = computed(() => {
 
   return "/imgs/avatar.jpeg";
 });
+
+const splideOptions = {
+  perPage: 3,
+  gap: "20px",
+  breakpoints: {
+    1024: { perPage: 2 },
+    640: { perPage: 1, gap: "15px" },
+  },
+  arrows: true,
+  pagination: false,
+  drag: "free",
+};
 </script>
 
 <template>
   <voltar />
   <AppHeader class="header-principal" />
+
   <div id="me">
     <div class="topo-perfil">
       <div class="info">
@@ -61,7 +110,7 @@ const userPhoto = computed(() => {
         </div>
 
         <div class="menu-info">
-          <strong>{{ authStore.user?.name }}</strong>
+          <strong>{{ authStore.user?.name || 'Usuário' }}</strong>
           <p>{{ userEmail }}</p>
         </div>
       </div>
@@ -72,99 +121,93 @@ const userPhoto = computed(() => {
     </div>
 
     <div class="stats">
-      <p>
+      <div class="stat-item">
         <span>
           <LibraryBig :size="22" />
-          25
+          {{ totalLivros }}
         </span>
-        Livros
-      </p>
+        <p>Total na Estante</p>
+      </div>
 
-      <p id="center">
+      <div class="stat-item divisor">
         <span>
           <BookOpenCheck :size="22" />
-          15
+          {{ totalLidos }}
         </span>
-        Lidos
-      </p>
+        <p>Lidos</p>
+      </div>
 
-      <p>
+      <div class="stat-item divisor">
         <span>
           <BookOpenText :size="22" />
-          4
+          {{ totalLendo }}
         </span>
-        Lendo
-      </p>
+        <p>Lendo</p>
+      </div>
+
+      <div class="stat-item">
+        <span>
+          <Bookmark :size="22" />
+          {{ totalQueroLer }}
+        </span>
+        <p>Quero Ler</p>
+      </div>
     </div>
   </div>
 
   <div id="livros">
-    <div class="meus">
-      <h1 class="titulo-secao">Meus Livros</h1>
+    <!-- Seção: Lendo atualmente -->
+    <div class="secao-livros" v-if="livrosLendo.length">
+      <h1 class="titulo-secao">Lendo Atualmente</h1>
       <div class="lista-livros">
-        <Splide
-          :options="{
-            perPage: 3,
-            gap: '0px' /* Reduzido o gap padrão */,
-            breakpoints: {
-              640: {
-                perPage: 1,
-                gap: '30px',
-              },
-            },
-            arrows: true,
-            pagination: false,
-            drag: 'free',
-          }"
-        >
-          <SplideSlide v-for="item in livroStore.meusLivros" :key="item.id">
-            <RouterLink :to="`/livro/${item.livro.id}`">
-              <BookCard :livro="item.livro" />
+        <Splide :options="splideOptions">
+          <SplideSlide v-for="item in livrosLendo" :key="item.id">
+            <RouterLink :to="`/livro/${getLivroId(item)}`">
+              <BookCard :livro="getLivroObjeto(item)" />
             </RouterLink>
           </SplideSlide>
         </Splide>
       </div>
     </div>
-    <div>
-      <div class="favoritos">
-        <h1 class="titulo-secao">Outros</h1>
-        <div class="lista-livros">
-          <Splide
-            :options="{
-              perPage: 3,
-              gap: '0px' /* Reduzido o gap padrão */,
-              breakpoints: {
-                640: {
-                  perPage: 1,
-                  gap: '30px',
-                },
-              },
-              arrows: true,
-              pagination: false,
-              drag: 'free',
-            }"
-          >
-            <SplideSlide
-              v-for="item in livroStore.meusLivros.filter((i) => i.status !== 'lido')"
-              :key="item.id"
-            >
-              <RouterLink :to="`/livro/${item.livro.id}`">
-                <BookCard :livro="item.livro" />
-              </RouterLink>
-            </SplideSlide>
-          </Splide>
-        </div>
+
+    <!-- Seção: Quero Ler -->
+    <div class="secao-livros" v-if="livrosQueroLer.length">
+      <h1 class="titulo-secao">Quero Ler</h1>
+      <div class="lista-livros">
+        <Splide :options="splideOptions">
+          <SplideSlide v-for="item in livrosQueroLer" :key="item.id">
+            <RouterLink :to="`/livro/${getLivroId(item)}`">
+              <BookCard :livro="getLivroObjeto(item)" />
+            </RouterLink>
+          </SplideSlide>
+        </Splide>
       </div>
     </div>
+
+    <!-- Seção: Lidos -->
+    <div class="secao-livros" v-if="livrosLidos.length">
+      <h1 class="titulo-secao">Lidos</h1>
+      <div class="lista-livros">
+        <Splide :options="splideOptions">
+          <SplideSlide v-for="item in livrosLidos" :key="item.id">
+            <RouterLink :to="`/livro/${getLivroId(item)}`">
+              <BookCard :livro="getLivroObjeto(item)" />
+            </RouterLink>
+          </SplideSlide>
+        </Splide>
+      </div>
+    </div>
+
+    <!-- Estado Vazio -->
+    <div v-if="!totalLivros" class="sem-livros">
+      <p>Você ainda não adicionou nenhum livro à sua estante.</p>
+    </div>
   </div>
+
   <AppFooter />
 </template>
 
 <style scoped>
-/* =====================
-   PERFIL
-===================== */
-
 #me {
   background: #f3e7d7;
   padding: 40px 60px;
@@ -226,61 +269,53 @@ const userPhoto = computed(() => {
   transform: translateY(-1px);
 }
 
-/* =====================
-   ESTATÍSTICAS
-===================== */
-
 .stats {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-.stats p {
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.stat-item p {
   margin: 0;
   color: #6d6d6d;
-  font-size: 1rem;
-  line-height: 1.4;
+  font-size: 0.95rem;
 }
 
-.stats span {
+.stat-item span {
   display: flex;
   align-items: center;
   gap: 8px;
-
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 600;
   color: #6b4226;
-
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
-#center {
-  padding: 0 30px;
+.divisor {
+  padding: 0 25px;
   border-left: 1px solid #8a6a52;
-  border-right: 1px solid #8a6a52;
 }
-
-/* =====================
-   SEÇÕES DE LIVROS
-===================== */
 
 #livros {
   padding: 50px 60px;
 }
 
-.meus,
-.favoritos {
-  margin-bottom: 60px;
+.secao-livros {
+  margin-bottom: 50px;
 }
 
 .titulo-secao {
   position: relative;
   display: inline-block;
-
-  margin-bottom: 30px;
-
-  font-size: 2rem;
+  margin-bottom: 25px;
+  font-size: 1.8rem;
   font-weight: 500;
   color: #2d2d2d;
 }
@@ -288,20 +323,20 @@ const userPhoto = computed(() => {
 .titulo-secao::after {
   content: "";
   position: absolute;
-
   left: 0;
   bottom: -8px;
-
   width: 50%;
   height: 3px;
-
   background: #6b4226;
   border-radius: 999px;
 }
 
-/* =====================
-   SPLIDE
-===================== */
+.sem-livros {
+  text-align: center;
+  padding: 40px;
+  color: #8a6a52;
+  font-size: 1.1rem;
+}
 
 .lista-livros {
   width: 100%;
@@ -327,10 +362,6 @@ const userPhoto = computed(() => {
 .splide__slide:hover {
   transform: translateY(-4px);
 }
-
-/* =====================
-   RESPONSIVO
-===================== */
 
 @media (max-width: 768px) {
   .header-principal {
@@ -370,20 +401,16 @@ const userPhoto = computed(() => {
 
   .stats {
     width: 100%;
-    justify-content: center;
-    text-align: center;
+    justify-content: space-around;
   }
 
-  .stats span {
-    font-size: 1.4rem;
-  }
-
-  #center {
-    padding: 0 15px;
+  .divisor {
+    padding: 0 10px;
+    border-left: none;
   }
 
   .titulo-secao {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
 
   .splide__slide:hover {

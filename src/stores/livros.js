@@ -9,6 +9,10 @@ import {
   deleteLivro,
   getCategorias,
   getEditoras,
+  createLivroUsuario,
+  updateStatusLivroUsuario,
+  importarLivroGoogle,
+  deleteLivroUsuario,
 } from "@/services/livros";
 
 export const useLivrosStore = defineStore("livros", () => {
@@ -22,8 +26,18 @@ export const useLivrosStore = defineStore("livros", () => {
   const totalLivros = computed(() => livros.value.length);
   const totalMeusLivros = computed(() => meusLivros.value.length);
 
+  // Computeds para contagem por status
+  const totalLidos = computed(
+    () => meusLivros.value.filter((item) => item.status === "lido").length
+  );
+  const totalLendo = computed(
+    () => meusLivros.value.filter((item) => item.status === "lendo").length
+  );
+  const totalQueroLer = computed(
+    () => meusLivros.value.filter((item) => item.status === "quero_ler").length
+  );
+
   let alreadyLoaded = false;
-  let meusLivrosAlreadyLoaded = false;
 
   async function fetchLivros() {
     if (alreadyLoaded) return;
@@ -55,10 +69,6 @@ export const useLivrosStore = defineStore("livros", () => {
   }
 
   async function fetchMeusLivros(status = null) {
-    meusLivrosAlreadyLoaded = false; // sempre recarrega, já que o status pode mudar entre chamadas
-    if (meusLivrosAlreadyLoaded) return;
-    meusLivrosAlreadyLoaded = true;
-
     loading.value = true;
     error.value = null;
 
@@ -70,6 +80,44 @@ export const useLivrosStore = defineStore("livros", () => {
       console.error(err);
     } finally {
       loading.value = false;
+    }
+  }
+
+  async function atualizarStatusMeuLivro(livroOuPayload, novoStatus) {
+    const livroId = typeof livroOuPayload === "object" ? livroOuPayload.id : livroOuPayload;
+
+    // 1. Procura se esse livro já está salvo na estante do usuário
+    const itemExistente = meusLivros.value.find(
+      (item) => item.livro?.id === livroId || item.livro === livroId || item.id === livroId
+    );
+
+    if (itemExistente) {
+      // 🟢 SE JÁ EXISTE NA ESTANTE: usa PATCH passando o ID da relação na estante (itemExistente.id)
+      await updateStatusLivroUsuario(itemExistente.id, novoStatus);
+    } else {
+      // 🟢 SE NÃO EXISTE AINDA: usa POST para criar a relação na estante
+      await createLivroUsuario({ livro: livroId, status: novoStatus });
+    }
+
+    // Recarrega os livros do usuário para sincronizar a estante na tela
+    await fetchMeusLivros();
+  }
+
+  // Ação para remover livro da estante do usuário
+  async function removerMeuLivro(meuLivroId) {
+    error.value = null;
+    try {
+      // Chama o serviço de deleção do vínculo do usuário com o livro
+      await deleteLivroUsuario(meuLivroId);
+
+      // Atualiza a lista local removendo o item
+      meusLivros.value = meusLivros.value.filter(
+        (item) => item.id !== meuLivroId && item.livro?.id !== meuLivroId && item.livro !== meuLivroId
+      );
+    } catch (err) {
+      error.value = "Erro ao remover livro da estante.";
+      console.error(err);
+      throw err;
     }
   }
 
@@ -112,7 +160,6 @@ export const useLivrosStore = defineStore("livros", () => {
       }
       delete payload.autores;
 
-      // campos opcionais vazios -> null
       [
         "isbn",
         "idioma",
@@ -130,7 +177,6 @@ export const useLivrosStore = defineStore("livros", () => {
         }
       });
 
-      // categoria é ManyToMany no backend -> precisa ser lista de IDs
       if (
         payload.categoria === null ||
         payload.categoria === "" ||
@@ -140,8 +186,6 @@ export const useLivrosStore = defineStore("livros", () => {
       } else {
         payload.categoria = [payload.categoria];
       }
-
-      console.log("PAYLOAD ENVIADO:", payload);
 
       const response = await createLivro(payload);
       livros.value.push(response.data);
@@ -188,6 +232,11 @@ export const useLivrosStore = defineStore("livros", () => {
     error,
     totalLivros,
     totalMeusLivros,
+    totalLidos,
+    totalLendo,
+    totalQueroLer,
+    atualizarStatusMeuLivro,
+    removerMeuLivro,
     fetchCategorias,
     fetchEditoras,
     fetchLivros,

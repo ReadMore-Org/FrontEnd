@@ -1,5 +1,4 @@
 <script setup>
-// Corrigido: Agora as props estão separadas corretamente
 const props = defineProps({
   modelValue: {
     type: String,
@@ -7,7 +6,11 @@ const props = defineProps({
   },
   variante: {
     type: String,
-    default: 'padrao', // Se não passar nada na View, ele usa 'padrao'
+    default: 'padrao',
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -20,6 +23,7 @@ const statusOpcoes = [
 ];
 
 const selecionarOpcao = (valor) => {
+  if (props.disabled) return;
   emit("update:modelValue", valor);
 };
 </script>
@@ -32,6 +36,8 @@ const selecionarOpcao = (valor) => {
       <button
         v-for="s in statusOpcoes"
         :key="s.value"
+        type="button"
+        :disabled="disabled"
         @click="selecionarOpcao(s.value)"
         :class="['toggle-btn', { active: modelValue === s.value }]"
       >
@@ -43,7 +49,7 @@ const selecionarOpcao = (valor) => {
 
 <style scoped>
 /* ==========================================================================
-   ESTILOS PADRÃO (O que você já tinha feito)
+   ESTILOS PADRÃO
    ========================================================================== */
 .field {
   margin-top: 12px;
@@ -78,8 +84,12 @@ const selecionarOpcao = (valor) => {
   padding: 0px 0px 0px 5px;
 }
 
+.toggle-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
-.toggle-btn:hover:not(.active) {
+.toggle-btn:hover:not(.active):not(:disabled) {
   background: #c59e7e;
   color: #ffffff;
 }
@@ -91,32 +101,33 @@ const selecionarOpcao = (valor) => {
 }
 
 /* ==========================================================================
-   ESTILOS CUSTOMIZADOS PARA A VARIANTE "LIVRO" (Exemplo de modificação)
+   ESTILOS CUSTOMIZADOS PARA A VARIANTE "LIVRO"
    ========================================================================== */
-   
-/* Digamos que na tela de detalhes você queira os botões lado a lado e com cor diferente: */
 .variante-livro .toggle-group {
   display: flex;
   gap: 10px;
 }
 
 .variante-livro .toggle-btn {
-  width: auto; /* Deixa o tamanho fluido */
+  width: auto;
   text-align: center;
   background: #fcfbf9;
   border-color: #6b4226;
   color: #6b4226;
+  padding: 0 16px;
 }
 
 .variante-livro .toggle-btn.active {
-  background: #6b4226; /* Uma cor diferente para essa tela se quiser */
+  background: #6b4226;
   color: #ffffff;
   border-color: #6b4226;
 }
+
 .variante-livro {
   margin-top: 14px;
 }
-.variante-livro .toggle-btn:hover:not(.active) {
+
+.variante-livro .toggle-btn:hover:not(.active):not(:disabled) {
   background: #6b4226;
   color: #ffffff;
 }

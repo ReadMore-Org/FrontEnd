@@ -27,6 +27,19 @@ export function getLivrosUsuario(status = null) {
   return api.get(`/livros-usuario/${query}`);
 }
 
+export function createLivroUsuario(data) {
+  return api.post('/livros-usuario/', data);
+}
+
+export function updateStatusLivroUsuario(livroUsuarioId, status) {
+  return api.patch(`/livros-usuario/${livroUsuarioId}/`, { status });
+}
+
+export async function deleteLivroUsuario(id) {
+  // Substitua '/meus-livros/' pela rota correta da sua API se for diferente
+  return await api.delete(`/meus-livros/${id}/`); 
+}
+
 export function importarLivroGoogle(livro, status) {
   const payload = {
     titulo: livro.titulo,

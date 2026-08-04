@@ -14,6 +14,7 @@ import {
   Calendar,
   Shield,
   Barcode,
+  Trash2, // <--- Adicionado para o botão de deletar
 } from "lucide-vue-next";
 import statusSelect from "@/components/common/statusSelect.vue";
 
@@ -26,8 +27,9 @@ const id = route.params.id;
 const livroStore = useLivrosStore();
 
 const status = ref("quero_ler");
-
 const isLoading = ref(true);
+const isUpdatingStatus = ref(false);
+const isDeleting = ref(false);
 const isFavorito = ref(false);
 
 const toggleFavorito = () => {
@@ -38,22 +40,109 @@ const livro = computed(() => {
   if (isGoogleBook.value) {
     return googleBooksStore.livroSelecionado;
   }
-  return livroStore.livros.find((l) => l.id === Number(id));
+
+  const numId = Number(id);
+
+  // 1. Tenta encontrar na lista geral de livros
+  const livroGeral = livroStore.livros.find((l) => l.id === numId);
+  if (livroGeral) return livroGeral;
+
+  // 2. Se não achou na lista geral, busca na lista de livros do usuário
+  const meuLivroItem = livroStore.meusLivros.find(
+    (item) =>
+      item.livro?.id === numId ||
+      item.livro === numId ||
+      item.id === numId
+  );
+
+  if (meuLivroItem) {
+    return typeof meuLivroItem.livro === "object"
+      ? meuLivroItem.livro
+      : meuLivroItem;
+  }
+
+  return null;
 });
+
+// Identifica se o livro atual está salvo na estante do usuário
+const meuLivroItem = computed(() => {
+  if (!livro.value) return null;
+  const numId = Number(livro.value.id || id);
+
+  return livroStore.meusLivros.find(
+    (item) =>
+      item.livro?.id === numId ||
+      item.livro === numId ||
+      item.id === numId
+  );
+});
+
+const carregarStatusAtual = () => {
+  if (meuLivroItem.value && meuLivroItem.value.status) {
+    status.value = meuLivroItem.value.status;
+  } else {
+    status.value = "quero_ler";
+  }
+};
 
 onMounted(async () => {
   try {
     if (isGoogleBook.value) {
       await googleBooksStore.buscarLivro(id);
     } else {
-      await Promise.all([livroStore.fetchLivros(), livroStore.fetchCategorias()]);
+      await Promise.all([
+        livroStore.fetchLivros(),
+        livroStore.fetchCategorias(),
+      ]);
     }
+    await livroStore.fetchMeusLivros();
+    carregarStatusAtual();
   } catch (error) {
     console.error("Erro ao carregar detalhes do livro:", error);
   } finally {
     isLoading.value = false;
   }
 });
+
+// Atualiza apenas quando o usuário interage diretamente com o componente
+const onStatusChange = async (novoStatus) => {
+  if (isUpdatingStatus.value || novoStatus === status.value) return;
+
+  const statusAnterior = status.value;
+  status.value = novoStatus; // Atualiza a UI imediatamente
+  isUpdatingStatus.value = true;
+
+  try {
+    const livroPayload = isGoogleBook.value
+      ? { ...livro.value, isGoogleBook: true }
+      : livro.value.id;
+
+    await livroStore.atualizarStatusMeuLivro(livroPayload, novoStatus);
+  } catch (err) {
+    console.error("Erro ao atualizar o status:", err);
+    status.value = statusAnterior; // Reverte se der erro, sem acionar loop
+  } finally {
+    isUpdatingStatus.value = false;
+  }
+};
+
+// Remove o livro da estante do usuário
+const removerDaEstante = async () => {
+  if (!meuLivroItem.value) return;
+
+  if (confirm("Tem certeza que deseja remover este livro da sua estante?")) {
+    isDeleting.value = true;
+    try {
+      const meuLivroId = meuLivroItem.value.id;
+      await livroStore.removerMeuLivro(meuLivroId);
+      status.value = "quero_ler"; // Reseta o status local
+    } catch (err) {
+      console.error("Erro ao remover o livro da estante:", err);
+    } finally {
+      isDeleting.value = false;
+    }
+  }
+};
 
 const formatarData = (data) => {
   if (!data) return "-";
@@ -93,7 +182,7 @@ const categoriaNome = computed(() => {
 
 <template>
   <div class="pagina-livro">
-    <button @click="voltar" class="btn-voltar">
+    <button @click="voltar" class="btn-voltar" type="button">
       <ArrowLeft :size="17" />
       <span>Voltar</span>
     </button>
@@ -120,17 +209,17 @@ const categoriaNome = computed(() => {
             </div>
 
             <div class="acoes">
-              <button class="icone-acao" @click="toggleFavorito">
+              <button class="icone-acao" @click="toggleFavorito" type="button">
                 <Heart
                   :size="18"
                   :fill="isFavorito ? '#a4161a' : 'none'"
                   :color="isFavorito ? '#a4161a' : '#5a4636'"
                 />
               </button>
-              <button class="icone-acao">
+              <button class="icone-acao" type="button">
                 <Share2 :size="17" />
               </button>
-              <button class="icone-acao">
+              <button class="icone-acao" type="button">
                 <Settings :size="17" />
               </button>
             </div>
@@ -142,7 +231,7 @@ const categoriaNome = computed(() => {
                 v-for="i in 5"
                 :key="i"
                 class="estrela"
-                :class="{ preenchida: i <= Math.round(parseFloat(livro.nota)) }"
+                :class="{ preenchida: i <= Math.round(parseFloat(livro.nota || 0)) }"
                 ><Star :size="16"
               /></span>
             </div>
@@ -156,14 +245,35 @@ const categoriaNome = computed(() => {
             <p>{{ categoriaNome }}</p>
           </div>
 
-          <statusSelect v-model="status" variante="livro" />
+          <!-- Container do Status + Botão de Deletar -->
+          <div class="container-status-acoes">
+            <statusSelect
+              :modelValue="status"
+              @update:modelValue="onStatusChange"
+              variante="livro"
+              :disabled="isUpdatingStatus || isDeleting"
+            />
+
+            <!-- Botão de remover exibe apenas se o livro estiver na estante do usuário -->
+            <button
+              v-if="meuLivroItem"
+              class="btn-deletar-estante"
+              @click="removerDaEstante"
+              :disabled="isDeleting"
+              type="button"
+              title="Remover da estante"
+            >
+              <Trash2 :size="18" />
+              <span>Remover da estante</span>
+            </button>
+          </div>
         </div>
       </div>
 
       <div class="infoMaior">
         <div class="secao-sinopse">
           <h2 class="titulo-secao">Sinopse</h2>
-          <p class="texto-sinopse" v-html="livro.sinopse"></p>
+          <p class="texto-sinopse" v-html="livro.sinopse || 'Sem sinopse disponível.'"></p>
         </div>
 
         <div class="secao-detalhes">
@@ -172,12 +282,12 @@ const categoriaNome = computed(() => {
             <div class="detalhe-item">
               <Languages :size="16" class="icone-detalhe" />
               <p class="detalhe-label">Idioma</p>
-              <p class="detalhe-valor">{{ livro.idioma === "pt" ? "Português" : livro.idioma }}</p>
+              <p class="detalhe-valor">{{ livro.idioma === "pt" ? "Português" : (livro.idioma || "-") }}</p>
             </div>
             <div class="detalhe-item">
               <BookOpen :size="16" class="icone-detalhe" />
               <p class="detalhe-label">Páginas</p>
-              <p class="detalhe-valor">{{ livro.paginas }}</p>
+              <p class="detalhe-valor">{{ livro.paginas || "-" }}</p>
             </div>
             <div class="detalhe-item">
               <Calendar :size="16" class="icone-detalhe" />
@@ -192,7 +302,7 @@ const categoriaNome = computed(() => {
             <div class="detalhe-item">
               <Barcode :size="16" class="icone-detalhe" />
               <p class="detalhe-label">ISBN</p>
-              <p class="detalhe-valor isbn">{{ livro.isbn }}</p>
+              <p class="detalhe-valor isbn">{{ livro.isbn || "-" }}</p>
             </div>
           </div>
         </div>
@@ -392,6 +502,40 @@ const categoriaNome = computed(() => {
   border-radius: 20px;
   font-size: 13px;
   font-weight: 500;
+}
+
+/* container status e acao de remocao */
+.container-status-acoes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.btn-deletar-estante {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid #a4161a;
+  color: #a4161a;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-deletar-estante:hover {
+  background-color: #a4161a;
+  color: white;
+}
+
+.btn-deletar-estante:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* sinopse + detalhes */
