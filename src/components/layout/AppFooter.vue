@@ -63,7 +63,7 @@ const active = ref("home");
             <h1>Navegação</h1>
             <p @click="$router.push('/home')">Home</p>
             <p @click="$router.push('/profile/edit')">Estante</p>
-            <p @click="$router.push('/profile/edit')">Marketplace</p>
+            <p @click="$router.push('/marketplace')">Marketplace</p>
             <p @click="$router.push('/profile')">Perfil</p>
           </li>
         </ul>
@@ -100,6 +100,7 @@ const active = ref("home");
           :class="{ active: active === 'marketplace' }"
           @click="
             active = 'marketplace';
+            $router.push('/marketplace');
           "
         >
           <Store :size="25" />
