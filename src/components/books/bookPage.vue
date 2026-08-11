@@ -49,16 +49,11 @@ const livro = computed(() => {
 
   // 2. Se não achou na lista geral, busca na lista de livros do usuário
   const meuLivroItem = livroStore.meusLivros.find(
-    (item) =>
-      item.livro?.id === numId ||
-      item.livro === numId ||
-      item.id === numId
+    (item) => item.livro?.id === numId || item.livro === numId || item.id === numId
   );
 
   if (meuLivroItem) {
-    return typeof meuLivroItem.livro === "object"
-      ? meuLivroItem.livro
-      : meuLivroItem;
+    return typeof meuLivroItem.livro === "object" ? meuLivroItem.livro : meuLivroItem;
   }
 
   return null;
@@ -70,10 +65,7 @@ const meuLivroItem = computed(() => {
   const numId = Number(livro.value.id || id);
 
   return livroStore.meusLivros.find(
-    (item) =>
-      item.livro?.id === numId ||
-      item.livro === numId ||
-      item.id === numId
+    (item) => item.livro?.id === numId || item.livro === numId || item.id === numId
   );
 });
 
@@ -90,10 +82,7 @@ onMounted(async () => {
     if (isGoogleBook.value) {
       await googleBooksStore.buscarLivro(id);
     } else {
-      await Promise.all([
-        livroStore.fetchLivros(),
-        livroStore.fetchCategorias(),
-      ]);
+      await Promise.all([livroStore.fetchLivros(), livroStore.fetchCategorias()]);
     }
     await livroStore.fetchMeusLivros();
     carregarStatusAtual();
@@ -203,7 +192,9 @@ const categoriaNome = computed(() => {
               <p v-if="livro.autores && livro.autores.length" class="autores">
                 por
                 <span class="autores-nome">{{
-                  livro.autores.map((a) => (typeof a === "string" ? a : a.nome)).join(", ")
+                  livro.autores
+                    .map((a) => (typeof a === "string" ? a : a.nome))
+                    .join(", ")
                 }}</span>
               </p>
             </div>
@@ -247,14 +238,15 @@ const categoriaNome = computed(() => {
 
           <!-- Container do Status + Botão de Deletar -->
           <div class="container-status-acoes">
-            <statusSelect
-              :modelValue="status"
-              @update:modelValue="onStatusChange"
-              variante="livro"
-              :disabled="isUpdatingStatus || isDeleting"
-            />
+            <div class="status-wrapper">
+              <statusSelect
+                :modelValue="status"
+                @update:modelValue="onStatusChange"
+                variante="livro"
+                :disabled="isUpdatingStatus || isDeleting"
+              />
+            </div>
 
-            <!-- Botão de remover exibe apenas se o livro estiver na estante do usuário -->
             <button
               v-if="meuLivroItem"
               class="btn-deletar-estante"
@@ -273,7 +265,10 @@ const categoriaNome = computed(() => {
       <div class="infoMaior">
         <div class="secao-sinopse">
           <h2 class="titulo-secao">Sinopse</h2>
-          <p class="texto-sinopse" v-html="livro.sinopse || 'Sem sinopse disponível.'"></p>
+          <p
+            class="texto-sinopse"
+            v-html="livro.sinopse || 'Sem sinopse disponível.'"
+          ></p>
         </div>
 
         <div class="secao-detalhes">
@@ -282,7 +277,9 @@ const categoriaNome = computed(() => {
             <div class="detalhe-item">
               <Languages :size="16" class="icone-detalhe" />
               <p class="detalhe-label">Idioma</p>
-              <p class="detalhe-valor">{{ livro.idioma === "pt" ? "Português" : (livro.idioma || "-") }}</p>
+              <p class="detalhe-valor">
+                {{ livro.idioma === "pt" ? "Português" : livro.idioma || "-" }}
+              </p>
             </div>
             <div class="detalhe-item">
               <BookOpen :size="16" class="icone-detalhe" />
@@ -375,8 +372,12 @@ const categoriaNome = computed(() => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .erro-container {
@@ -508,24 +509,37 @@ const categoriaNome = computed(() => {
 .container-status-acoes {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  width: 100%;
   margin-top: 4px;
 }
 
-.btn-deletar-estante {
+.status-wrapper {
   display: flex;
   align-items: center;
+}
+
+.btn-deletar-estante {
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
+
   background: transparent;
   border: 1px solid #a4161a;
   color: #a4161a;
-  padding: 6px 14px;
+
+  padding: 4px 8px;
   border-radius: 8px;
+
   font-size: 13px;
   font-weight: 500;
+
   cursor: pointer;
   transition: all 0.2s ease;
+
+  height: 30px;
 }
 
 .btn-deletar-estante:hover {
