@@ -10,13 +10,16 @@ import {
 } from "@/services/googleBooks";
 
 // =========================
-// SHUFFLE (CORRETO)
+// SHUFFLE
 // =========================
 function shuffle(array) {
   return array
-    .map((v) => ({ v, sort: Math.random() }))
+    .map((value) => ({
+      value,
+      sort: Math.random(),
+    }))
     .sort((a, b) => a.sort - b.sort)
-    .map(({ v }) => v);
+    .map(({ value }) => value);
 }
 
 export const useGoogleBooksStore = defineStore("googleBooks", () => {
@@ -27,7 +30,7 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
   const error = ref(null);
 
   // =========================
-  // ESTADO DA BUSCA (persiste entre navegações)
+  // ESTADO DA BUSCA
   // =========================
   const termoBusca = ref("");
   const idiomasSelecionados = ref([]);
@@ -47,7 +50,7 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
 
       resultados.value = (response.items ?? [])
         .map((item) => googleBookToLivro(item))
-        .filter((livro) => livro.titulo);
+        .filter((livro) => livro.titulo && livro.capa);
     } catch (err) {
       console.error(err);
       error.value = "Erro ao pesquisar livros.";
@@ -72,28 +75,93 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
         "inauthor:J.K. Rowling",
       ];
 
-      // busca paralela
+      // =========================
+      // BUSCA TODOS OS AUTORES
+      // =========================
       const responses = await Promise.all(
-        queries.map((q) => searchBooks(q))
+        queries.map((query) => searchBooks(query))
       );
 
-      console.log("📦 responses:", responses);
+      // Junta todos os resultados
+      const allBooks = responses.flatMap(
+        (response) => response.items ?? []
+      );
 
-      // junta todos os livros
-      const allBooks = responses.flatMap((res) => res.items ?? []);
-      console.log("📚 allBooks:", allBooks.length);
+      // =========================
+      // REMOVE DUPLICADOS
+      // =========================
+      const uniqueBooks = Array.from(
+        new Map(
+          allBooks.map((book) => [book.id, book])
+        ).values()
+      );
 
-      // embaralha
-      const shuffled = shuffle(allBooks);
-      console.log("🔀 shuffled:", shuffled.length);
+      // =========================
+      // FILTRA LIVROS VÁLIDOS
+      // =========================
+      const validBooks = uniqueBooks.filter((book) => {
+        const info = book.volumeInfo;
 
-      // converte + filtra
-      const livros = shuffled
-        .map((item) => googleBookToLivro(item))
-        .filter((livro) => livro.titulo && livro.capa);
+        return (
+          info?.title &&
+          info?.imageLinks?.thumbnail
+        );
+      });
 
-      console.log("🎯 final:", livros.length);
+      // =========================
+      // CALCULA POPULARIDADE
+      // =========================
+      const scoredBooks = validBooks.map((book) => {
+        const info = book.volumeInfo;
 
+        const ratingsCount = info.ratingsCount ?? 0;
+        const averageRating = info.averageRating ?? 0;
+
+        // Quanto mais avaliações, maior a popularidade.
+        // O log evita que um livro com milhares de
+        // avaliações fique absurdamente acima dos outros.
+        const popularityScore =
+          Math.log10(ratingsCount + 1) * 10;
+
+        // A nota também influencia.
+        const ratingScore =
+          averageRating * 2;
+
+        return {
+          book,
+          score: popularityScore + ratingScore,
+        };
+      });
+
+      // =========================
+      // ALEATORIEDADE + POPULARIDADE
+      // =========================
+      const shuffledBooks = shuffle(scoredBooks);
+
+      shuffledBooks.sort((a, b) => {
+        const randomA = Math.random() * 15;
+        const randomB = Math.random() * 15;
+
+        return (
+          b.score +
+          randomB -
+          (a.score + randomA)
+        );
+      });
+
+      // =========================
+      // CONVERTE TODOS OS LIVROS
+      // =========================
+      const livros = shuffledBooks
+        .map(({ book }) => googleBookToLivro(book))
+        .filter(
+          (livro) =>
+            livro.titulo &&
+            livro.capa
+        );
+
+      // Não limita aqui.
+      // O GradeBook controla quantos aparecem.
       resultados.value = livros;
     } catch (err) {
       console.error(err);
@@ -136,7 +204,8 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
     try {
       const response = await getBookById(id);
 
-      livroSelecionado.value = googleBookToLivro(response);
+      livroSelecionado.value =
+        googleBookToLivro(response);
     } catch (err) {
       console.error(err);
       error.value = "Erro ao carregar livro.";
@@ -160,13 +229,14 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
     loading,
     error,
 
-    // estado de busca
+    // Estado de busca
     termoBusca,
     idiomasSelecionados,
     categoriasSelecionadas,
     ordenacao,
     jaBuscou,
 
+    // Funções
     pesquisarLivros,
     buscarRecomendados,
     pesquisarPorISBN,
