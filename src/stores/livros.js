@@ -1,5 +1,6 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
+import api from '@/services/api';
 import { uploadImagem } from "@/services/upload";
 import {
   getLivros,
@@ -28,13 +29,13 @@ export const useLivrosStore = defineStore("livros", () => {
 
   // Computeds para contagem por status
   const totalLidos = computed(
-    () => meusLivros.value.filter((item) => item.status === "lido").length
+    () => meusLivros.value.filter((item) => item.status === "lido").length,
   );
   const totalLendo = computed(
-    () => meusLivros.value.filter((item) => item.status === "lendo").length
+    () => meusLivros.value.filter((item) => item.status === "lendo").length,
   );
   const totalQueroLer = computed(
-    () => meusLivros.value.filter((item) => item.status === "quero_ler").length
+    () => meusLivros.value.filter((item) => item.status === "quero_ler").length,
   );
 
   let alreadyLoaded = false;
@@ -84,11 +85,15 @@ export const useLivrosStore = defineStore("livros", () => {
   }
 
   async function atualizarStatusMeuLivro(livroOuPayload, novoStatus) {
-    const livroId = typeof livroOuPayload === "object" ? livroOuPayload.id : livroOuPayload;
+    const livroId =
+      typeof livroOuPayload === "object" ? livroOuPayload.id : livroOuPayload;
 
     // 1. Procura se esse livro já está salvo na estante do usuário
     const itemExistente = meusLivros.value.find(
-      (item) => item.livro?.id === livroId || item.livro === livroId || item.id === livroId
+      (item) =>
+        item.livro?.id === livroId ||
+        item.livro === livroId ||
+        item.id === livroId,
     );
 
     if (itemExistente) {
@@ -106,17 +111,16 @@ export const useLivrosStore = defineStore("livros", () => {
   // Ação para remover livro da estante do usuário
   async function removerMeuLivro(meuLivroId) {
     error.value = null;
+
     try {
-      // Chama o serviço de deleção do vínculo do usuário com o livro
       await deleteLivroUsuario(meuLivroId);
 
-      // Atualiza a lista local removendo o item
       meusLivros.value = meusLivros.value.filter(
-        (item) => item.id !== meuLivroId && item.livro?.id !== meuLivroId && item.livro !== meuLivroId
+        (item) => item.id !== meuLivroId,
       );
     } catch (err) {
       error.value = "Erro ao remover livro da estante.";
-      console.error(err);
+      console.error("Erro ao remover meu livro:", err);
       throw err;
     }
   }
@@ -223,6 +227,29 @@ export const useLivrosStore = defineStore("livros", () => {
     }
   }
 
+async function importarLivroDoGoogle(livroDados, status = "quero_ler") {
+  loading.value = true;
+  error.value = null;
+
+  try {
+    // Monta o payload incluindo o status no nível raiz do objeto
+    const payload = typeof livroDados === "object"
+      ? { ...livroDados, status: status }
+      : { googleBookId: livroDados, status: status };
+
+    // Aponta exatamente para a rota configurada em urls.py
+    const response = await api.post("/livros/importar-google/", payload);
+
+    return response.data;
+  } catch (err) {
+    error.value = "Erro ao importar livro do Google.";
+    console.error(err);
+    throw err;
+  } finally {
+    loading.value = false;
+  }
+}
+
   return {
     livros,
     meusLivros,
@@ -235,6 +262,8 @@ export const useLivrosStore = defineStore("livros", () => {
     totalLidos,
     totalLendo,
     totalQueroLer,
+    importarLivroDoGoogle, // Adicionado aqui
+    importarLivroGoogle: importarLivroDoGoogle,
     atualizarStatusMeuLivro,
     removerMeuLivro,
     fetchCategorias,

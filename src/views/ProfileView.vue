@@ -24,6 +24,7 @@ const authStore = useAuthStore();
 
 const user = computed(() => authStore.user);
 const userEmail = computed(() => user.value?.email || "");
+const userBio = computed(() => user.value?.bio || "");
 
 onMounted(() => {
   livroStore.fetchMeusLivros();
@@ -49,20 +50,9 @@ const getLivroObjeto = (item) => {
 
 // Estatísticas reativas diretas da store
 const totalLivros = computed(() => livroStore.totalMeusLivros);
-const totalLidos = computed(() => livroStore.totalLidos);
-const totalLendo = computed(() => livroStore.totalLendo);
-const totalQueroLer = computed(() => livroStore.totalQueroLer);
 
-// Listas filtradas para as seções
-const livrosLendo = computed(() =>
-  livroStore.meusLivros.filter((i) => i.status === "lendo")
-);
-const livrosQueroLer = computed(() =>
-  livroStore.meusLivros.filter((i) => i.status === "quero_ler")
-);
-const livrosLidos = computed(() =>
-  livroStore.meusLivros.filter((i) => i.status === "lido")
-);
+// Todos os livros do usuário
+const meusLivros = computed(() => livroStore.meusLivros);
 
 const userPhoto = computed(() => {
   const url = authStore.user?.foto?.url;
@@ -112,6 +102,7 @@ const splideOptions = {
         <div class="menu-info">
           <strong>{{ authStore.user?.name || 'Usuário' }}</strong>
           <p>{{ userEmail }}</p>
+          <p v-if="userBio" class="user-bio">{{ userBio }}</p>
         </div>
       </div>
 
@@ -120,76 +111,15 @@ const splideOptions = {
       </button>
     </div>
 
-    <div class="stats">
-      <div class="stat-item">
-        <span>
-          <LibraryBig :size="22" />
-          {{ totalLivros }}
-        </span>
-        <p>Total na Estante</p>
-      </div>
-
-      <div class="stat-item divisor">
-        <span>
-          <BookOpenCheck :size="22" />
-          {{ totalLidos }}
-        </span>
-        <p>Lidos</p>
-      </div>
-
-      <div class="stat-item divisor">
-        <span>
-          <BookOpenText :size="22" />
-          {{ totalLendo }}
-        </span>
-        <p>Lendo</p>
-      </div>
-
-      <div class="stat-item">
-        <span>
-          <Bookmark :size="22" />
-          {{ totalQueroLer }}
-        </span>
-        <p>Quero Ler</p>
-      </div>
-    </div>
   </div>
 
   <div id="livros">
-    <!-- Seção: Lendo atualmente -->
-    <div class="secao-livros" v-if="livrosLendo.length">
-      <h1 class="titulo-secao">Lendo Atualmente</h1>
+    <!-- Seção Única: Livros Salvos -->
+    <div class="secao-livros" v-if="meusLivros.length">
+      <h1 class="titulo-secao">Livros Salvos</h1>
       <div class="lista-livros">
         <Splide :options="splideOptions">
-          <SplideSlide v-for="item in livrosLendo" :key="item.id">
-            <RouterLink :to="`/livro/${getLivroId(item)}`">
-              <BookCard :livro="getLivroObjeto(item)" />
-            </RouterLink>
-          </SplideSlide>
-        </Splide>
-      </div>
-    </div>
-
-    <!-- Seção: Quero Ler -->
-    <div class="secao-livros" v-if="livrosQueroLer.length">
-      <h1 class="titulo-secao">Quero Ler</h1>
-      <div class="lista-livros">
-        <Splide :options="splideOptions">
-          <SplideSlide v-for="item in livrosQueroLer" :key="item.id">
-            <RouterLink :to="`/livro/${getLivroId(item)}`">
-              <BookCard :livro="getLivroObjeto(item)" />
-            </RouterLink>
-          </SplideSlide>
-        </Splide>
-      </div>
-    </div>
-
-    <!-- Seção: Lidos -->
-    <div class="secao-livros" v-if="livrosLidos.length">
-      <h1 class="titulo-secao">Lidos</h1>
-      <div class="lista-livros">
-        <Splide :options="splideOptions">
-          <SplideSlide v-for="item in livrosLidos" :key="item.id">
+          <SplideSlide v-for="item in meusLivros" :key="item.id">
             <RouterLink :to="`/livro/${getLivroId(item)}`">
               <BookCard :livro="getLivroObjeto(item)" />
             </RouterLink>
@@ -199,7 +129,7 @@ const splideOptions = {
     </div>
 
     <!-- Estado Vazio -->
-    <div v-if="!totalLivros" class="sem-livros">
+    <div v-else class="sem-livros">
       <p>Você ainda não adicionou nenhum livro à sua estante.</p>
     </div>
   </div>
@@ -269,40 +199,6 @@ const splideOptions = {
   transform: translateY(-1px);
 }
 
-.stats {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.stat-item p {
-  margin: 0;
-  color: #6d6d6d;
-  font-size: 0.95rem;
-}
-
-.stat-item span {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: #6b4226;
-  margin-bottom: 2px;
-}
-
-.divisor {
-  padding: 0 25px;
-  border-left: 1px solid #8a6a52;
-}
-
 #livros {
   padding: 50px 60px;
 }
@@ -361,6 +257,15 @@ const splideOptions = {
 
 .splide__slide:hover {
   transform: translateY(-4px);
+}
+
+.menu-info .user-bio {
+  color: #4a4a4a;
+  font-size: 0.95rem;
+  margin-top: 8px;
+  line-height: 1.4;
+  max-width: 500px;
+  word-break: break-word;
 }
 
 @media (max-width: 768px) {

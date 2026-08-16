@@ -37,7 +37,7 @@ export function updateStatusLivroUsuario(livroUsuarioId, status) {
 
 export async function deleteLivroUsuario(id) {
   // Substitua '/meus-livros/' pela rota correta da sua API se for diferente
-  return await api.delete(`/meus-livros/${id}/`); 
+  return await api.delete(`/livros-usuario/${id}/`);
 }
 
 export function importarLivroGoogle(livro, status) {

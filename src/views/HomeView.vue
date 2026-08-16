@@ -48,29 +48,6 @@ console.log("LIVROS BACKEND:", livroStore.livros);
     <ListaRecursos />
     <div class="margin">
 
-      <h1 class="titulo-secao">Meus livros</h1>
-      <div class="lista-livros">
-        <Splide :options="{
-          perPage: 3,
-          gap: '0px',
-          breakpoints: {
-            640: {
-              perPage: 1,
-              gap: '30px',
-            },
-          },
-          arrows: true,
-          pagination: false,
-          drag: 'free',
-        }">
-          <SplideSlide v-for="livro in livroStore.livros" :key="livro.id">
-            <RouterLink :to="`/livro/${livro.id}`">
-              <BookCard :livro="livro" />
-            </RouterLink>
-          </SplideSlide>
-        </Splide>
-      </div>
-
       <h1 class="titulo-secao">Resumo rápido</h1>
       <div class="lista-cards">
         <StatsCard titulo="Livros" :valor="10" />
