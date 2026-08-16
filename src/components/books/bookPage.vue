@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useLivrosStore } from "@/stores/livros";
 import { useGoogleBooksStore } from "@/stores/googleBooks";
+
 import {
   Star,
   Heart,
@@ -14,40 +15,66 @@ import {
   Calendar,
   Shield,
   Barcode,
-  Trash2, // <--- Adicionado para o botão de deletar
+  Trash2,
 } from "lucide-vue-next";
+
 import statusSelect from "@/components/common/statusSelect.vue";
 
 const route = useRoute();
 
 const googleBooksStore = useGoogleBooksStore();
-const isGoogleBook = computed(() => route.path.startsWith("/livro/google"));
-
-const id = route.params.id;
 const livroStore = useLivrosStore();
 
-const status = ref("quero_ler");
+const isGoogleBook = computed(() =>
+  route.path.startsWith("/livro/google")
+);
+
+// =========================================================
+// ESTADOS DA PÁGINA
+// =========================================================
+
+const status = ref(null);
+const meuLivroId = ref(null);
+
 const isLoading = ref(true);
 const isUpdatingStatus = ref(false);
 const isDeleting = ref(false);
 const isFavorito = ref(false);
 
+
+// =========================================================
+// FAVORITO
+// =========================================================
+
 const toggleFavorito = () => {
   isFavorito.value = !isFavorito.value;
 };
 
+
+// =========================================================
+// LIVRO ATUAL
+// =========================================================
+
 const livro = computed(() => {
+  const currentId = route.params.id;
+
+  // Livro vindo do Google Books
   if (isGoogleBook.value) {
     return googleBooksStore.livroSelecionado;
   }
 
-  const numId = Number(id);
+  const numId = Number(currentId);
 
-  // 1. Tenta encontrar na lista geral de livros
-  const livroGeral = livroStore.livros.find((l) => l.id === numId);
-  if (livroGeral) return livroGeral;
+  // 1. Procura na lista geral de livros
+  const livroGeral = livroStore.livros.find(
+    (l) => l.id === numId
+  );
 
-  // 2. Se não achou na lista geral, busca na lista de livros do usuário
+  if (livroGeral) {
+    return livroGeral;
+  }
+
+  // 2. Procura na lista de livros do usuário
   const meuLivroItem = livroStore.meusLivros.find(
     (item) =>
       item.livro?.id === numId ||
@@ -64,119 +91,418 @@ const livro = computed(() => {
   return null;
 });
 
-// Identifica se o livro atual está salvo na estante do usuário
-const meuLivroItem = computed(() => {
-  if (!livro.value) return null;
-  const numId = Number(livro.value.id || id);
 
-  return livroStore.meusLivros.find(
-    (item) =>
-      item.livro?.id === numId ||
-      item.livro === numId ||
-      item.id === numId
-  );
+// =========================================================
+// LIVRO DO USUÁRIO / ESTANTE
+// =========================================================
+
+const meuLivroItem = computed(() => {
+  if (!livro.value) {
+    return null;
+  }
+
+  const livroAtualId = livro.value.id;
+  const routeId = route.params.id;
+
+  return livroStore.meusLivros.find((item) => {
+    // LivroUsuario -> livro pode vir como objeto
+    if (item.livro?.id != null) {
+      return String(item.livro.id) === String(livroAtualId);
+    }
+
+    // LivroUsuario -> livro pode vir apenas como ID
+    if (item.livro != null) {
+      return String(item.livro) === String(livroAtualId);
+    }
+
+    // Fallback para quando o próprio item representa o livro
+    if (item.id != null) {
+      return String(item.id) === String(livroAtualId);
+    }
+
+    // Para livros do Google, tenta também comparar com o ID da rota
+    if (routeId != null && item.livro?.google_book_id != null) {
+      return (
+        String(item.livro.google_book_id) === String(routeId)
+      );
+    }
+
+    return false;
+  });
 });
 
+
+// =========================================================
+// CARREGAR STATUS ATUAL
+// =========================================================
+
 const carregarStatusAtual = () => {
-  if (meuLivroItem.value && meuLivroItem.value.status) {
-    status.value = meuLivroItem.value.status;
-  } else {
-    status.value = "quero_ler";
+  if (meuLivroItem.value) {
+    meuLivroId.value = meuLivroItem.value.id;
+
+    status.value = meuLivroItem.value.status
+      ? String(meuLivroItem.value.status).toLowerCase()
+      : null;
   }
+
+  /*
+   * IMPORTANTE:
+   *
+   * Não colocamos:
+   *
+   * else {
+   *   status.value = null;
+   * }
+   *
+   * porque, ao importar um livro novo, o status já foi
+   * definido localmente pelo clique do usuário.
+   *
+   * Se o backend ainda não tiver aparecido em meusLivros,
+   * não devemos apagar esse estado visual.
+   */
 };
 
-onMounted(async () => {
+
+// =========================================================
+// SINCRONIZA STATUS QUANDO MEU LIVRO MUDAR
+// =========================================================
+
+watch(
+  meuLivroItem,
+  () => {
+    carregarStatusAtual();
+  },
+  {
+    immediate: true,
+  }
+);
+
+
+// =========================================================
+// CARREGAMENTO INICIAL
+// =========================================================
+
+const carregarDados = async () => {
+  isLoading.value = true;
+
+  const currentId = route.params.id;
+
   try {
+    // -----------------------------------------------------
+    // Carrega informações do livro
+    // -----------------------------------------------------
+
     if (isGoogleBook.value) {
-      await googleBooksStore.buscarLivro(id);
+      await googleBooksStore.buscarLivro(currentId);
     } else {
       await Promise.all([
         livroStore.fetchLivros(),
         livroStore.fetchCategorias(),
       ]);
     }
-    await livroStore.fetchMeusLivros();
+
+    // -----------------------------------------------------
+    // Carrega livros da estante
+    // -----------------------------------------------------
+
+    if (livroStore.fetchMeusLivros) {
+      await livroStore.fetchMeusLivros();
+    } else if (livroStore.buscarMeusLivros) {
+      await livroStore.buscarMeusLivros();
+    }
+
+    // -----------------------------------------------------
+    // Sincroniza status
+    // -----------------------------------------------------
+
     carregarStatusAtual();
+
   } catch (error) {
-    console.error("Erro ao carregar detalhes do livro:", error);
+    console.error(
+      "Erro ao carregar detalhes do livro:",
+      error
+    );
   } finally {
     isLoading.value = false;
   }
+};
+
+
+// =========================================================
+// MOUNT
+// =========================================================
+
+onMounted(() => {
+  carregarDados();
 });
 
-// Atualiza apenas quando o usuário interage diretamente com o componente
-const onStatusChange = async (novoStatus) => {
-  if (isUpdatingStatus.value || novoStatus === status.value) return;
 
+// =========================================================
+// TROCA DE LIVRO PELA ROTA
+// =========================================================
+
+watch(
+  () => route.params.id,
+  (newId) => {
+    if (newId) {
+      carregarDados();
+    }
+  }
+);
+
+
+// =========================================================
+// ALTERAÇÃO DO STATUS
+// =========================================================
+
+const onStatusChange = async (novoStatus) => {
+  if (
+    isUpdatingStatus.value ||
+    novoStatus === status.value
+  ) {
+    return;
+  }
+
+  // Guarda o status anterior caso a requisição falhe
   const statusAnterior = status.value;
-  status.value = novoStatus; // Atualiza a UI imediatamente
+
+  // -------------------------------------------------------
+  // ATUALIZA IMEDIATAMENTE A INTERFACE
+  // -------------------------------------------------------
+
+  status.value = novoStatus;
+
   isUpdatingStatus.value = true;
 
   try {
-    const livroPayload = isGoogleBook.value
-      ? { ...livro.value, isGoogleBook: true }
-      : livro.value.id;
+    const idLivroParaSalvar =
+      livro.value?.id ?? route.params.id;
 
-    await livroStore.atualizarStatusMeuLivro(livroPayload, novoStatus);
+    // -----------------------------------------------------
+    // LIVRO DO GOOGLE / LIVRO AINDA NÃO IMPORTADO
+    // -----------------------------------------------------
+
+    if (
+      isGoogleBook.value ||
+      typeof idLivroParaSalvar === "string"
+    ) {
+      const resposta =
+        await livroStore.importarLivroDoGoogle(
+          livro.value,
+          novoStatus
+        );
+
+      console.log(
+        "Resposta da importação:",
+        resposta
+      );
+    }
+
+    // -----------------------------------------------------
+    // LIVRO NORMAL JÁ EXISTENTE NO BACKEND
+    // -----------------------------------------------------
+
+    else {
+      await livroStore.atualizarStatusMeuLivro(
+        Number(idLivroParaSalvar),
+        novoStatus
+      );
+    }
+
+    // -----------------------------------------------------
+    // ATUALIZA A ESTANTE
+    // -----------------------------------------------------
+
+    if (livroStore.fetchMeusLivros) {
+      await livroStore.fetchMeusLivros();
+    } else if (livroStore.buscarMeusLivros) {
+      await livroStore.buscarMeusLivros();
+    }
+
+    // -----------------------------------------------------
+    // SINCRONIZA COM O BACKEND SOMENTE SE ENCONTRAR
+    // O ITEM NA ESTANTE
+    // -----------------------------------------------------
+
+    if (meuLivroItem.value) {
+      carregarStatusAtual();
+    }
+
+    console.log(
+      "Status final:",
+      status.value
+    );
+
+    console.log(
+      "Meu livro:",
+      meuLivroItem.value
+    );
+
   } catch (err) {
-    console.error("Erro ao atualizar o status:", err);
-    status.value = statusAnterior; // Reverte se der erro, sem acionar loop
+    console.error(
+      "Erro ao atualizar o status:",
+      err
+    );
+
+    // Se deu erro, volta para o status anterior
+    status.value = statusAnterior;
+
   } finally {
     isUpdatingStatus.value = false;
   }
 };
 
-// Remove o livro da estante do usuário
-const removerDaEstante = async () => {
-  if (!meuLivroItem.value) return;
 
-  if (confirm("Tem certeza que deseja remover este livro da sua estante?")) {
-    isDeleting.value = true;
-    try {
-      const meuLivroId = meuLivroItem.value.id;
-      await livroStore.removerMeuLivro(meuLivroId);
-      status.value = "quero_ler"; // Reseta o status local
-    } catch (err) {
-      console.error("Erro ao remover o livro da estante:", err);
-    } finally {
-      isDeleting.value = false;
-    }
+// =========================================================
+// MODAL E REMOÇÃO
+// =========================================================
+
+const mostrarModalRemocao = ref(false);
+
+const abrirModalRemocao = () => {
+  if (
+    !meuLivroItem.value ||
+    isDeleting.value
+  ) {
+    return;
+  }
+
+  mostrarModalRemocao.value = true;
+};
+
+const cancelarRemocao = () => {
+  if (isDeleting.value) {
+    return;
+  }
+
+  mostrarModalRemocao.value = false;
+};
+
+const removerDaEstante = async () => {
+  if (
+    !meuLivroItem.value ||
+    isDeleting.value
+  ) {
+    return;
+  }
+
+  isDeleting.value = true;
+
+  try {
+    const idParaRemover =
+      meuLivroItem.value.id;
+
+    await livroStore.removerMeuLivro(
+      idParaRemover
+    );
+
+    mostrarModalRemocao.value = false;
+
+    window.history.back();
+
+  } catch (err) {
+    console.error(
+      "Erro ao remover o livro da estante:",
+      err
+    );
+
+    alert(
+      "Não foi possível remover o livro da sua estante."
+    );
+
+  } finally {
+    isDeleting.value = false;
   }
 };
 
+
+// =========================================================
+// FORMATAÇÃO DE DATA
+// =========================================================
+
 const formatarData = (data) => {
-  if (!data) return "-";
-  return new Date(data).toLocaleDateString("pt-BR");
+  if (!data) {
+    return "-";
+  }
+
+  return new Date(data).toLocaleDateString(
+    "pt-BR"
+  );
 };
+
+
+// =========================================================
+// VOLTAR
+// =========================================================
 
 const voltar = () => {
   window.history.back();
 };
 
+
+// =========================================================
+// CAPA DO LIVRO
+// =========================================================
+
 const getBookCover = (livro) => {
-  if (!livro) return "/imgs/livro_sem_capa.png";
+  if (!livro) {
+    return "/imgs/livro_sem_capa.png";
+  }
 
   const capa = livro.capa;
-  const url = typeof capa === "string" ? capa : capa?.url;
 
-  if (!url) return "/imgs/livro_sem_capa.png";
+  const url =
+    typeof capa === "string"
+      ? capa
+      : capa?.url;
+
+  if (!url) {
+    return "/imgs/livro_sem_capa.png";
+  }
 
   if (url.startsWith("http")) {
-    const isLocal = /^https?:\/\/(127\.0\.0\.1|localhost)/i.test(url);
-    return isLocal ? url : url.replace(/^http:\/\//i, "https://");
+    const isLocal =
+      /^https?:\/\/(127\.0\.0\.1|localhost)/i.test(
+        url
+      );
+
+    return isLocal
+      ? url
+      : url.replace(
+          /^http:\/\//i,
+          "https://"
+        );
   }
 
   return `${import.meta.env.VITE_API_BASE_URL}${url}`;
 };
 
+
+// =========================================================
+// CATEGORIA
+// =========================================================
+
 const categoriaNome = computed(() => {
   const livroAtual = livro.value;
   const categorias = livroStore.categorias;
 
-  if (!livroAtual || !categorias.length) return "";
+  if (
+    !livroAtual ||
+    !categorias?.length
+  ) {
+    return "";
+  }
 
-  const categoria = categorias.find((c) => Number(c.id) === Number(livroAtual.categoria));
-  return categoria?.descricao || "Sem categoria";
+  const categoria = categorias.find(
+    (c) =>
+      Number(c.id) ===
+      Number(livroAtual.categoria)
+  );
+
+  return (
+    categoria?.descricao ||
+    "Sem categoria"
+  );
 });
 </script>
 
@@ -203,7 +529,9 @@ const categoriaNome = computed(() => {
               <p v-if="livro.autores && livro.autores.length" class="autores">
                 por
                 <span class="autores-nome">{{
-                  livro.autores.map((a) => (typeof a === "string" ? a : a.nome)).join(", ")
+                  livro.autores
+                    .map((a) => (typeof a === "string" ? a : a.nome))
+                    .join(", ")
                 }}</span>
               </p>
             </div>
@@ -247,18 +575,20 @@ const categoriaNome = computed(() => {
 
           <!-- Container do Status + Botão de Deletar -->
           <div class="container-status-acoes">
-            <statusSelect
-              :modelValue="status"
-              @update:modelValue="onStatusChange"
-              variante="livro"
-              :disabled="isUpdatingStatus || isDeleting"
-            />
+            <div class="status-wrapper">
+              <statusSelect
+                :modelValue="status || ''"
+                @update:modelValue="onStatusChange"
+                variante="livro"
+                esconder-label
+                :disabled="isUpdatingStatus || isDeleting"
+              />
+            </div>
 
-            <!-- Botão de remover exibe apenas se o livro estiver na estante do usuário -->
             <button
               v-if="meuLivroItem"
               class="btn-deletar-estante"
-              @click="removerDaEstante"
+              @click="abrirModalRemocao"
               :disabled="isDeleting"
               type="button"
               title="Remover da estante"
@@ -273,7 +603,10 @@ const categoriaNome = computed(() => {
       <div class="infoMaior">
         <div class="secao-sinopse">
           <h2 class="titulo-secao">Sinopse</h2>
-          <p class="texto-sinopse" v-html="livro.sinopse || 'Sem sinopse disponível.'"></p>
+          <p
+            class="texto-sinopse"
+            v-html="livro.sinopse || 'Sem sinopse disponível.'"
+          ></p>
         </div>
 
         <div class="secao-detalhes">
@@ -282,7 +615,9 @@ const categoriaNome = computed(() => {
             <div class="detalhe-item">
               <Languages :size="16" class="icone-detalhe" />
               <p class="detalhe-label">Idioma</p>
-              <p class="detalhe-valor">{{ livro.idioma === "pt" ? "Português" : (livro.idioma || "-") }}</p>
+              <p class="detalhe-valor">
+                {{ livro.idioma === "pt" ? "Português" : livro.idioma || "-" }}
+              </p>
             </div>
             <div class="detalhe-item">
               <BookOpen :size="16" class="icone-detalhe" />
@@ -311,6 +646,57 @@ const categoriaNome = computed(() => {
 
     <div v-else class="erro-container">
       <p>Não foi possível encontrar as informações deste livro.</p>
+    </div>
+  </div>
+
+  <div
+    v-if="mostrarModalRemocao"
+    class="modal-overlay"
+    @click.self="cancelarRemocao"
+  >
+    <div class="modal-remocao">
+      <button
+        class="modal-fechar"
+        type="button"
+        :disabled="isDeleting"
+        @click="cancelarRemocao"
+        aria-label="Fechar"
+      >
+        ×
+      </button>
+
+      <div class="modal-icone">
+        <Trash2 :size="128" />
+      </div>
+
+      <h2>Remover livro?</h2>
+
+      <p>
+        Tem certeza que deseja remover
+        <strong>{{ livro?.titulo }}</strong>
+        da sua estante?
+      </p>
+
+      <div class="modal-acoes">
+        <button
+          type="button"
+          class="btn-modal-cancelar"
+          :disabled="isDeleting"
+          @click="cancelarRemocao"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn-modal-remover"
+          :disabled="isDeleting"
+          @click="removerDaEstante"
+        >
+          <span v-if="!isDeleting">Remover</span>
+          <span v-else>Removendo...</span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -375,8 +761,12 @@ const categoriaNome = computed(() => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .erro-container {
@@ -508,24 +898,44 @@ const categoriaNome = computed(() => {
 .container-status-acoes {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 4px;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  margin-top: 25px;
+}
+
+.status-wrapper {
+  display: flex;
+  align-items: center;
+  margin: 0;
 }
 
 .btn-deletar-estante {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 7px;
+
+  height: 35px;
+  padding: 0 12px;
+  box-sizing: border-box;
+
+  flex-shrink: 0;
+
   background: transparent;
   border: 1px solid #a4161a;
-  color: #a4161a;
-  padding: 6px 14px;
   border-radius: 8px;
+
+  color: #a4161a;
   font-size: 13px;
   font-weight: 500;
+
   cursor: pointer;
-  transition: all 0.2s ease;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .btn-deletar-estante:hover {
@@ -536,6 +946,204 @@ const categoriaNome = computed(() => {
 .btn-deletar-estante:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* =========================================================
+   MODAL DE CONFIRMAÇÃO DE REMOÇÃO
+   ========================================================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(0, 0, 0, 0.45);
+
+  z-index: 9999;
+
+  animation: aparecerOverlay 0.2s ease;
+}
+
+.modal-remocao {
+  position: relative;
+
+  width: min(420px, 100%);
+
+  background: #ffffff;
+  border-radius: 16px;
+
+  padding: 32px;
+
+  box-sizing: border-box;
+
+  text-align: center;
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+
+  animation: aparecerModal 0.2s ease;
+}
+
+.modal-fechar {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  background: transparent;
+
+  color: #8a7a6a;
+  font-size: 26px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  border-radius: 50%;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.modal-fechar:hover {
+  background: #f3eee9;
+  color: #5a4636;
+}
+
+.modal-icone {
+  width: 56px;
+  height: 56px;
+
+  margin: 0 auto 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #fbe9e9;
+
+  font-size: 24px;
+}
+
+.modal-remocao h2 {
+  margin: 0 0 10px;
+
+  color: #4b3626;
+
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.modal-remocao p {
+  margin: 0 auto;
+
+  max-width: 340px;
+
+  color: #6f6257;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.modal-remocao p strong {
+  color: #4b3626;
+}
+
+.modal-acoes {
+  display: flex;
+  justify-content: center;
+
+  gap: 10px;
+
+  margin-top: 26px;
+}
+
+.btn-modal-cancelar,
+.btn-modal-remover {
+  min-width: 110px;
+  height: 40px;
+
+  padding: 0 18px;
+
+  border-radius: 8px;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.btn-modal-cancelar {
+  background: #ffffff;
+
+  border: 1px solid #d8c9ba;
+
+  color: #5a4636;
+}
+
+.btn-modal-cancelar:hover {
+  background: #f5f0eb;
+}
+
+.btn-modal-remover {
+  background: #a4161a;
+
+  border: 1px solid #a4161a;
+
+  color: #ffffff;
+}
+
+.btn-modal-remover:hover {
+  background: #861215;
+  border-color: #861215;
+}
+
+.btn-modal-cancelar:disabled,
+.btn-modal-remover:disabled,
+.modal-fechar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes aparecerOverlay {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes aparecerModal {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* sinopse + detalhes */
@@ -597,4 +1205,34 @@ const categoriaNome = computed(() => {
   font-weight: 500;
   margin: 0 0 0 auto;
 }
+@media (max-width: 600px) {
+  .container-status-acoes {
+    align-items: stretch;
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .status-wrapper {
+    height: auto;
+  }
+
+  .btn-deletar-estante {
+    width: 100%;
+  }
+
+  .modal-remocao {
+    padding: 28px 20px;
+  }
+
+  .modal-acoes {
+    flex-direction: column-reverse;
+  }
+
+  .btn-modal-cancelar,
+  .btn-modal-remover {
+    width: 100%;
+  }
+}
+
+
 </style>

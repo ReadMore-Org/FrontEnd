@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import HomeView from "../views/HomeView.vue";
-import MarketplaceView from "@/views/MarketplaceView.vue"; 
+import MarketplaceView from "@/views/MarketplaceView.vue";
 
 import ProdutoView from "@/views/ProdutoView.vue";
 import OnBoardingView from "@/views/OnBoardingView.vue";
@@ -17,6 +17,7 @@ import ScanCodeView from "@/views/ScanCodeView.vue";
 import ManualBookView from "@/views/ManualBookView.vue";
 import ExploreView from "@/views/ExploreView.vue";
 
+import MeusLivrosView from "@/views/MeusLivrosView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -60,6 +61,11 @@ const router = createRouter({
       path: "/livro/google/:id",
       name: "livro-google",
       component: ProdutoView,
+    },
+    {
+      path: "/meus-livros",
+      name: "meus-livros",
+      component: () => import("@/views/MeusLivrosView.vue"),
     },
     {
       path: "/signup",
