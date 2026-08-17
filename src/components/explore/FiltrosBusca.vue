@@ -2,7 +2,6 @@
 import { ref } from "vue";
 import { SlidersHorizontal, ChevronUp, ChevronDown } from "lucide-vue-next";
 
-
 const props = defineProps({
   idiomasSelecionados: {
     type: Array,
@@ -52,37 +51,39 @@ function limparFiltros() {
       <p>Filtros</p>
     </div>
 
-    <div class="f-secao">
-      <button class="f-header" @click="secaoCategoriaAberta = !secaoCategoriaAberta">
-        <span class="f-titulo">Categoria</span>
-        <component :is="secaoCategoriaAberta ? ChevronUp : ChevronDown" :size="14" />
-      </button>
-      <div v-show="secaoCategoriaAberta">
-        <label v-for="c in categorias" :key="c.value" class="f-linha">
-          <input
-            type="checkbox"
-            :checked="categoriasSelecionadas.includes(c.value)"
-            @change="toggle(categoriasSelecionadas, c.value, 'update:categoriasSelecionadas')"
-          />
-          {{ c.label }}
-        </label>
+    <div class="conteudo-secoes">
+      <div class="f-secao">
+        <button class="f-header" @click="secaoCategoriaAberta = !secaoCategoriaAberta">
+          <span class="f-titulo">Categoria</span>
+          <component :is="secaoCategoriaAberta ? ChevronUp : ChevronDown" :size="14" />
+        </button>
+        <div v-show="secaoCategoriaAberta">
+          <label v-for="c in categorias" :key="c.value" class="f-linha">
+            <input
+              type="checkbox"
+              :checked="categoriasSelecionadas.includes(c.value)"
+              @change="toggle(categoriasSelecionadas, c.value, 'update:categoriasSelecionadas')"
+            />
+            {{ c.label }}
+          </label>
+        </div>
       </div>
-    </div>
 
-    <div class="f-secao">
-      <button class="f-header" @click="secaoIdiomaAberta = !secaoIdiomaAberta">
-        <span class="f-titulo">Idioma</span>
-        <component :is="secaoIdiomaAberta ? ChevronUp : ChevronDown" :size="14" />
-      </button>
-      <div v-show="secaoIdiomaAberta">
-        <label v-for="i in idiomas" :key="i.value" class="f-linha">
-          <input
-            type="checkbox"
-            :checked="idiomasSelecionados.includes(i.value)"
-            @change="toggle(idiomasSelecionados, i.value, 'update:idiomasSelecionados')"
-          />
-          {{ i.label }}
-        </label>
+      <div class="f-secao">
+        <button class="f-header" @click="secaoIdiomaAberta = !secaoIdiomaAberta">
+          <span class="f-titulo">Idioma</span>
+          <component :is="secaoIdiomaAberta ? ChevronUp : ChevronDown" :size="14" />
+        </button>
+        <div v-show="secaoIdiomaAberta">
+          <label v-for="i in idiomas" :key="i.value" class="f-linha">
+            <input
+              type="checkbox"
+              :checked="idiomasSelecionados.includes(i.value)"
+              @change="toggle(idiomasSelecionados, i.value, 'update:idiomasSelecionados')"
+            />
+            {{ i.label }}
+          </label>
+        </div>
       </div>
     </div>
 
@@ -95,6 +96,7 @@ function limparFiltros() {
   width: 230px;
   flex-shrink: 0;
   padding: 22px 20px 26px 28px;
+  box-sizing: border-box;
 }
 
 .cabecalho-filtros {
@@ -113,6 +115,11 @@ function limparFiltros() {
 
 .cabecalho-filtros svg {
   color: #6b4226;
+}
+
+.conteudo-secoes {
+  display: flex;
+  flex-direction: column;
 }
 
 .f-secao {
@@ -157,7 +164,7 @@ function limparFiltros() {
 
 .btn-limpar {
   width: 100%;
-  margin-top: 10px;
+  margin-top: 16px;
   background: none;
   border: 1px solid #e8d8c3;
   color: #5a4636;
@@ -170,5 +177,35 @@ function limparFiltros() {
 
 .btn-limpar:hover {
   background: #faf3e0;
+}
+
+/* Responsividade Mobile - Filtros lado a lado */
+@media (max-width: 768px) {
+  .filtros-sidebar {
+    width: 100%;
+    padding: 12px 16px;
+  }
+
+  .conteudo-secoes {
+    flex-direction: row;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .f-secao {
+    flex: 1;
+    border-bottom: none;
+    border-right: 1px solid #e8d8c3;
+    padding: 0 12px 0 0;
+  }
+
+  .f-secao:last-child {
+    border-right: none;
+    padding-right: 0;
+  }
+
+  .btn-limpar {
+    margin-top: 12px;
+  }
 }
 </style>

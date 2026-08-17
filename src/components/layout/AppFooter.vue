@@ -1,23 +1,17 @@
 <script setup>
-import { House } from "lucide-vue-next";
-import { Book } from "lucide-vue-next";
-import { Plus } from "lucide-vue-next";
-import { Store } from "lucide-vue-next";
-import { User } from "lucide-vue-next";
+import { House, Book, Plus, Store, User, Mail, Phone, MapPin } from "lucide-vue-next";
+import { computed } from "vue";
+import { useRoute, RouterLink } from "vue-router";
 
-import { Mail } from "lucide-vue-next";
-import { Phone } from "lucide-vue-next";
-import { MapPin } from "lucide-vue-next";
-
-import { useRouter } from "vue-router";
-import { useRoute } from "vue-router";
-
-const router = useRouter();
 const route = useRoute();
 
-import { ref } from "vue";
-
-const active = ref("home");
+// Função para verificar se o item está ativo de acordo com a rota atual
+const isActive = (path) => {
+  if (path === '/home') {
+    return route.path === '/home' || route.path === '/';
+  }
+  return route.path.startsWith(path);
+};
 </script>
 
 <template>
@@ -44,15 +38,15 @@ const active = ref("home");
             <h1>Social</h1>
 
             <div class="icons">
-              <a href="https://github.com">
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer">
                 <img src="/imgs/social/github.png" alt="github" />
               </a>
 
-              <a href="https://linkedin.com">
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
                 <img src="/imgs/social/linkedin.png" alt="linkedin" />
               </a>
 
-              <a href="https://instagram.com">
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
                 <img src="/imgs/social/instagram.png" alt="instagram" />
               </a>
             </div>
@@ -62,58 +56,45 @@ const active = ref("home");
           <li>
             <h1>Navegação</h1>
             <p @click="$router.push('/home')">Home</p>
-            <p @click="$router.push('/profile/edit')">Estante</p>
+            <p @click="$router.push('/meus-livros')">Estante</p>
             <p @click="$router.push('/marketplace')">Marketplace</p>
             <p @click="$router.push('/profile')">Perfil</p>
           </li>
         </ul>
       </div>
     </div>
+
+    <!-- MENU MOBILE -->
     <nav id="mobile">
       <ul>
-        <li
-          :class="{ active: active === 'home' }"
-          @click="
-            active = 'home';
-            $router.push('/home');
-          "
-        >
-          <House :size="25" />
-        </li>
-
-        <li
-          :class="{ active: active === 'estante' }"
-          @click="
-            active = 'estante';
-          "
-        >
-          <Book :size="25" />
+        <li>
+          <RouterLink to="/home" :class="{ active: isActive('/home') }">
+            <House :size="25" />
+          </RouterLink>
         </li>
 
         <li>
-          <span id="Mais" @click="$router.push('/adicionar')">
+          <RouterLink to="/meus-livros" :class="{ active: isActive('/meus-livros') }">
+            <Book :size="25" />
+          </RouterLink>
+        </li>
+
+        <li>
+          <RouterLink to="/adicionar" id="Mais">
             <Plus :size="38" />
-          </span>
+          </RouterLink>
         </li>
 
-        <li
-          :class="{ active: active === 'marketplace' }"
-          @click="
-            active = 'marketplace';
-            $router.push('/marketplace');
-          "
-        >
-          <Store :size="25" />
+        <li>
+          <RouterLink to="/marketplace" :class="{ active: isActive('/marketplace') }">
+            <Store :size="25" />
+          </RouterLink>
         </li>
 
-        <li
-          :class="{ active: active === 'perfil' }"
-          @click="
-            active = 'perfil';
-            $router.push('/profile');
-          "
-        >
-          <User :size="25" />
+        <li>
+          <RouterLink to="/profile" :class="{ active: isActive('/profile') }">
+            <User :size="25" />
+          </RouterLink>
         </li>
       </ul>
     </nav>
@@ -166,6 +147,8 @@ footer {
 
 ul {
   list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 ul li h1 {
@@ -201,6 +184,7 @@ ul li h1 {
 #mobile {
   display: none;
 }
+
 @media (max-width: 650px) {
   footer {
     background: white;
@@ -213,17 +197,10 @@ ul li h1 {
     z-index: 1000;
   }
 
-  /* evita o conteúdo ficar escondido atrás do footer */
-  body {
-    padding-bottom: 80px; /* ajusta conforme a altura do footer */
-  }
-
-  /* Esconde desktop */
   #main {
     display: none;
   }
 
-  /* Mostra mobile */
   #mobile {
     display: block;
   }
@@ -233,11 +210,20 @@ ul li h1 {
     justify-content: center;
     align-items: center;
     gap: 47px;
-    padding: 20px 0;
+    padding: 15px 0;
   }
 
-  #mobile li {
-    cursor: pointer;
+  #mobile a {
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  #mobile a.active {
+    color: #6b4226;
   }
 
   #Mais {
@@ -247,15 +233,7 @@ ul li h1 {
     justify-content: center;
     padding: 6px;
     border-radius: 50%;
-    color: white;
-  }
-
-  li {
-    color: #666;
-    transition: color 0.2s ease;
-  }
-  li.active {
-    color: #6b4226; 
+    color: white !important;
   }
 }
 </style>

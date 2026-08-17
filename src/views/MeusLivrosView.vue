@@ -84,6 +84,9 @@ const splideOptions = {
       <div class="cabecalho-conteudo">
         <div class="titulos">
           <h1>Meus Livros</h1>
+          
+
+
           <p>Gerencie sua estante organizada por status de leitura</p>
         </div>
 
@@ -412,7 +415,7 @@ const splideOptions = {
 /* Responsividade */
 @media (max-width: 768px) {
   .header-principal {
-    display: none !important;
+    display:content !important;
   }
 
   .cabecalho-pagina {

@@ -1,6 +1,6 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
-import api from '@/services/api';
+import api from "@/services/api";
 import { uploadImagem } from "@/services/upload";
 import {
   getLivros,
@@ -84,29 +84,43 @@ export const useLivrosStore = defineStore("livros", () => {
     }
   }
 
-  async function atualizarStatusMeuLivro(livroOuPayload, novoStatus) {
-    const livroId =
-      typeof livroOuPayload === "object" ? livroOuPayload.id : livroOuPayload;
+async function atualizarStatusMeuLivro(livroOuPayload, novoStatus) {
+  const livroId =
+    typeof livroOuPayload === "object" ? livroOuPayload.id : livroOuPayload;
 
-    // 1. Procura se esse livro já está salvo na estante do usuário
-    const itemExistente = meusLivros.value.find(
-      (item) =>
-        item.livro?.id === livroId ||
-        item.livro === livroId ||
-        item.id === livroId,
-    );
+  // Encontra o índice no array
+  const index = meusLivros.value.findIndex(
+    (item) =>
+      item.livro?.id === livroId ||
+      item.livro === livroId ||
+      item.id === livroId
+  );
 
-    if (itemExistente) {
-      // 🟢 SE JÁ EXISTE NA ESTANTE: usa PATCH passando o ID da relação na estante (itemExistente.id)
-      await updateStatusLivroUsuario(itemExistente.id, novoStatus);
-    } else {
-      // 🟢 SE NÃO EXISTE AINDA: usa POST para criar a relação na estante
-      await createLivroUsuario({ livro: livroId, status: novoStatus });
+  if (index !== -1) {
+    // 🟢 Atualização reativa direta substituindo o objeto no array
+    meusLivros.value[index] = {
+      ...meusLivros.value[index],
+      status: novoStatus
+    };
+
+    // Atualiza no backend em segundo plano
+    try {
+      await updateStatusLivroUsuario(meusLivros.value[index].id, novoStatus);
+    } catch (err) {
+      console.error("Erro ao atualizar no backend:", err);
+      await fetchMeusLivros(); // Recarrega se houver erro
     }
-
-    // Recarrega os livros do usuário para sincronizar a estante na tela
-    await fetchMeusLivros();
+  } else {
+    // 🟢 Se o livro não estava na estante (novo registro)
+    try {
+      await createLivroUsuario({ livro: livroId, status: novoStatus });
+      // Busca novamente os livros para trazer o novo registro com ID gerado pelo backend
+      await fetchMeusLivros();
+    } catch (err) {
+      console.error("Erro ao adicionar livro:", err);
+    }
   }
+}
 
   // Ação para remover livro da estante do usuário
   async function removerMeuLivro(meuLivroId) {
@@ -227,28 +241,29 @@ export const useLivrosStore = defineStore("livros", () => {
     }
   }
 
-async function importarLivroDoGoogle(livroDados, status = "quero_ler") {
-  loading.value = true;
-  error.value = null;
+  async function importarLivroDoGoogle(livroDados, status = "quero_ler") {
+    loading.value = true;
+    error.value = null;
 
-  try {
-    // Monta o payload incluindo o status no nível raiz do objeto
-    const payload = typeof livroDados === "object"
-      ? { ...livroDados, status: status }
-      : { googleBookId: livroDados, status: status };
+    try {
+      // Monta o payload incluindo o status no nível raiz do objeto
+      const payload =
+        typeof livroDados === "object"
+          ? { ...livroDados, status: status }
+          : { googleBookId: livroDados, status: status };
 
-    // Aponta exatamente para a rota configurada em urls.py
-    const response = await api.post("/livros/importar-google/", payload);
+      // Aponta exatamente para a rota configurada em urls.py
+      const response = await api.post("/livros/importar-google/", payload);
 
-    return response.data;
-  } catch (err) {
-    error.value = "Erro ao importar livro do Google.";
-    console.error(err);
-    throw err;
-  } finally {
-    loading.value = false;
+      return response.data;
+    } catch (err) {
+      error.value = "Erro ao importar livro do Google.";
+      console.error(err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
   }
-}
 
   return {
     livros,

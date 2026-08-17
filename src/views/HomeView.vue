@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 
 import { useLivrosStore } from "@/stores/livros";
 import { useGoogleBooksStore } from "@/stores/googleBooks";
@@ -25,7 +25,12 @@ const isLoading = ref(true);
 
 onMounted(async () => {
   try {
-    await Promise.all([livroStore.fetchLivros(), googleBooksStore.buscarRecomendados()]);
+    // Carrega o catálogo geral, a estante do usuário e os recomendados em paralelo
+    await Promise.all([
+      livroStore.fetchLivros(),
+      livroStore.fetchMeusLivros(),
+      googleBooksStore.buscarRecomendados()
+    ]);
   } catch (error) {
     console.error("Erro ao carregar dados:", error);
   } finally {
@@ -33,7 +38,11 @@ onMounted(async () => {
   }
 });
 
-console.log("LIVROS BACKEND:", livroStore.livros);
+// Consome exatamente as mesmas propriedades reativas da store usadas no "meusLivros"
+const totalLivros = computed(() => livroStore.totalMeusLivros);
+const totalLidos = computed(() => livroStore.totalLidos);
+const totalLendo = computed(() => livroStore.totalLendo);
+const totalQueroLer = computed(() => livroStore.totalQueroLer);
 </script>
 
 <template>
@@ -50,10 +59,10 @@ console.log("LIVROS BACKEND:", livroStore.livros);
 
       <h1 class="titulo-secao">Resumo rápido</h1>
       <div class="lista-cards">
-        <StatsCard titulo="Livros" :valor="10" />
-        <StatsCard titulo="Lendo" :valor="11" />
-        <StatsCard titulo="Finalizados" :valor="12" />
-        <StatsCard titulo="Quero ler" :valor="13" />
+        <StatsCard titulo="Livros" :valor="totalLivros" />
+        <StatsCard titulo="Lendo" :valor="totalLendo" />
+        <StatsCard titulo="Finalizados" :valor="totalLidos" />
+        <StatsCard titulo="Quero ler" :valor="totalQueroLer" />
       </div>
 
       <h1 class="titulo-secao">Meta 2026</h1>
@@ -79,7 +88,6 @@ console.log("LIVROS BACKEND:", livroStore.livros);
   justify-content: center;
   min-height: 100vh;
   background-color: #fcfbf9;
-  /* Um fundo levemente off-white combinando com estética de livros */
   font-family: sans-serif;
 }
 
@@ -87,9 +95,7 @@ console.log("LIVROS BACKEND:", livroStore.livros);
   width: 50px;
   height: 50px;
   border: 5px solid #E0D7D0;
-  /* Cor suave de fundo */
   border-top: 5px solid #6B4226;
-  /* A cor marrom que você usou nos títulos */
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20px;
@@ -105,7 +111,6 @@ console.log("LIVROS BACKEND:", livroStore.livros);
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
@@ -167,9 +172,7 @@ console.log("LIVROS BACKEND:", livroStore.livros);
   .lista-cards {
     display: flex;
     flex-wrap: wrap;
-    /* Permite que os itens se quebrem em múltiplas linhas */
     gap: 10px;
-    /* Espaçamento entre os cards */
     justify-content: center;
   }
 
