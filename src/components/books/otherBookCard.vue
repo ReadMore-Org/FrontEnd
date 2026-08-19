@@ -11,6 +11,23 @@ const props = defineProps({
   },
 });
 
+onMounted(async () => {
+  document.addEventListener("click", aoClicarFora);
+
+  // Sempre busca a lista atualizada do backend ao carregar o componente
+  try {
+    if (livroStore.fetchMeusLivros) {
+      await livroStore.fetchMeusLivros();
+    } else if (livroStore.buscarMeusLivros) {
+      await livroStore.buscarMeusLivros();
+    }
+  } catch (err) {
+    console.error("Erro ao sincronizar estante:", err);
+  }
+  console.log("Livro recebido via props:", props.livro);
+  console.log("Lista na Store (meusLivros):", livroStore.meusLivros);
+});
+
 const router = useRouter();
 const livroStore = useLivrosStore();
 
@@ -33,19 +50,43 @@ const statusOpcoes = [
 ];
 
 /* Localiza o item correspondente em meusLivros */
+/* Localiza o item correspondente em meusLivros */
 const itemNaEstante = computed(() => {
-  if (!props.livro?.id || !livroStore.meusLivros?.length) return null;
+  if (!props.livro || !livroStore.meusLivros?.length) return null;
 
-  const currentId = String(props.livro.id);
+  // Extrai identificadores do livro recebido via Props (API Google)
+  const propIdGoogle = String(props.livro.google_book_id || props.livro.id || "").trim();
+  const propIsbn = String(props.livro.isbn || "").replace(/\D/g, ""); // Apenas números
+  const propTitulo = props.livro.titulo?.toLowerCase().trim();
 
   return livroStore.meusLivros.find((item) => {
-    const itemLivro = item.livro;
-    const idItem = String(item.id || "");
-    const idLivroInterno = typeof itemLivro === "object" ? String(itemLivro?.id || "") : String(itemLivro || "");
-    const idGoogle = item.google_book_id || (typeof itemLivro === "object" ? itemLivro?.google_book_id : null);
-    const strGoogleId = idGoogle ? String(idGoogle) : "";
+    const itemLivro = typeof item.livro === "object" ? item.livro : item;
 
-    return strGoogleId === currentId || idLivroInterno === currentId || idItem === currentId;
+    // 1. Tenta comparar por ID do Google (caso exista salvo no banco)
+    const bancoGoogleId = String(
+      item.google_book_id || itemLivro?.google_book_id || itemLivro?.id || ""
+    ).trim();
+
+    if (propIdGoogle && bancoGoogleId && propIdGoogle === bancoGoogleId) {
+      return true;
+    }
+
+    // 2. Tenta comparar por ISBN (O mais confiável para livros salvos do Google)
+    const bancoIsbn = String(
+      item.isbn || itemLivro?.isbn || ""
+    ).replace(/\D/g, "");
+
+    if (propIsbn && bancoIsbn && propIsbn === bancoIsbn) {
+      return true;
+    }
+
+    // 3. Fallback: Compara pelo Título exato
+    const bancoTitulo = (item.titulo || itemLivro?.titulo || "").toLowerCase().trim();
+    if (propTitulo && bancoTitulo && propTitulo === bancoTitulo) {
+      return true;
+    }
+
+    return false;
   });
 });
 
@@ -54,7 +95,9 @@ const jaEstaNaEstante = computed(() => !!itemNaEstante.value);
 
 /* Status salvo para destacar na opção do popover */
 const statusSalvo = computed(() => {
-  return itemNaEstante.value?.status ? String(itemNaEstante.value.status).toLowerCase() : null;
+  return itemNaEstante.value?.status
+    ? String(itemNaEstante.value.status).toLowerCase()
+    : null;
 });
 
 /* Estado visual do botão */
@@ -83,11 +126,14 @@ const getAutores = (livro) => {
 };
 
 function abrirPopover() {
-  if (adicionando.value) return;
+  if (adicionando.value || adicionado.value) return;
   popoverAberto.value = !popoverAberto.value;
 }
 
 async function escolherStatus(status) {
+  // Trava a execução se já estiver na estante
+  if (jaEstaNaEstante.value) return;
+
   adicionando.value = true;
   popoverAberto.value = false;
   erro.value = null;
@@ -136,7 +182,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="card-livro-grid">
     <div class="capa-wrapper" @click="abrirLivro">
-      <img class="capa" :src="getBookCover(livro)" :alt="livro?.titulo || 'Capa do livro'" />
+      <img
+        class="capa"
+        :src="getBookCover(livro)"
+        :alt="livro?.titulo || 'Capa do livro'"
+      />
 
       <div class="popover-wrapper" ref="raizPopover" @click.stop>
         <button
@@ -144,7 +194,7 @@ onBeforeUnmount(() => {
           class="btn-adicionar"
           :class="{ adicionado }"
           @click.stop="abrirPopover"
-          :disabled="adicionando"
+          :disabled="adicionando || adicionado"
         >
           <Check v-if="adicionado" :size="14" />
           <Plus v-else-if="!adicionando" :size="14" />
@@ -248,6 +298,16 @@ onBeforeUnmount(() => {
 
 .btn-adicionar:disabled {
   opacity: 0.9;
+}
+
+.btn-adicionar.adicionado {
+  background: #3a7d44;
+  cursor: default; /* Remove o ponteiro de clique */
+}
+
+.btn-adicionar.adicionado:hover {
+  transform: none; /* Desativa a animação de hover */
+  background-color: #3a7d44;
 }
 
 .popover-status {
