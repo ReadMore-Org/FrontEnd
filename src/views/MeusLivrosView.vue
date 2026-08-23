@@ -84,8 +84,6 @@ const splideOptions = {
       <div class="cabecalho-conteudo">
         <div class="titulos">
           <h1>Meus Livros</h1>
-          
-
 
           <p>Gerencie sua estante organizada por status de leitura</p>
         </div>
@@ -146,9 +144,7 @@ const splideOptions = {
         <div class="lista-livros">
           <Splide :options="splideOptions">
             <SplideSlide v-for="item in livrosLendo" :key="item.id">
-              <RouterLink :to="`/livro/${getLivroId(item)}`" class="card-link">
-                <BookCard :livro="getLivroObjeto(item)" />
-              </RouterLink>
+              <BookCard :livro="getLivroObjeto(item)" />
             </SplideSlide>
           </Splide>
         </div>
@@ -163,9 +159,7 @@ const splideOptions = {
         <div class="lista-livros">
           <Splide :options="splideOptions">
             <SplideSlide v-for="item in livrosQueroLer" :key="item.id">
-              <RouterLink :to="`/livro/${getLivroId(item)}`" class="card-link">
-                <BookCard :livro="getLivroObjeto(item)" />
-              </RouterLink>
+              <BookCard :livro="getLivroObjeto(item)" />
             </SplideSlide>
           </Splide>
         </div>
@@ -180,9 +174,7 @@ const splideOptions = {
         <div class="lista-livros">
           <Splide :options="splideOptions">
             <SplideSlide v-for="item in livrosLidos" :key="item.id">
-              <RouterLink :to="`/livro/${getLivroId(item)}`" class="card-link">
-                <BookCard :livro="getLivroObjeto(item)" />
-              </RouterLink>
+              <BookCard :livro="getLivroObjeto(item)" />
             </SplideSlide>
           </Splide>
         </div>
@@ -192,7 +184,9 @@ const splideOptions = {
       <div v-if="!totalLivros" class="sem-livros">
         <LibraryBig :size="48" class="icone-vazio" />
         <p class="titulo-vazio">Sua estante está vazia</p>
-        <p class="subtitulo-vazio">Adicione seus primeiros livros para acompanhar seu progresso de leitura.</p>
+        <p class="subtitulo-vazio">
+          Adicione seus primeiros livros para acompanhar seu progresso de leitura.
+        </p>
       </div>
     </main>
   </div>
@@ -415,7 +409,7 @@ const splideOptions = {
 /* Responsividade */
 @media (max-width: 768px) {
   .header-principal {
-    display:content !important;
+    display: content !important;
   }
 
   .cabecalho-pagina {

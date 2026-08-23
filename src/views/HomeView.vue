@@ -25,17 +25,16 @@ const isLoading = ref(true);
 
 onMounted(async () => {
   try {
-    // Carrega o catálogo geral, a estante do usuário e os recomendados em paralelo
-    await Promise.all([
-      livroStore.fetchLivros(),
-      livroStore.fetchMeusLivros(),
-      googleBooksStore.buscarRecomendados()
-    ]);
+    // Carrega dados essenciais da sua API primeiro
+    await Promise.all([livroStore.fetchLivros(), livroStore.fetchMeusLivros()]);
   } catch (error) {
-    console.error("Erro ao carregar dados:", error);
+    console.error("Erro ao carregar dados da estante:", error);
   } finally {
     isLoading.value = false;
   }
+
+  // Busca os recomendados em segundo plano para não travar a tela
+  googleBooksStore.buscarRecomendados();
 });
 
 // Consome exatamente as mesmas propriedades reativas da store usadas no "meusLivros"
@@ -56,7 +55,6 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
     <cardMarketplace />
     <ListaRecursos />
     <div class="margin">
-
       <h1 class="titulo-secao">Resumo rápido</h1>
       <div class="lista-cards">
         <StatsCard titulo="Livros" :valor="totalLivros" />
@@ -69,11 +67,38 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
       <barraProgresso />
 
       <h1 class="titulo-secao">Recomendados</h1>
-      <GradeBook titulo="testando" :livros="googleBooksStore.resultados">
+      <!-- 1. Estado de Carregamento dos Recomendados -->
+      <div v-if="googleBooksStore.loading" class="status-recomendados">
+        <div class="spinner-small"></div>
+        <p>Buscando livros recomendados para você...</p>
+      </div>
+
+      <!-- 2. Estado de Erro / Falha de API -->
+      <div v-else-if="googleBooksStore.error" class="status-recomendados erro">
+        <p>{{ googleBooksStore.error }}</p>
+        <button
+          @click="googleBooksStore.buscarRecomendados(true)"
+          class="btn-tentar-novamente"
+        >
+          Tentar novamente
+        </button>
+      </div>
+
+      <!-- 3. Estado de Sucesso (Lista de Livros) -->
+      <GradeBook
+        v-else-if="googleBooksStore.resultados.length > 0"
+        titulo="testando"
+        :livros="googleBooksStore.resultados"
+      >
         <template #default="{ livro }">
           <OtherBookCard :livro="livro" />
         </template>
       </GradeBook>
+
+      <!-- 4. Fallback se não retornar nenhum item -->
+      <div v-else class="status-recomendados">
+        <p>Nenhuma recomendação encontrada no momento.</p>
+      </div>
     </div>
 
     <AppFooter />
@@ -94,15 +119,15 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
 .spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid #E0D7D0;
-  border-top: 5px solid #6B4226;
+  border: 5px solid #e0d7d0;
+  border-top: 5px solid #6b4226;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20px;
 }
 
 .loading-container p {
-  color: #6B4226;
+  color: #6b4226;
   font-weight: 500;
   font-size: 18px;
 }
@@ -158,6 +183,47 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
 
 .splide__slide:hover {
   transform: scale(1.05);
+}
+.status-recomendados {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: none;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.status-recomendados.erro p {
+  color: #c0392b;
+  margin-bottom: 12px;
+}
+
+.btn-tentar-novamente {
+  background-color: #6b4226;
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-tentar-novamente:hover {
+  background-color: #52321c;
+}
+
+.spinner-small {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e0d7d0;
+  border-top: 3px solid #6b4226;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
 }
 
 @media (max-width: 650px) {

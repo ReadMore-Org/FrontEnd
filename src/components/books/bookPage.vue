@@ -93,25 +93,41 @@ const meuLivroItem = computed(() => {
     return null;
   }
 
-  const routeId = String(route.params.id || "");
-  const livroAtualId = livro.value?.id ? String(livro.value.id) : null;
+  // Identificadores vindos da Rota e do objeto de Livro retornado
+  const routeId = String(route.params.id || "").trim();
+  const libroObj = livro.value;
+
+  const targetGoogleId = String(
+    libroObj?.google_book_id || libroObj?.id || routeId || ""
+  ).trim();
+
+  const targetIsbn = String(libroObj?.isbn || "").replace(/\D/g, "");
+  const targetTitulo = (libroObj?.titulo || "").toLowerCase().trim();
 
   return livroStore.meusLivros.find((item) => {
-    const itemLivro = item.livro;
-    
-    // IDs do item no banco
-    const idItem = String(item.id || "");
-    const idLivroInterno = typeof itemLivro === "object" ? String(itemLivro?.id || "") : String(itemLivro || "");
-    const idGoogle = item.google_book_id || (typeof itemLivro === "object" ? itemLivro?.google_book_id : null);
-    const strGoogleId = idGoogle ? String(idGoogle) : "";
+    const itemLivro = typeof item.livro === "object" ? item.livro : item;
 
-    // 1. Verificação por Google Book ID
-    if (routeId && strGoogleId && strGoogleId === routeId) return true;
-    if (livroAtualId && strGoogleId && strGoogleId === livroAtualId) return true;
+    // 1. Comparação por Google Book ID / ID
+    const bancoGoogleId = String(
+      item.google_book_id || itemLivro?.google_book_id || itemLivro?.id || item.id || ""
+    ).trim();
 
-    // 2. Verificação por ID Interno
-    if (routeId && (idLivroInterno === routeId || idItem === routeId)) return true;
-    if (livroAtualId && (idLivroInterno === livroAtualId || idItem === livroAtualId)) return true;
+    if (targetGoogleId && bancoGoogleId && targetGoogleId === bancoGoogleId) {
+      return true;
+    }
+
+    // 2. Comparação Confiável por ISBN
+    const bancoIsbn = String(item.isbn || itemLivro?.isbn || "").replace(/\D/g, "");
+
+    if (targetIsbn && bancoIsbn && targetIsbn === bancoIsbn) {
+      return true;
+    }
+
+    // 3. Fallback por Título
+    const bancoTitulo = (item.titulo || itemLivro?.titulo || "").toLowerCase().trim();
+    if (targetTitulo && bancoTitulo && targetTitulo === bancoTitulo) {
+      return true;
+    }
 
     return false;
   });
@@ -210,28 +226,32 @@ const onStatusChange = async (novoStatus) => {
   }
 
   const statusAnterior = status.value;
-
   status.value = novoStatus;
   isUpdatingStatus.value = true;
 
   try {
-    const idLivroParaSalvar = livro.value?.id ?? route.params.id;
-
-    if (isGoogleBook.value || typeof idLivroParaSalvar === "string") {
+    // Se o livro JÁ EXISTE na estante, atualiza direto no BD usando o ID do relacionamento
+    if (meuLivroItem.value?.id) {
+      await livroStore.atualizarStatusMeuLivro(meuLivroItem.value.id, novoStatus);
+    }
+    // Se NÃO EXISTE na estante ainda (e é da Google Store), importa
+    else if (isGoogleBook.value) {
       await livroStore.importarLivroDoGoogle(livro.value, novoStatus);
-    } else {
-      await livroStore.atualizarStatusMeuLivro(Number(idLivroParaSalvar), novoStatus);
+    }
+    // Fallback para livros nativos do sistema
+    else {
+      const idParaSalvar = livro.value?.id ?? route.params.id;
+      await livroStore.atualizarStatusMeuLivro(Number(idParaSalvar), novoStatus);
     }
 
+    // Recarrega a lista do banco para sincronizar a store global
     if (livroStore.fetchMeusLivros) {
       await livroStore.fetchMeusLivros();
     } else if (livroStore.buscarMeusLivros) {
       await livroStore.buscarMeusLivros();
     }
 
-    if (meuLivroItem.value) {
-      carregarStatusAtual();
-    }
+    carregarStatusAtual();
   } catch (err) {
     console.error("Erro ao atualizar o status:", err);
     status.value = statusAnterior;
@@ -279,7 +299,6 @@ const removerDaEstante = async () => {
     setTimeout(() => {
       router.back();
     }, 500);
-
   } catch (err) {
     console.error("Erro ao remover da estante:", err);
     toast.error("Erro ao remover o livro da estante.");
@@ -370,7 +389,7 @@ const categoriaNome = computed(() => {
           <div class="cabecalho">
             <div>
               <h1 class="titulo">{{ livro.titulo }}</h1>
-              
+
               <p v-if="livro.autores && livro.autores.length" class="autores">
                 por
                 <span class="autores-nome">{{
@@ -867,7 +886,8 @@ const categoriaNome = computed(() => {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .btn-modal-cancelar {
@@ -899,8 +919,12 @@ const categoriaNome = computed(() => {
 }
 
 @keyframes aparecerOverlay {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes aparecerModal {

@@ -24,8 +24,6 @@ onMounted(async () => {
   } catch (err) {
     console.error("Erro ao sincronizar estante:", err);
   }
-  console.log("Livro recebido via props:", props.livro);
-  console.log("Lista na Store (meusLivros):", livroStore.meusLivros);
 });
 
 const router = useRouter();
@@ -49,7 +47,6 @@ const statusOpcoes = [
   { value: "lido", label: "Lido" },
 ];
 
-/* Localiza o item correspondente em meusLivros */
 /* Localiza o item correspondente em meusLivros */
 const itemNaEstante = computed(() => {
   if (!props.livro || !livroStore.meusLivros?.length) return null;
