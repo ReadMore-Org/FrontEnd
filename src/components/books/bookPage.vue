@@ -1,8 +1,9 @@
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useLivrosStore } from "@/stores/livros";
 import { useGoogleBooksStore } from "@/stores/googleBooks";
+import { useToast } from "vue-toastification";
 
 import {
   Star,
@@ -20,14 +21,15 @@ import {
 
 import statusSelect from "@/components/common/statusSelect.vue";
 
+const toast = useToast();
+
 const route = useRoute();
+const router = useRouter();
 
 const googleBooksStore = useGoogleBooksStore();
 const livroStore = useLivrosStore();
 
-const isGoogleBook = computed(() =>
-  route.path.startsWith("/livro/google")
-);
+const isGoogleBook = computed(() => route.path.startsWith("/livro/google"));
 
 // =========================================================
 // ESTADOS DA PÁGINA
@@ -41,7 +43,6 @@ const isUpdatingStatus = ref(false);
 const isDeleting = ref(false);
 const isFavorito = ref(false);
 
-
 // =========================================================
 // FAVORITO
 // =========================================================
@@ -49,7 +50,6 @@ const isFavorito = ref(false);
 const toggleFavorito = () => {
   isFavorito.value = !isFavorito.value;
 };
-
 
 // =========================================================
 // LIVRO ATUAL
@@ -66,9 +66,7 @@ const livro = computed(() => {
   const numId = Number(currentId);
 
   // 1. Procura na lista geral de livros
-  const livroGeral = livroStore.livros.find(
-    (l) => l.id === numId
-  );
+  const livroGeral = livroStore.livros.find((l) => l.id === numId);
 
   if (livroGeral) {
     return livroGeral;
@@ -76,61 +74,64 @@ const livro = computed(() => {
 
   // 2. Procura na lista de livros do usuário
   const meuLivroItem = livroStore.meusLivros.find(
-    (item) =>
-      item.livro?.id === numId ||
-      item.livro === numId ||
-      item.id === numId
+    (item) => item.livro?.id === numId || item.livro === numId || item.id === numId
   );
 
   if (meuLivroItem) {
-    return typeof meuLivroItem.livro === "object"
-      ? meuLivroItem.livro
-      : meuLivroItem;
+    return typeof meuLivroItem.livro === "object" ? meuLivroItem.livro : meuLivroItem;
   }
 
   return null;
 });
-
 
 // =========================================================
 // LIVRO DO USUÁRIO / ESTANTE
 // =========================================================
 
 const meuLivroItem = computed(() => {
-  if (!livro.value) {
+  if (!livroStore.meusLivros?.length) {
     return null;
   }
 
-  const livroAtualId = livro.value.id;
-  const routeId = route.params.id;
+  // Identificadores vindos da Rota e do objeto de Livro retornado
+  const routeId = String(route.params.id || "").trim();
+  const libroObj = livro.value;
+
+  const targetGoogleId = String(
+    libroObj?.google_book_id || libroObj?.id || routeId || ""
+  ).trim();
+
+  const targetIsbn = String(libroObj?.isbn || "").replace(/\D/g, "");
+  const targetTitulo = (libroObj?.titulo || "").toLowerCase().trim();
 
   return livroStore.meusLivros.find((item) => {
-    // LivroUsuario -> livro pode vir como objeto
-    if (item.livro?.id != null) {
-      return String(item.livro.id) === String(livroAtualId);
+    const itemLivro = typeof item.livro === "object" ? item.livro : item;
+
+    // 1. Comparação por Google Book ID / ID
+    const bancoGoogleId = String(
+      item.google_book_id || itemLivro?.google_book_id || itemLivro?.id || item.id || ""
+    ).trim();
+
+    if (targetGoogleId && bancoGoogleId && targetGoogleId === bancoGoogleId) {
+      return true;
     }
 
-    // LivroUsuario -> livro pode vir apenas como ID
-    if (item.livro != null) {
-      return String(item.livro) === String(livroAtualId);
+    // 2. Comparação Confiável por ISBN
+    const bancoIsbn = String(item.isbn || itemLivro?.isbn || "").replace(/\D/g, "");
+
+    if (targetIsbn && bancoIsbn && targetIsbn === bancoIsbn) {
+      return true;
     }
 
-    // Fallback para quando o próprio item representa o livro
-    if (item.id != null) {
-      return String(item.id) === String(livroAtualId);
-    }
-
-    // Para livros do Google, tenta também comparar com o ID da rota
-    if (routeId != null && item.livro?.google_book_id != null) {
-      return (
-        String(item.livro.google_book_id) === String(routeId)
-      );
+    // 3. Fallback por Título
+    const bancoTitulo = (item.titulo || itemLivro?.titulo || "").toLowerCase().trim();
+    if (targetTitulo && bancoTitulo && targetTitulo === bancoTitulo) {
+      return true;
     }
 
     return false;
   });
 });
-
 
 // =========================================================
 // CARREGAR STATUS ATUAL
@@ -144,39 +145,25 @@ const carregarStatusAtual = () => {
       ? String(meuLivroItem.value.status).toLowerCase()
       : null;
   }
-
-  /*
-   * IMPORTANTE:
-   *
-   * Não colocamos:
-   *
-   * else {
-   *   status.value = null;
-   * }
-   *
-   * porque, ao importar um livro novo, o status já foi
-   * definido localmente pelo clique do usuário.
-   *
-   * Se o backend ainda não tiver aparecido em meusLivros,
-   * não devemos apagar esse estado visual.
-   */
 };
-
 
 // =========================================================
 // SINCRONIZA STATUS QUANDO MEU LIVRO MUDAR
 // =========================================================
 
 watch(
-  meuLivroItem,
-  () => {
-    carregarStatusAtual();
+  () => meuLivroItem.value,
+  (novoItem) => {
+    if (novoItem) {
+      meuLivroId.value = novoItem.id;
+      status.value = novoItem.status ? String(novoItem.status).toLowerCase() : null;
+    } else {
+      status.value = null;
+      meuLivroId.value = null;
+    }
   },
-  {
-    immediate: true,
-  }
+  { immediate: true, deep: true }
 );
-
 
 // =========================================================
 // CARREGAMENTO INICIAL
@@ -188,22 +175,11 @@ const carregarDados = async () => {
   const currentId = route.params.id;
 
   try {
-    // -----------------------------------------------------
-    // Carrega informações do livro
-    // -----------------------------------------------------
-
     if (isGoogleBook.value) {
       await googleBooksStore.buscarLivro(currentId);
     } else {
-      await Promise.all([
-        livroStore.fetchLivros(),
-        livroStore.fetchCategorias(),
-      ]);
+      await Promise.all([livroStore.fetchLivros(), livroStore.fetchCategorias()]);
     }
-
-    // -----------------------------------------------------
-    // Carrega livros da estante
-    // -----------------------------------------------------
 
     if (livroStore.fetchMeusLivros) {
       await livroStore.fetchMeusLivros();
@@ -211,22 +187,13 @@ const carregarDados = async () => {
       await livroStore.buscarMeusLivros();
     }
 
-    // -----------------------------------------------------
-    // Sincroniza status
-    // -----------------------------------------------------
-
     carregarStatusAtual();
-
   } catch (error) {
-    console.error(
-      "Erro ao carregar detalhes do livro:",
-      error
-    );
+    console.error("Erro ao carregar detalhes do livro:", error);
   } finally {
     isLoading.value = false;
   }
 };
-
 
 // =========================================================
 // MOUNT
@@ -235,7 +202,6 @@ const carregarDados = async () => {
 onMounted(() => {
   carregarDados();
 });
-
 
 // =========================================================
 // TROCA DE LIVRO PELA ROTA
@@ -250,108 +216,49 @@ watch(
   }
 );
 
-
 // =========================================================
 // ALTERAÇÃO DO STATUS
 // =========================================================
 
 const onStatusChange = async (novoStatus) => {
-  if (
-    isUpdatingStatus.value ||
-    novoStatus === status.value
-  ) {
+  if (isUpdatingStatus.value || novoStatus === status.value) {
     return;
   }
 
-  // Guarda o status anterior caso a requisição falhe
   const statusAnterior = status.value;
-
-  // -------------------------------------------------------
-  // ATUALIZA IMEDIATAMENTE A INTERFACE
-  // -------------------------------------------------------
-
   status.value = novoStatus;
-
   isUpdatingStatus.value = true;
 
   try {
-    const idLivroParaSalvar =
-      livro.value?.id ?? route.params.id;
-
-    // -----------------------------------------------------
-    // LIVRO DO GOOGLE / LIVRO AINDA NÃO IMPORTADO
-    // -----------------------------------------------------
-
-    if (
-      isGoogleBook.value ||
-      typeof idLivroParaSalvar === "string"
-    ) {
-      const resposta =
-        await livroStore.importarLivroDoGoogle(
-          livro.value,
-          novoStatus
-        );
-
-      console.log(
-        "Resposta da importação:",
-        resposta
-      );
+    // Se o livro JÁ EXISTE na estante, atualiza direto no BD usando o ID do relacionamento
+    if (meuLivroItem.value?.id) {
+      await livroStore.atualizarStatusMeuLivro(meuLivroItem.value.id, novoStatus);
     }
-
-    // -----------------------------------------------------
-    // LIVRO NORMAL JÁ EXISTENTE NO BACKEND
-    // -----------------------------------------------------
-
+    // Se NÃO EXISTE na estante ainda (e é da Google Store), importa
+    else if (isGoogleBook.value) {
+      await livroStore.importarLivroDoGoogle(livro.value, novoStatus);
+    }
+    // Fallback para livros nativos do sistema
     else {
-      await livroStore.atualizarStatusMeuLivro(
-        Number(idLivroParaSalvar),
-        novoStatus
-      );
+      const idParaSalvar = livro.value?.id ?? route.params.id;
+      await livroStore.atualizarStatusMeuLivro(Number(idParaSalvar), novoStatus);
     }
 
-    // -----------------------------------------------------
-    // ATUALIZA A ESTANTE
-    // -----------------------------------------------------
-
+    // Recarrega a lista do banco para sincronizar a store global
     if (livroStore.fetchMeusLivros) {
       await livroStore.fetchMeusLivros();
     } else if (livroStore.buscarMeusLivros) {
       await livroStore.buscarMeusLivros();
     }
 
-    // -----------------------------------------------------
-    // SINCRONIZA COM O BACKEND SOMENTE SE ENCONTRAR
-    // O ITEM NA ESTANTE
-    // -----------------------------------------------------
-
-    if (meuLivroItem.value) {
-      carregarStatusAtual();
-    }
-
-    console.log(
-      "Status final:",
-      status.value
-    );
-
-    console.log(
-      "Meu livro:",
-      meuLivroItem.value
-    );
-
+    carregarStatusAtual();
   } catch (err) {
-    console.error(
-      "Erro ao atualizar o status:",
-      err
-    );
-
-    // Se deu erro, volta para o status anterior
+    console.error("Erro ao atualizar o status:", err);
     status.value = statusAnterior;
-
   } finally {
     isUpdatingStatus.value = false;
   }
 };
-
 
 // =========================================================
 // MODAL E REMOÇÃO
@@ -360,10 +267,7 @@ const onStatusChange = async (novoStatus) => {
 const mostrarModalRemocao = ref(false);
 
 const abrirModalRemocao = () => {
-  if (
-    !meuLivroItem.value ||
-    isDeleting.value
-  ) {
+  if (!meuLivroItem.value || isDeleting.value) {
     return;
   }
 
@@ -379,42 +283,29 @@ const cancelarRemocao = () => {
 };
 
 const removerDaEstante = async () => {
-  if (
-    !meuLivroItem.value ||
-    isDeleting.value
-  ) {
-    return;
-  }
+  if (!meuLivroItem.value || isDeleting.value) return;
 
   isDeleting.value = true;
 
   try {
-    const idParaRemover =
-      meuLivroItem.value.id;
+    const idParaRemover = meuLivroItem.value.id;
 
-    await livroStore.removerMeuLivro(
-      idParaRemover
-    );
+    await livroStore.removerMeuLivro(idParaRemover);
+
+    toast.success("Livro removido com sucesso!");
 
     mostrarModalRemocao.value = false;
 
-    window.history.back();
-
+    setTimeout(() => {
+      router.back();
+    }, 500);
   } catch (err) {
-    console.error(
-      "Erro ao remover o livro da estante:",
-      err
-    );
-
-    alert(
-      "Não foi possível remover o livro da sua estante."
-    );
-
+    console.error("Erro ao remover da estante:", err);
+    toast.error("Erro ao remover o livro da estante.");
   } finally {
     isDeleting.value = false;
   }
 };
-
 
 // =========================================================
 // FORMATAÇÃO DE DATA
@@ -425,11 +316,8 @@ const formatarData = (data) => {
     return "-";
   }
 
-  return new Date(data).toLocaleDateString(
-    "pt-BR"
-  );
+  return new Date(data).toLocaleDateString("pt-BR");
 };
-
 
 // =========================================================
 // VOLTAR
@@ -438,7 +326,6 @@ const formatarData = (data) => {
 const voltar = () => {
   window.history.back();
 };
-
 
 // =========================================================
 // CAPA DO LIVRO
@@ -450,33 +337,19 @@ const getBookCover = (livro) => {
   }
 
   const capa = livro.capa;
-
-  const url =
-    typeof capa === "string"
-      ? capa
-      : capa?.url;
+  const url = typeof capa === "string" ? capa : capa?.url;
 
   if (!url) {
     return "/imgs/livro_sem_capa.png";
   }
 
   if (url.startsWith("http")) {
-    const isLocal =
-      /^https?:\/\/(127\.0\.0\.1|localhost)/i.test(
-        url
-      );
-
-    return isLocal
-      ? url
-      : url.replace(
-          /^http:\/\//i,
-          "https://"
-        );
+    const isLocal = /^https?:\/\/(127\.0\.0\.1|localhost)/i.test(url);
+    return isLocal ? url : url.replace(/^http:\/\//i, "https://");
   }
 
   return `${import.meta.env.VITE_API_BASE_URL}${url}`;
 };
-
 
 // =========================================================
 // CATEGORIA
@@ -486,23 +359,13 @@ const categoriaNome = computed(() => {
   const livroAtual = livro.value;
   const categorias = livroStore.categorias;
 
-  if (
-    !livroAtual ||
-    !categorias?.length
-  ) {
+  if (!livroAtual || !categorias?.length) {
     return "";
   }
 
-  const categoria = categorias.find(
-    (c) =>
-      Number(c.id) ===
-      Number(livroAtual.categoria)
-  );
+  const categoria = categorias.find((c) => Number(c.id) === Number(livroAtual.categoria));
 
-  return (
-    categoria?.descricao ||
-    "Sem categoria"
-  );
+  return categoria?.descricao || "Sem categoria";
 });
 </script>
 
@@ -526,6 +389,7 @@ const categoriaNome = computed(() => {
           <div class="cabecalho">
             <div>
               <h1 class="titulo">{{ livro.titulo }}</h1>
+
               <p v-if="livro.autores && livro.autores.length" class="autores">
                 por
                 <span class="autores-nome">{{
@@ -573,7 +437,6 @@ const categoriaNome = computed(() => {
             <p>{{ categoriaNome }}</p>
           </div>
 
-          <!-- Container do Status + Botão de Deletar -->
           <div class="container-status-acoes">
             <div class="status-wrapper">
               <statusSelect
@@ -649,11 +512,7 @@ const categoriaNome = computed(() => {
     </div>
   </div>
 
-  <div
-    v-if="mostrarModalRemocao"
-    class="modal-overlay"
-    @click.self="cancelarRemocao"
-  >
+  <div v-if="mostrarModalRemocao" class="modal-overlay" @click.self="cancelarRemocao">
     <div class="modal-remocao">
       <button
         class="modal-fechar"
@@ -666,7 +525,7 @@ const categoriaNome = computed(() => {
       </button>
 
       <div class="modal-icone">
-        <Trash2 :size="128" />
+        <Trash2 :size="28" color="#a4161a" />
       </div>
 
       <h2>Remover livro?</h2>
@@ -708,7 +567,6 @@ const categoriaNome = computed(() => {
   padding: 20px 20vw 4vw;
 }
 
-/* voltar */
 .btn-voltar {
   display: flex;
   align-items: center;
@@ -729,7 +587,6 @@ const categoriaNome = computed(() => {
   transform: translateX(-2px);
 }
 
-/* loading */
 .loading-container {
   position: fixed;
   top: 0;
@@ -776,7 +633,6 @@ const categoriaNome = computed(() => {
   font-weight: 500;
 }
 
-/* topo do livro */
 .livro {
   display: flex;
   gap: 36px;
@@ -847,7 +703,6 @@ const categoriaNome = computed(() => {
   color: #6b4226;
 }
 
-/* nota */
 .nota {
   display: flex;
   align-items: center;
@@ -882,7 +737,6 @@ const categoriaNome = computed(() => {
   margin: 0;
 }
 
-/* categoria */
 .categorias p {
   display: inline-block;
   background-color: #faf3e0;
@@ -894,7 +748,6 @@ const categoriaNome = computed(() => {
   font-weight: 500;
 }
 
-/* container status e acao de remocao */
 .container-status-acoes {
   display: flex;
   align-items: center;
@@ -915,27 +768,18 @@ const categoriaNome = computed(() => {
   align-items: center;
   justify-content: center;
   gap: 7px;
-
   height: 35px;
   padding: 0 12px;
   box-sizing: border-box;
-
   flex-shrink: 0;
-
   background: transparent;
   border: 1px solid #a4161a;
   border-radius: 8px;
-
   color: #a4161a;
   font-size: 13px;
   font-weight: 500;
-
   cursor: pointer;
-
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .btn-deletar-estante:hover {
@@ -948,43 +792,27 @@ const categoriaNome = computed(() => {
   cursor: not-allowed;
 }
 
-/* =========================================================
-   MODAL DE CONFIRMAÇÃO DE REMOÇÃO
-   ========================================================= */
-
 .modal-overlay {
   position: fixed;
   inset: 0;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   padding: 20px;
-
   background: rgba(0, 0, 0, 0.45);
-
   z-index: 9999;
-
   animation: aparecerOverlay 0.2s ease;
 }
 
 .modal-remocao {
   position: relative;
-
   width: min(420px, 100%);
-
   background: #ffffff;
   border-radius: 16px;
-
   padding: 32px;
-
   box-sizing: border-box;
-
   text-align: center;
-
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-
   animation: aparecerModal 0.2s ease;
 }
 
@@ -992,28 +820,19 @@ const categoriaNome = computed(() => {
   position: absolute;
   top: 12px;
   right: 14px;
-
   width: 32px;
   height: 32px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border: none;
   background: transparent;
-
   color: #8a7a6a;
   font-size: 26px;
   line-height: 1;
-
   cursor: pointer;
-
   border-radius: 50%;
-
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .modal-fechar:hover {
@@ -1024,36 +843,25 @@ const categoriaNome = computed(() => {
 .modal-icone {
   width: 56px;
   height: 56px;
-
   margin: 0 auto 18px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 50%;
-
   background: #fbe9e9;
-
-  font-size: 24px;
 }
 
 .modal-remocao h2 {
   margin: 0 0 10px;
-
   color: #4b3626;
-
   font-size: 22px;
   font-weight: 600;
 }
 
 .modal-remocao p {
   margin: 0 auto;
-
   max-width: 340px;
-
   color: #6f6257;
-
   font-size: 14px;
   line-height: 1.6;
 }
@@ -1065,9 +873,7 @@ const categoriaNome = computed(() => {
 .modal-acoes {
   display: flex;
   justify-content: center;
-
   gap: 10px;
-
   margin-top: 26px;
 }
 
@@ -1075,28 +881,18 @@ const categoriaNome = computed(() => {
 .btn-modal-remover {
   min-width: 110px;
   height: 40px;
-
   padding: 0 18px;
-
   border-radius: 8px;
-
   font-size: 13px;
   font-weight: 500;
-
   cursor: pointer;
-
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease,
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease,
     opacity 0.2s ease;
 }
 
 .btn-modal-cancelar {
   background: #ffffff;
-
   border: 1px solid #d8c9ba;
-
   color: #5a4636;
 }
 
@@ -1106,9 +902,7 @@ const categoriaNome = computed(() => {
 
 .btn-modal-remover {
   background: #a4161a;
-
   border: 1px solid #a4161a;
-
   color: #ffffff;
 }
 
@@ -1128,7 +922,6 @@ const categoriaNome = computed(() => {
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
   }
@@ -1139,14 +932,12 @@ const categoriaNome = computed(() => {
     opacity: 0;
     transform: translateY(-10px) scale(0.98);
   }
-
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
-/* sinopse + detalhes */
 .infoMaior {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
@@ -1205,6 +996,7 @@ const categoriaNome = computed(() => {
   font-weight: 500;
   margin: 0 0 0 auto;
 }
+
 @media (max-width: 600px) {
   .container-status-acoes {
     align-items: stretch;
@@ -1233,6 +1025,4 @@ const categoriaNome = computed(() => {
     width: 100%;
   }
 }
-
-
 </style>

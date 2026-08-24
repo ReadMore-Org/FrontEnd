@@ -1,8 +1,15 @@
 <script setup>
+import { useLivrosStore } from "@/stores/livros";
+
 const props = defineProps({
   modelValue: {
     type: String,
     required: true,
+  },
+  // Opcional: passe o ID do livro caso deseje atualizar a store direto no componente
+  livroId: {
+    type: [Number, String],
+    default: null,
   },
   variante: {
     type: String,
@@ -18,7 +25,8 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "change"]);
+const livroStore = useLivrosStore();
 
 const statusOpcoes = [
   { value: "quero_ler", label: "Quero ler" },
@@ -26,9 +34,21 @@ const statusOpcoes = [
   { value: "lido", label: "Lido" },
 ];
 
-const selecionarOpcao = (valor) => {
-  if (props.disabled) return;
+const selecionarOpcao = async (valor) => {
+  if (props.disabled || valor === props.modelValue) return;
+
+  // 1. Emite a atualização do v-model para a interface atualizar instantaneamente no componente pai
   emit("update:modelValue", valor);
+  emit("change", valor);
+
+  // 2. Se o livroId foi informado, atualiza reativamente na Store da Pinia sem precisar de F5
+  if (props.livroId) {
+    try {
+      await livroStore.atualizarStatusMeuLivro(props.livroId, valor);
+    } catch (error) {
+      console.error("Erro ao atualizar status na store:", error);
+    }
+  }
 };
 </script>
 
@@ -73,6 +93,11 @@ const selecionarOpcao = (valor) => {
   margin-bottom: 5px;
 }
 
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+}
+
 .toggle-btn {
   flex: 1;
   border: 1px solid #e8d8c3;
@@ -88,7 +113,7 @@ const selecionarOpcao = (valor) => {
   height: 35px;
   width: 150px;
   margin-bottom: 5px;
-  padding: 0px 0px 0px 5px;
+  padding: 0px 0px 0px 8px;
 }
 
 .toggle-btn:disabled {
@@ -110,32 +135,13 @@ const selecionarOpcao = (valor) => {
 /* ==========================================================================
    ESTILOS CUSTOMIZADOS PARA A VARIANTE "LIVRO"
    ========================================================================== */
-.variante-livro .toggle-group {
-  display: flex;
-  gap: 10px;
-}
-
-.variante-livro .toggle-btn {
-  width: auto;
-  text-align: center;
-  background: #fcfbf9;
-  border-color: #6b4226;
-  color: #6b4226;
-  padding: 0 16px;
-}
-
-.variante-livro .toggle-btn.active {
-  background: #6b4226;
-  color: #ffffff;
-  border-color: #6b4226;
-}
-
 .variante-livro {
   margin: 0;
 }
 
 .variante-livro .toggle-group {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 10px;
 }
@@ -154,5 +160,11 @@ const selecionarOpcao = (valor) => {
 .variante-livro .toggle-btn:hover:not(.active):not(:disabled) {
   background: #6b4226;
   color: #ffffff;
+}
+
+.variante-livro .toggle-btn.active {
+  background: #6b4226;
+  color: #ffffff;
+  border-color: #6b4226;
 }
 </style>

@@ -1,7 +1,7 @@
 <script setup>
 import { BellDot } from "lucide-vue-next";
 import { Plus } from "lucide-vue-next";
-import { MoonStar } from "lucide-vue-next";
+import { MoonStar, Search } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
@@ -27,9 +27,7 @@ const userPhoto = computed(() => {
   const url = authStore.user?.foto?.url;
 
   if (url) {
-    return url.startsWith("http")
-      ? url
-      : `${import.meta.env.VITE_BACKEND_URL}${url}`;
+    return url.startsWith("http") ? url : `${import.meta.env.VITE_BACKEND_URL}${url}`;
   }
 
   if (authStore.user?.google_picture) {
@@ -96,7 +94,10 @@ console.count("AppHeader");
         <RouterLink to="/adicionar">
           <button id="Mais"><Plus :size="24" />Adicionar Livro</button>
         </RouterLink>
-        <button id="Sino">
+        <button @click="$router.push('/explore')" class="icon" id="Lupa">
+          <Search :size="24" />
+        </button>
+        <button class="icon" id="Sino">
           <BellDot :size="24" />
         </button>
       </div>
@@ -149,7 +150,7 @@ button a {
 }
 
 img {
-  transition: opacity .2s;
+  transition: opacity 0.2s;
 }
 
 .app-header {
@@ -223,7 +224,15 @@ button {
   display: none;
 }
 
+#Lupa,
 #Sino {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #6b4226;
+}
+
+.icon {
   border: none;
   background: none;
   cursor: pointer;
@@ -422,6 +431,11 @@ button {
     flex-direction: row-reverse;
   }
 
+  .icones {
+    gap: 12px;
+  }
+
+  #Lupa,
   #Sino {
     color: #5a4636;
     background-color: white;
@@ -431,7 +445,6 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-
     border: none;
     cursor: pointer;
   }

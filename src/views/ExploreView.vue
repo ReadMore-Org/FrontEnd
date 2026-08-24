@@ -9,6 +9,8 @@ import OrdenarDropdown from "@/components/explore/OrdenarDropDown.vue";
 import GradeLivros from "@/components/books/GradeBook.vue";
 import BookCard from "@/components/books/otherBookCard.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
+import AppFooter from "@/components/layout/AppFooter.vue";
+import voltar from "@/components/common/voltar.vue";
 
 const googleBooksStore = useGoogleBooksStore();
 
@@ -48,6 +50,7 @@ function removerFiltroIdioma(valor) {
 </script>
 
 <template>
+  <Voltar/>
   <AppHeader />
   <div class="explore-view">
     <FiltrosBusca
@@ -108,6 +111,7 @@ function removerFiltroIdioma(valor) {
       </GradeLivros>
     </main>
   </div>
+  <AppFooter/>
 </template>
 
 <style scoped>
@@ -116,6 +120,8 @@ function removerFiltroIdioma(valor) {
   background-color: #f5e6d3;
   min-height: 100vh;
   margin: 5vw;
+  border-radius: 20px;
+  overflow: hidden;
 }
 
 .conteudo-busca {
@@ -124,6 +130,8 @@ function removerFiltroIdioma(valor) {
   border-top-left-radius: 20px;
   box-shadow: -8px 0 20px -12px rgba(107, 66, 38, 0.1);
   padding: 22px 28px 26px 26px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .barra-resultados {
@@ -131,6 +139,7 @@ function removerFiltroIdioma(valor) {
   align-items: center;
   justify-content: space-between;
   margin: 18px 0 12px;
+  gap: 12px;
 }
 
 .contagem {
@@ -162,6 +171,12 @@ function removerFiltroIdioma(valor) {
   border-radius: 14px;
   cursor: pointer;
   text-transform: capitalize;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.chip-ativo:hover {
+  background-color: #f0e2cd;
 }
 
 .estado-vazio {
@@ -169,5 +184,32 @@ function removerFiltroIdioma(valor) {
   padding: 60px 0;
   color: #9c8a7a;
   font-size: 14px;
+}
+
+/* Responsividade para Dispositivos Móveis */
+@media (max-width: 768px) {
+  .explore-view {
+    flex-direction: column;
+    margin: 16px 12px;
+    border-radius: 16px;
+  }
+
+  .conteudo-busca {
+    border-top-left-radius: 0;
+    border-radius: 0 0 16px 16px;
+    padding: 16px;
+    box-shadow: none;
+  }
+
+  .barra-resultados {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .estado-vazio {
+    padding: 40px 16px;
+  }
+  
 }
 </style>
