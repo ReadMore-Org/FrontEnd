@@ -6,7 +6,10 @@ import { Store } from 'lucide-vue-next'
 <div class="card">
     <div class="esquerda">
         <h1>Encontre livros para trocar ou pegar emprestado</h1>
-        <button> <p>Ver mercado</p><Store /></button>
+         <RouterLink to="/marketplace">
+          <button id="mercado"> <p>Ver mercado</p><Store /></button>
+        </RouterLink>
+        
     </div>
     <div class="direita">
         <img src="/imgs/imagemCard.png" alt="livros" class="livros">
@@ -15,6 +18,11 @@ import { Store } from 'lucide-vue-next'
 </template>
 
 <style scoped>
+
+#mercado:hover {
+  cursor: pointer;
+}
+
 .card {
     background-color: white;
     display: flex;

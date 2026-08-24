@@ -237,11 +237,11 @@ const salvarPerfil = async () => {
   cursor: not-allowed;
 }
 .avatar {
-  width: 180px;
-  height: 180px;
+  width: 200px !important;
+  height: 200px !important;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #6b4226;
+  border: 3px solid #6b4226;
   transition: opacity 0.2s;
 }
 .camera-btn {

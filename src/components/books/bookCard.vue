@@ -162,6 +162,9 @@ h1 {
   color: #5a4636;
   font-weight: 500;
   margin: 10px 0;
+  font-size: 13px;
+  margin: 8px 0;
+  width: 130px;
 }
 
 .info {
@@ -232,11 +235,6 @@ h1 {
     max-width: 100%;
     line-height: 1.25;
     margin: 0;
-  }
-
-  .autor {
-    font-size: 13px;
-    margin: 8px 0;
   }
 
   .info {

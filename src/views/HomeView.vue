@@ -179,6 +179,7 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
   display: flex;
   align-items: center;
   justify-content: center;
+  
 }
 
 .splide__slide:hover {

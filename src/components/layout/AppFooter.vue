@@ -21,7 +21,7 @@ const isActive = (path) => {
         <li>
           <h1>READMORE</h1>
           <p>A plataforma criada para acompanhar sua jornada de leitura</p>
-          <small>© 2026 READMORE. Todos os direitos reservados</small>
+          <small>© 2026 READMORE. Todos os direitos reservados.</small>
         </li>
       </ul>
       <div id="outros">

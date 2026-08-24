@@ -50,7 +50,7 @@ const livrosLidos = computed(() =>
 );
 
 const splideOptions = {
-  perPage: 4,
+  perPage: 10,
   gap: "px",
   padding: "8px",
   breakpoints: {
@@ -364,7 +364,7 @@ const splideOptions = {
 
 :deep(.splide__slide) {
   box-sizing: border-box;
-  padding: 0 4px;
+  padding: 0 20px;
   transition: transform 0.25s ease;
 }
 
