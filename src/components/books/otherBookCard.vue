@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { Plus, Star, Check } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useLivrosStore } from "@/stores/livros";
+import { useAuthStore } from "@/stores/auth";
 
 const props = defineProps({
   livro: {
@@ -10,6 +11,10 @@ const props = defineProps({
     required: true,
   },
 });
+
+const router = useRouter();
+const livroStore = useLivrosStore();
+const authStore = useAuthStore();
 
 onMounted(async () => {
   document.addEventListener("click", aoClicarFora);
@@ -25,9 +30,6 @@ onMounted(async () => {
     console.error("Erro ao sincronizar estante:", err);
   }
 });
-
-const router = useRouter();
-const livroStore = useLivrosStore();
 
 function abrirLivro() {
   if (props.livro?.id) {
@@ -125,11 +127,23 @@ const getAutores = (livro) => {
 };
 
 function abrirPopover() {
+  // Redireciona usuários deslogados diretamente para a tela de CTA
+  if (!authStore.isAuthenticated) {
+    router.push("/entrar");
+    return;
+  }
+
   if (adicionando.value || adicionado.value) return;
   popoverAberto.value = !popoverAberto.value;
 }
 
 async function escolherStatus(status) {
+  // Verificação de segurança caso o usuário esteja deslogado
+  if (!authStore.isAuthenticated) {
+    router.push("/entrar");
+    return;
+  }
+
   // Trava a execução se já estiver na estante
   if (jaEstaNaEstante.value) return;
 

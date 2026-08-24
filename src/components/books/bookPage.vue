@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useLivrosStore } from "@/stores/livros";
 import { useGoogleBooksStore } from "@/stores/googleBooks";
+import { useAuthStore } from "@/stores/auth";
 import { useToast } from "vue-toastification";
 
 import {
@@ -28,6 +29,7 @@ const router = useRouter();
 
 const googleBooksStore = useGoogleBooksStore();
 const livroStore = useLivrosStore();
+const authStore = useAuthStore();
 
 const isGoogleBook = computed(() => route.path.startsWith("/livro/google"));
 
@@ -221,6 +223,11 @@ watch(
 // =========================================================
 
 const onStatusChange = async (novoStatus) => {
+  if (!authStore.isAuthenticated) {
+    router.push("/entrar");
+    return;
+  }
+
   if (isUpdatingStatus.value || novoStatus === status.value) {
     return;
   }
@@ -267,6 +274,11 @@ const onStatusChange = async (novoStatus) => {
 const mostrarModalRemocao = ref(false);
 
 const abrirModalRemocao = () => {
+  if (!authStore.isAuthenticated) {
+    router.push("/entrar");
+    return;
+  }
+
   if (!meuLivroItem.value || isDeleting.value) {
     return;
   }
@@ -283,6 +295,11 @@ const cancelarRemocao = () => {
 };
 
 const removerDaEstante = async () => {
+  if (!authStore.isAuthenticated) {
+    router.push("/entrar");
+    return;
+  }
+
   if (!meuLivroItem.value || isDeleting.value) return;
 
   isDeleting.value = true;

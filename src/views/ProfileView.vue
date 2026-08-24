@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { useLivrosStore } from "@/stores/livros";
 import { useAuthStore } from "@/stores/auth";
@@ -12,12 +12,7 @@ import AppFooter from "@/components/layout/AppFooter.vue";
 import voltar from "@/components/common/voltar.vue";
 import BookCard from "@/components/books/bookCard.vue";
 
-import {
-  LibraryBig,
-  BookOpenCheck,
-  BookOpenText,
-  Bookmark,
-} from "lucide-vue-next";
+import { Target, Check, Edit2 } from "lucide-vue-next";
 
 const livroStore = useLivrosStore();
 const authStore = useAuthStore();
@@ -26,9 +21,55 @@ const user = computed(() => authStore.user);
 const userEmail = computed(() => user.value?.email || "");
 const userBio = computed(() => user.value?.bio || "");
 
+// Estado para controle da Meta de Leitura
+const editandoMeta = ref(false);
+const metaInput = ref(10); // Valor padrão inicial
+
+// Inicializa a meta buscando do usuário ou do localStorage como fallback
+const carregarMeta = () => {
+  if (user.value?.meta_leitura) {
+    metaInput.value = user.value.meta_leitura;
+  } else {
+    const metaSalva = localStorage.getItem("meta_leitura_anual");
+    if (metaSalva) {
+      metaInput.value = parseInt(metaSalva, 10);
+    }
+  }
+};
+
 onMounted(() => {
   livroStore.fetchMeusLivros();
+  carregarMeta();
 });
+
+// Atualiza o input se o usuário for carregado após a montagem
+watch(
+  () => authStore.user,
+  () => carregarMeta(),
+  { immediate: true }
+);
+
+const salvarMeta = async () => {
+  const novaMeta = Number(metaInput.value);
+  if (isNaN(novaMeta) || novaMeta < 1) return;
+
+  // Persistência em cache local imediato
+  localStorage.setItem("meta_leitura_anual", novaMeta.toString());
+
+  // Tenta salvar via Store/Backend se o método existir
+  if (authStore.updateProfile) {
+    try {
+      await authStore.updateProfile({ meta_leitura: novaMeta });
+    } catch (error) {
+      console.error("Erro ao salvar meta no backend:", error);
+    }
+  } else if (authStore.user) {
+    // Sincroniza localmente com a store de autenticação
+    authStore.user.meta_leitura = novaMeta;
+  }
+
+  editandoMeta.value = false;
+};
 
 // Helper para extrair o ID do livro com segurança
 const getLivroId = (item) => {
@@ -111,6 +152,52 @@ const splideOptions = {
       </button>
     </div>
 
+    <!-- Bloco de Gerenciamento da Meta de Leitura -->
+    <div class="card-meta-perfil">
+      <div class="meta-header">
+        <div class="meta-titulo">
+          <Target :size="20" color="#6b4226" />
+          <span>Meta de Leitura do Ano</span>
+        </div>
+
+        <button 
+          v-if="!editandoMeta" 
+          class="btn-icon-meta" 
+          @click="editandoMeta = true"
+          title="Editar meta"
+        >
+          <Edit2 :size="16" />
+        </button>
+      </div>
+
+      <div class="meta-body">
+        <template v-if="!editandoMeta">
+          <p class="meta-valor">
+            Sua meta atual é ler <strong>{{ metaInput }}</strong> {{ metaInput === 1 ? 'livro' : 'livros' }}.
+          </p>
+        </template>
+
+        <template v-else>
+          <form @submit.prevent="salvarMeta" class="form-meta">
+            <label for="metaInput">Defina o total de livros:</label>
+            <div class="input-container">
+              <input
+                id="metaInput"
+                type="number"
+                v-model.number="metaInput"
+                min="1"
+                max="999"
+                required
+              />
+              <button type="submit" class="btn-salvar-meta">
+                <Check :size="16" />
+                Salvar
+              </button>
+            </div>
+          </form>
+        </template>
+      </div>
+    </div>
   </div>
 
   <div id="livros">
@@ -197,6 +284,106 @@ const splideOptions = {
 .btn-editar:hover {
   background: #faf7f4;
   transform: translateY(-1px);
+}
+
+/* Card Meta de Leitura */
+.card-meta-perfil {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e8d8c3;
+  max-width: 500px;
+}
+
+.meta-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.meta-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #2d2d2d;
+  font-size: 1.05rem;
+}
+
+.btn-icon-meta {
+  background: none;
+  border: none;
+  color: #7b5638;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.btn-icon-meta:hover {
+  background: #f3e7d7;
+}
+
+.meta-valor {
+  color: #5a4636;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.meta-valor strong {
+  color: #6b4226;
+  font-size: 1.1rem;
+}
+
+.form-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-meta label {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.input-container {
+  display: flex;
+  gap: 10px;
+}
+
+.input-container input {
+  width: 100px;
+  padding: 8px 12px;
+  border: 1px solid #e8d8c3;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+}
+
+.input-container input:focus {
+  border-color: #6b4226;
+}
+
+.btn-salvar-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #6b4226;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.btn-salvar-meta:hover {
+  background: #52321c;
 }
 
 #livros {
@@ -304,22 +491,16 @@ const splideOptions = {
     width: 100%;
   }
 
-  .stats {
-    width: 100%;
-    justify-content: space-around;
-  }
-
-  .divisor {
-    padding: 0 10px;
-    border-left: none;
-  }
-
   .titulo-secao {
     font-size: 1.5rem;
   }
 
   .splide__slide:hover {
     transform: none;
+  }
+
+  .card-meta-perfil {
+    max-width: 100%;
   }
 }
 </style>

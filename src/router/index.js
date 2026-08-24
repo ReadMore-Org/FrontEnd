@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 
 import HomeView from "../views/HomeView.vue";
 import MarketplaceView from "@/views/MarketplaceView.vue";
@@ -16,8 +17,6 @@ import AddBookView from "@/views/AddBookView.vue";
 import ScanCodeView from "@/views/ScanCodeView.vue";
 import ManualBookView from "@/views/ManualBookView.vue";
 import ExploreView from "@/views/ExploreView.vue";
-
-import MeusLivrosView from "@/views/MeusLivrosView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -51,6 +50,7 @@ const router = createRouter({
       path: "/profile/edit",
       name: "profile-edit",
       component: EditProfileView,
+      meta: { requiresAuth: true },
     },
     {
       path: "/livro/:id",
@@ -71,6 +71,11 @@ const router = createRouter({
       path: "/signup",
       name: "signup",
       component: SignUpView,
+    },
+    {
+      path: "/entrar",
+      name: "EntrarCTA",
+      component: () => import("@/views/EntrarView.vue"),
     },
     {
       path: "/adicionar",
@@ -94,6 +99,17 @@ const router = createRouter({
       component: ExploreView,
     },
   ],
+});
+
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    // Redireciona para o login se tentar acessar rota privada sem estar autenticado
+    next({ name: "Login" });
+  } else {
+    next();
+  }
 });
 
 export default router;

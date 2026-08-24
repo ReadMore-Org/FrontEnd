@@ -4,6 +4,8 @@ import { defineStore } from "pinia";
 import auth from "../services/auth";
 import api from "../services/api";
 
+import { useLivrosStore } from "./livros";
+
 export const useAuthStore = defineStore("auth", () => {
   const accessToken = ref(localStorage.getItem("access_token"));
   const refreshToken = ref(localStorage.getItem("refresh_token"));
@@ -48,6 +50,11 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
+
+    const livrosStore = useLivrosStore();
+    if (livrosStore.meusLivros) {
+      livrosStore.meusLivros = [];
+    }
   }
 
   async function updateOnboardingPreference(showOnboarding) {
@@ -58,7 +65,13 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.setItem("user", JSON.stringify(user.value));
   }
 
-  async function updateProfile({ name, bio, imgAttachmentKey } = {}) {
+  async function updateProfile({
+    name,
+    bio,
+    imgAttachmentKey,
+    meta_leitura,
+  } = {}) {
+    // Se o nome foi enviado explicitamente e está em branco, não prossegue
     if (name !== undefined && !name.trim()) return;
 
     error.value = null;
@@ -66,17 +79,18 @@ export const useAuthStore = defineStore("auth", () => {
 
     if (name !== undefined) payload.name = name.trim();
     if (bio !== undefined) payload.bio = bio;
+    if (meta_leitura !== undefined) payload.meta_leitura = Number(meta_leitura);
 
-    // AJUSTADO AQUI: Enviando exatamente o nome que o SlugRelatedField espera receber
     if (imgAttachmentKey != null)
       payload.foto_attachment_key = imgAttachmentKey;
 
+    // Se nenhum campo foi alterado, cancela a requisição
     if (Object.keys(payload).length === 0) return;
 
     try {
       const response = await api.patch("/usuarios/me/", payload);
 
-      // Atualiza o estado global da store e o localStorage
+      // Atualiza o estado global da store e o localStorage com os dados do backend
       user.value = response.data;
       localStorage.setItem("user", JSON.stringify(response.data));
     } catch (err) {
@@ -85,6 +99,7 @@ export const useAuthStore = defineStore("auth", () => {
       throw err;
     }
   }
+  
   return {
     accessToken,
     refreshToken,
