@@ -1,6 +1,5 @@
 <script setup>
 import { computed } from "vue";
-import { RouterLink } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useGoogleBooksStore } from "@/stores/googleBooks";
 import BarraBusca from "@/components/explore/BarraBusca.vue";
@@ -10,7 +9,7 @@ import GradeLivros from "@/components/books/GradeBook.vue";
 import BookCard from "@/components/books/otherBookCard.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import AppFooter from "@/components/layout/AppFooter.vue";
-import voltar from "@/components/common/voltar.vue";
+import Voltar from "@/components/common/voltar.vue";
 
 const googleBooksStore = useGoogleBooksStore();
 
@@ -24,18 +23,28 @@ const {
 
 const queryFinal = computed(() => {
   const partes = [];
+  const termoLimpo = termo.value?.trim();
 
-  if (termo.value.trim()) partes.push(termo.value.trim());
+  if (termoLimpo) partes.push(termoLimpo);
   categoriasSelecionadas.value.forEach((c) => partes.push(`subject:${c}`));
 
   return partes.join(" ");
 });
 
-async function buscar() {
+// Timer para controlar o Debounce das buscas
+let timerBusca = null;
+
+function buscar() {
   if (!queryFinal.value) return;
 
-  jaBuscou.value = true;
-  await googleBooksStore.pesquisarLivros(queryFinal.value);
+  // Cancela a busca agendada anterior para evitar múltiplos disparos
+  clearTimeout(timerBusca);
+
+  // Aguarda 300ms antes de efetuar a requisição
+  timerBusca = setTimeout(() => {
+    jaBuscou.value = true;
+    googleBooksStore.pesquisarLivros(queryFinal.value);
+  }, 300);
 }
 
 function removerFiltroCategoria(valor) {
@@ -50,7 +59,7 @@ function removerFiltroIdioma(valor) {
 </script>
 
 <template>
-  <Voltar/>
+  <Voltar />
   <AppHeader />
   <div class="explore-view">
     <FiltrosBusca
@@ -71,7 +80,10 @@ function removerFiltroIdioma(valor) {
         <OrdenarDropdown v-model="ordenacao" @update:modelValue="buscar" />
       </div>
 
-      <div v-if="categoriasSelecionadas.length || idiomasSelecionados.length" class="chips-ativos">
+      <div
+        v-if="categoriasSelecionadas.length || idiomasSelecionados.length"
+        class="chips-ativos"
+      >
         <span
           v-for="c in categoriasSelecionadas"
           :key="c"
@@ -94,7 +106,10 @@ function removerFiltroIdioma(valor) {
         <p>Buscando livros...</p>
       </div>
 
-      <div v-else-if="jaBuscou && googleBooksStore.resultados.length === 0" class="estado-vazio">
+      <div
+        v-else-if="jaBuscou && googleBooksStore.resultados.length === 0"
+        class="estado-vazio"
+      >
         <p>Nenhum livro encontrado para essa busca.</p>
       </div>
 
@@ -104,14 +119,12 @@ function removerFiltroIdioma(valor) {
 
       <GradeLivros v-else titulo="" :livros="googleBooksStore.resultados">
         <template #default="{ livro }">
-          <RouterLink :to="`/livro/google/${livro.id}`">
-            <BookCard :livro="livro" />
-          </RouterLink>
+          <BookCard :livro="livro" />
         </template>
       </GradeLivros>
     </main>
   </div>
-  <AppFooter/>
+  <AppFooter />
 </template>
 
 <style scoped>
@@ -210,6 +223,5 @@ function removerFiltroIdioma(valor) {
   .estado-vazio {
     padding: 40px 16px;
   }
-  
 }
 </style>

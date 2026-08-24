@@ -224,6 +224,9 @@ button {
   display: none;
 }
 
+#Lupa {
+  display: none;
+}
 #Lupa,
 #Sino {
   border: none;

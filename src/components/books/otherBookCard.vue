@@ -51,35 +51,37 @@ const statusOpcoes = [
 const itemNaEstante = computed(() => {
   if (!props.livro || !livroStore.meusLivros?.length) return null;
 
-  // Extrai identificadores do livro recebido via Props (API Google)
-  const propIdGoogle = String(props.livro.google_book_id || props.livro.id || "").trim();
-  const propIsbn = String(props.livro.isbn || "").replace(/\D/g, ""); // Apenas números
-  const propTitulo = props.livro.titulo?.toLowerCase().trim();
+  // 1. Identificadores do livro atual (prop)
+  const propId = props.livro.id ? String(props.livro.id) : null;
+  const propGoogleId = (props.livro.google_book_id || props.livro.googleBookId)
+    ? String(props.livro.google_book_id || props.livro.googleBookId).trim()
+    : null;
+  const propIsbn = props.livro.isbn 
+    ? String(props.livro.isbn).replace(/\D/g, "") 
+    : null;
 
   return livroStore.meusLivros.find((item) => {
     const itemLivro = typeof item.livro === "object" ? item.livro : item;
 
-    // 1. Tenta comparar por ID do Google (caso exista salvo no banco)
-    const bancoGoogleId = String(
-      item.google_book_id || itemLivro?.google_book_id || itemLivro?.id || ""
-    ).trim();
-
-    if (propIdGoogle && bancoGoogleId && propIdGoogle === bancoGoogleId) {
+    // A. Comparação por ID do Banco de Dados (Prioridade 1 - Identidade Exata)
+    const bancoId = item.id || itemLivro?.id ? String(item.id || itemLivro?.id) : null;
+    if (propId && bancoId && propId === bancoId) {
       return true;
     }
 
-    // 2. Tenta comparar por ISBN (O mais confiável para livros salvos do Google)
-    const bancoIsbn = String(
-      item.isbn || itemLivro?.isbn || ""
-    ).replace(/\D/g, "");
+    // B. Comparação por ID do Google Books (Prioridade 2 - Edição Exata do Google)
+    const bancoGoogleId = (item.google_book_id || itemLivro?.google_book_id)
+      ? String(item.google_book_id || itemLivro?.google_book_id).trim()
+      : null;
+    if (propGoogleId && bancoGoogleId && propGoogleId === bancoGoogleId) {
+      return true;
+    }
 
+    // C. Comparação por ISBN (Prioridade 3 - Apenas números, estritamente igual)
+    const bancoIsbn = (item.isbn || itemLivro?.isbn)
+      ? String(item.isbn || itemLivro?.isbn).replace(/\D/g, "")
+      : null;
     if (propIsbn && bancoIsbn && propIsbn === bancoIsbn) {
-      return true;
-    }
-
-    // 3. Fallback: Compara pelo Título exato
-    const bancoTitulo = (item.titulo || itemLivro?.titulo || "").toLowerCase().trim();
-    if (propTitulo && bancoTitulo && propTitulo === bancoTitulo) {
       return true;
     }
 

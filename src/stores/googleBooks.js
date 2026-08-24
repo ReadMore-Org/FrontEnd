@@ -38,27 +38,82 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
   const ordenacao = ref("relevance");
   const jaBuscou = ref(false);
 
+  // Controle de cancelamento de requisições sobrepostas
+  let controllerAtual = null;
+
   // =========================
-  // PESQUISAR LIVROS
+  // PESQUISAR LIVROS (COM ORDENAÇÃO POR POPULARIDADE)
   // =========================
   async function pesquisarLivros(query) {
+    const queryLimpa = query?.trim();
+
+    if (!queryLimpa) {
+      loading.value = false;
+      return;
+    }
+
+    // Cancela a requisição anterior se ainda estiver rodando
+    if (controllerAtual) {
+      controllerAtual.abort();
+    }
+    controllerAtual = new AbortController();
+
     loading.value = true;
     error.value = null;
+    jaBuscou.value = true;
 
     try {
-      const response = await searchBooks(query);
+      const response = await searchBooks(queryLimpa, {
+        signal: controllerAtual.signal,
+      });
 
-      resultados.value = (response.items ?? [])
-        .map((item) => googleBookToLivro(item))
-        .filter((livro) => livro.titulo && livro.capa);
+      const itens = response?.items ?? [];
+
+      // Mapeia os livros e calcula a pontuação para trazer os mais populares para o topo
+      const livrosFormatados = itens
+        .map((item) => {
+          const livro = googleBookToLivro(item);
+          const info = item.volumeInfo || {};
+
+          const avaliacoes = info.ratingsCount ?? 0;
+          const nota = info.averageRating ?? 0;
+          const temCapa =
+            livro.capa && !livro.capa.includes("no-cover") ? 30 : -100;
+          const eEmPortugues = info.language === "pt" ? 20 : 0;
+
+          const score =
+            Math.log10(avaliacoes + 1) * 25 +
+            nota * 10 +
+            temCapa +
+            eEmPortugues;
+
+          return { livro, score };
+        })
+        .filter(({ livro }) => livro.titulo && livro.capa);
+
+      // Ordena do maior score (mais popular) para o menor
+      livrosFormatados.sort((a, b) => b.score - a.score);
+
+      resultados.value = livrosFormatados.map(({ livro }) => livro);
     } catch (err) {
-      console.error(err);
-      error.value = "Erro ao pesquisar livros.";
+      // Ignora erros de cancelamento do Axios
+      if (
+        axios.isCancel(err) ||
+        err.name === "AbortError" ||
+        err.code === "ERR_CANCELED"
+      ) {
+        return;
+      }
+
+      console.error("Erro ao pesquisar livros:", err);
+      error.value = "Não foi possível carregar os livros. Tente novamente.";
+      resultados.value = [];
     } finally {
-      loading.value = false;
+      if (controllerAtual && !controllerAtual.signal.aborted) {
+        loading.value = false;
+      }
     }
   }
-
   // =========================
   // RECOMENDADOS
   // =========================
@@ -66,9 +121,6 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
   const CACHE_KEY_TIMESTAMP = "recomendados_google_books_time";
   const CACHE_EXPIRATION_MS = 12 * 60 * 60 * 1000; // 12 horas em milissegundos
 
-  // =========================
-  // RECOMENDADOS (SÓ SALVA SE TUDO CARREGAR)
-  // =========================
   async function buscarRecomendados(forceRefresh = false) {
     loading.value = true;
     error.value = null;
@@ -103,12 +155,10 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
         "inauthor:J.K. Rowling",
       ];
 
-      // Usamos Promise.all: se UMA busca falhar, lança exceção e NÃO salva nada pela metade
       const responses = await Promise.all(
         queries.map((query) => searchBooks(query)),
       );
 
-      // Valida se todas as respostas trouxeram itens
       const todosAutoresComSucesso = responses.every(
         (res) => res?.items && res.items.length > 0,
       );
@@ -159,13 +209,12 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
 
       resultados.value = livros;
 
-      // 3. SÓ SALVA NO CACHE SE CHEGOU AQUI (TODOS OS AUTORES CARREGARAM)
+      // 3. SALVA NO CACHE SE TODOS OS AUTORES CARREGARAM
       localStorage.setItem(CACHE_KEY_RECOMENDADOS, JSON.stringify(livros));
       localStorage.setItem(CACHE_KEY_TIMESTAMP, String(Date.now()));
     } catch (err) {
       console.error("Erro completo em buscarRecomendados:", err);
 
-      // Se falhou (ex: 503 em um dos autores), usa o cache antigo se existir
       const cachedData = localStorage.getItem(CACHE_KEY_RECOMENDADOS);
       if (cachedData) {
         resultados.value = JSON.parse(cachedData);
@@ -187,7 +236,6 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
 
     try {
       const response = await searchBookByISBN(isbn);
-
       const item = response.items?.[0] ?? null;
 
       livroSelecionado.value = item ? googleBookToLivro(item) : null;
@@ -208,7 +256,6 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
 
     try {
       const response = await getBookById(id);
-
       livroSelecionado.value = googleBookToLivro(response);
     } catch (err) {
       console.error(err);
