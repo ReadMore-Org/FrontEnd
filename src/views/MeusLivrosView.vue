@@ -1,11 +1,10 @@
 <script setup>
-import { onMounted, computed } from "vue";
-import { RouterLink } from "vue-router";
+import { onMounted, computed, ref, watch } from "vue";
 import { useLivrosStore } from "@/stores/livros";
 import { LibraryBig, BookOpenCheck, BookOpenText, Bookmark } from "lucide-vue-next";
 
-import { Splide, SplideSlide } from "@splidejs/vue-splide";
-import "@splidejs/vue-splide/css";
+// Troca do Splide pelo vuedraggable (npm install vuedraggable@4)
+import draggable from "vuedraggable";
 
 import AppHeader from "@/components/layout/AppHeader.vue";
 import AppFooter from "@/components/layout/AppFooter.vue";
@@ -13,18 +12,6 @@ import Voltar from "@/components/common/voltar.vue";
 import BookCard from "@/components/books/bookCard.vue";
 
 const livroStore = useLivrosStore();
-
-onMounted(() => {
-  livroStore.fetchMeusLivros();
-});
-
-const getLivroId = (item) => {
-  if (!item) return null;
-  if (typeof item.livro === "object" && item.livro !== null) {
-    return item.livro.id;
-  }
-  return item.livro || item.id;
-};
 
 const getLivroObjeto = (item) => {
   if (!item) return {};
@@ -39,39 +26,48 @@ const totalLidos = computed(() => livroStore.totalLidos);
 const totalLendo = computed(() => livroStore.totalLendo);
 const totalQueroLer = computed(() => livroStore.totalQueroLer);
 
-const livrosLendo = computed(() =>
-  livroStore.meusLivros.filter((i) => i.status === "lendo")
-);
-const livrosQueroLer = computed(() =>
-  livroStore.meusLivros.filter((i) => i.status === "quero_ler")
-);
-const livrosLidos = computed(() =>
-  livroStore.meusLivros.filter((i) => i.status === "lido")
-);
+// Três listas LOCAIS e independentes.
+// É nelas (e não direto na store) que o vuedraggable mexe quando você arrasta.
+const listaQueroLer = ref([]);
+const listaLendo = ref([]);
+const listaLidos = ref([]);
 
-const splideOptions = {
-  perPage: 4,
-  gap: "px",
-  padding: "8px",
-  breakpoints: {
-    1280: {
-      perPage: 3,
-      gap: "32px",
-    },
-    1024: {
-      perPage: 2,
-      gap: "32px",
-    },
-    640: {
-      perPage: 1,
-      gap: "20px",
-      padding: "0 10px",
-    },
-  },
-  arrows: true,
-  pagination: false,
-  drag: "free",
-};
+// Enquanto uma atualização de status está em andamento, não deixamos a
+// sincronização automática (abaixo) "brigar" com o que já foi arrastado na tela.
+const atualizandoStatus = ref(false);
+
+function sincronizarListasComStore() {
+  if (atualizandoStatus.value) return;
+  listaQueroLer.value = livroStore.meusLivros.filter((i) => i.status === "quero_ler");
+  listaLendo.value = livroStore.meusLivros.filter((i) => i.status === "lendo");
+  listaLidos.value = livroStore.meusLivros.filter((i) => i.status === "lido");
+}
+
+onMounted(async () => {
+  await livroStore.fetchMeusLivros();
+  sincronizarListasComStore();
+});
+
+// Se a store mudar por qualquer outro motivo (outra tela, refresh, etc.),
+// as três listas se atualizam sozinhas.
+watch(() => livroStore.meusLivros, sincronizarListasComStore, { deep: true });
+
+// Chamado pelo vuedraggable toda vez que uma lista ganha ou perde um item.
+// Só nos importa o evento "added": significa que o livro entrou nessa lista
+// (seja vindo de outra, seja um reordenamento dentro da mesma).
+async function aoMudarLista(evento, novoStatus) {
+  if (!evento.added) return;
+
+  const item = evento.added.element;
+  atualizandoStatus.value = true;
+
+  try {
+    // Essa função já existe no seu store e atualiza local + backend.
+    await livroStore.atualizarStatusMeuLivro(item, novoStatus);
+  } finally {
+    atualizandoStatus.value = false;
+  }
+}
 </script>
 
 <template>
@@ -84,8 +80,7 @@ const splideOptions = {
       <div class="cabecalho-conteudo">
         <div class="titulos">
           <h1>Meus Livros</h1>
-
-          <p>Gerencie sua estante organizada por status de leitura</p>
+          <p>Arraste os livros entre as listas para mudar o status de leitura</p>
         </div>
 
         <!-- Painel de Estatísticas -->
@@ -135,52 +130,6 @@ const splideOptions = {
 
     <!-- Conteúdo Principal -->
     <main id="livros-container">
-      <!-- Seção: Lendo atualmente -->
-      <section class="secao-livros" v-if="livrosLendo.length">
-        <div class="cabecalho-secao">
-          <h2 class="titulo-secao">Lendo Atualmente</h2>
-          <span class="contador-badge">{{ livrosLendo.length }}</span>
-        </div>
-        <div class="lista-livros">
-          <Splide :options="splideOptions">
-            <SplideSlide v-for="item in livrosLendo" :key="item.id">
-              <BookCard :livro="getLivroObjeto(item)" />
-            </SplideSlide>
-          </Splide>
-        </div>
-      </section>
-
-      <!-- Seção: Quero Ler -->
-      <section class="secao-livros" v-if="livrosQueroLer.length">
-        <div class="cabecalho-secao">
-          <h2 class="titulo-secao">Quero Ler</h2>
-          <span class="contador-badge">{{ livrosQueroLer.length }}</span>
-        </div>
-        <div class="lista-livros">
-          <Splide :options="splideOptions">
-            <SplideSlide v-for="item in livrosQueroLer" :key="item.id">
-              <BookCard :livro="getLivroObjeto(item)" />
-            </SplideSlide>
-          </Splide>
-        </div>
-      </section>
-
-      <!-- Seção: Lidos -->
-      <section class="secao-livros" v-if="livrosLidos.length">
-        <div class="cabecalho-secao">
-          <h2 class="titulo-secao">Lidos</h2>
-          <span class="contador-badge">{{ livrosLidos.length }}</span>
-        </div>
-        <div class="lista-livros">
-          <Splide :options="splideOptions">
-            <SplideSlide v-for="item in livrosLidos" :key="item.id">
-              <BookCard :livro="getLivroObjeto(item)" />
-            </SplideSlide>
-          </Splide>
-        </div>
-      </section>
-
-      <!-- Estado Vazio -->
       <div v-if="!totalLivros" class="sem-livros">
         <LibraryBig :size="48" class="icone-vazio" />
         <p class="titulo-vazio">Sua estante está vazia</p>
@@ -188,6 +137,101 @@ const splideOptions = {
           Adicione seus primeiros livros para acompanhar seu progresso de leitura.
         </p>
       </div>
+
+      <template v-else>
+        <!-- Seção: Quero Ler -->
+        <section class="secao-livros">
+          <div class="cabecalho-secao">
+            <h2 class="titulo-secao">Quero Ler</h2>
+            <span class="contador-badge">{{ listaQueroLer.length }}</span>
+          </div>
+
+          <draggable
+            v-model="listaQueroLer"
+            :animation="200"
+            group="livros"
+            item-key="id"
+            class="lista-livros"
+            ghost-class="fantasma-arraste"
+            drag-class="arrastando-item"
+            @change="aoMudarLista($event, 'quero_ler')"
+          >
+            <template #item="{ element }">
+              <div class="item-livro">
+                <BookCard :livro="getLivroObjeto(element)" />
+              </div>
+            </template>
+
+            <template #footer>
+              <p v-if="!listaQueroLer.length" class="lista-vazia">
+                Arraste um livro para cá
+              </p>
+            </template>
+          </draggable>
+        </section>
+
+        <!-- Seção: Lendo atualmente -->
+        <section class="secao-livros">
+          <div class="cabecalho-secao">
+            <h2 class="titulo-secao">Lendo Atualmente</h2>
+            <span class="contador-badge">{{ listaLendo.length }}</span>
+          </div>
+
+          <draggable
+            v-model="listaLendo"
+            :animation="200"
+            group="livros"
+            item-key="id"
+            class="lista-livros"
+            ghost-class="fantasma-arraste"
+            drag-class="arrastando-item"
+            @change="aoMudarLista($event, 'lendo')"
+          >
+            <template #item="{ element }">
+              <div class="item-livro">
+                <BookCard :livro="getLivroObjeto(element)" />
+              </div>
+            </template>
+
+            <template #footer>
+              <p v-if="!listaLendo.length" class="lista-vazia">
+                Arraste um livro para cá
+              </p>
+            </template>
+          </draggable>
+        </section>
+
+        <!-- Seção: Lidos -->
+        <section class="secao-livros">
+          <div class="cabecalho-secao">
+            <h2 class="titulo-secao">Lidos</h2>
+            <span class="contador-badge">{{ listaLidos.length }}</span>
+          </div>
+
+          <draggable
+            v-model="listaLidos"
+            :animation="200"
+            group="livros"
+            item-key="id"
+            class="lista-livros"
+            ghost-class="fantasma-arraste"
+            drag-class="arrastando-item"
+            @change="aoMudarLista($event, 'lido')"
+          >
+            <template #item="{ element }">
+              <div class="item-livro">
+                <BookCard :livro="getLivroObjeto(element)" />
+              </div>
+            </template>
+
+            <template #footer>
+              <p v-if="!listaLidos.length" class="lista-vazia">
+                Arraste um livro para cá
+              </p>
+            </template>
+          </draggable>
+        </section>
+      </template>
     </main>
   </div>
 
@@ -306,7 +350,6 @@ const splideOptions = {
   font-weight: 600;
   color: #2d2d2d;
   margin: 0;
-  position: relative;
 }
 
 .contador-badge {
@@ -318,66 +361,49 @@ const splideOptions = {
   border-radius: 999px;
 }
 
-.card-link {
-  text-decoration: none;
-  display: block;
-  height: 100%;
-}
-
+/* Lista horizontal (linha única, com rolagem lateral) que serve de área de soltura */
 .lista-livros {
-  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  overflow-x: auto;
+  padding: 8px 4px 16px 4px;
+  min-height: 140px;
 }
 
-/* Customização das Setas e Slider */
-:deep(.splide__track) {
-  padding: 12px 4px;
+.item-livro {
+  flex: 0 0 auto;
+  cursor: grab;
 }
 
-:deep(.splide__arrow) {
-  background: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e8d7c3;
+.item-livro:active {
+  cursor: grabbing;
+}
+
+/* Enquanto o card está sendo arrastado */
+.arrastando-item {
   opacity: 0.9;
-  width: 40px;
-  height: 40px;
-  transition: opacity 0.2s, transform 0.2s;
 }
 
-:deep(.splide__arrow:hover) {
-  opacity: 1;
-  background: #ffffff;
+/* "Fantasma" que mostra onde o card vai cair */
+.fantasma-arraste {
+  opacity: 0.4;
+  background: #f3e7d7;
+  border: 2px dashed #c9a97e;
+  border-radius: 10px;
 }
 
-:deep(.splide__arrow--prev) {
-  left: -20px;
+.lista-vazia {
+  color: #9c8a7a;
+  font-size: 0.9rem;
+  padding: 20px;
+  border: 1px dashed #e8d7c3;
+  border-radius: 10px;
+  margin: 0;
+  white-space: nowrap;
 }
 
-:deep(.splide__arrow--next) {
-  right: -20px;
-}
-
-:deep(.splide__arrow svg) {
-  fill: #6b4226;
-  width: 16px;
-  height: 16px;
-}
-
-:deep(.splide__slide) {
-  box-sizing: border-box;
-  padding: 0 4px;
-  transition: transform 0.25s ease;
-}
-
-:deep(.splide__slide > .card-link) {
-  display: block;
-  width: 100%;
-}
-
-.splide__slide:hover {
-  transform: translateY(-6px);
-}
-
-/* Estado Vazio */
+/* Estado Vazio (sem livro nenhum na estante) */
 .sem-livros {
   text-align: center;
   padding: 80px 20px;
@@ -440,14 +466,6 @@ const splideOptions = {
 
   .titulo-secao {
     font-size: 1.3rem;
-  }
-
-  :deep(.splide__arrow) {
-    display: none;
-  }
-
-  .splide__slide:hover {
-    transform: none;
   }
 }
 </style>
