@@ -39,6 +39,8 @@ const userPhoto = computed(() => {
 
 function handleLogout() {
   authStore.logout();
+  menuAberto.value = false;
+  router.push("/home");
 }
 
 const active = ref("home");
@@ -224,6 +226,9 @@ button {
   display: none;
 }
 
+#Lupa {
+  display: none;
+}
 #Lupa,
 #Sino {
   border: none;

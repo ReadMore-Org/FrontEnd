@@ -1,7 +1,7 @@
 <script setup>
-import { computed } from "vue";
-import { RouterLink } from "vue-router";
+import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
+import { SlidersHorizontal } from "lucide-vue-next";
 import { useGoogleBooksStore } from "@/stores/googleBooks";
 import BarraBusca from "@/components/explore/BarraBusca.vue";
 import FiltrosBusca from "@/components/explore/FiltrosBusca.vue";
@@ -10,7 +10,7 @@ import GradeLivros from "@/components/books/GradeBook.vue";
 import BookCard from "@/components/books/otherBookCard.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import AppFooter from "@/components/layout/AppFooter.vue";
-import voltar from "@/components/common/voltar.vue";
+import Voltar from "@/components/common/voltar.vue";
 
 const googleBooksStore = useGoogleBooksStore();
 
@@ -22,20 +22,29 @@ const {
   jaBuscou,
 } = storeToRefs(googleBooksStore);
 
+const filtrosAbertos = ref(true);
+
 const queryFinal = computed(() => {
   const partes = [];
+  const termoLimpo = termo.value?.trim();
 
-  if (termo.value.trim()) partes.push(termo.value.trim());
+  if (termoLimpo) partes.push(termoLimpo);
   categoriasSelecionadas.value.forEach((c) => partes.push(`subject:${c}`));
 
   return partes.join(" ");
 });
 
-async function buscar() {
+let timerBusca = null;
+
+function buscar() {
   if (!queryFinal.value) return;
 
-  jaBuscou.value = true;
-  await googleBooksStore.pesquisarLivros(queryFinal.value);
+  clearTimeout(timerBusca);
+
+  timerBusca = setTimeout(() => {
+    jaBuscou.value = true;
+    googleBooksStore.pesquisarLivros(queryFinal.value);
+  }, 300);
 }
 
 function removerFiltroCategoria(valor) {
@@ -47,21 +56,41 @@ function removerFiltroIdioma(valor) {
   idiomasSelecionados.value = idiomasSelecionados.value.filter((v) => v !== valor);
   buscar();
 }
+
+function alternarFiltros() {
+  filtrosAbertos.value = !filtrosAbertos.value;
+}
 </script>
 
 <template>
-  <Voltar/>
+  <Voltar />
   <AppHeader />
+
   <div class="explore-view">
     <FiltrosBusca
+      :aberto="filtrosAbertos"
       v-model:idiomasSelecionados="idiomasSelecionados"
       v-model:categoriasSelecionadas="categoriasSelecionadas"
+      @toggle="alternarFiltros"
       @update:idiomasSelecionados="buscar"
       @update:categoriasSelecionadas="buscar"
     />
 
-    <main class="conteudo-busca">
-      <BarraBusca v-model="termo" @buscar="buscar" />
+    <main class="conteudo-busca" :class="{ 'sem-filtros': !filtrosAbertos }">
+      <div class="topo-explore">
+        <BarraBusca v-model="termo" @buscar="buscar" />
+
+        <button
+          type="button"
+          class="btn-filtros-mobile"
+          :aria-expanded="filtrosAbertos"
+          aria-label="Abrir ou fechar filtros"
+          @click="alternarFiltros"
+        >
+          <SlidersHorizontal :size="17" />
+          <span>Filtros</span>
+        </button>
+      </div>
 
       <div v-if="jaBuscou" class="barra-resultados">
         <p class="contagem">
@@ -71,22 +100,26 @@ function removerFiltroIdioma(valor) {
         <OrdenarDropdown v-model="ordenacao" @update:modelValue="buscar" />
       </div>
 
-      <div v-if="categoriasSelecionadas.length || idiomasSelecionados.length" class="chips-ativos">
+      <div
+        v-if="categoriasSelecionadas.length || idiomasSelecionados.length"
+        class="chips-ativos"
+      >
         <span
           v-for="c in categoriasSelecionadas"
           :key="c"
           class="chip-ativo"
           @click="removerFiltroCategoria(c)"
         >
-          {{ c }} ✕
+          {{ c }} <span aria-hidden="true">✕</span>
         </span>
+
         <span
           v-for="i in idiomasSelecionados"
           :key="i"
           class="chip-ativo"
           @click="removerFiltroIdioma(i)"
         >
-          {{ i }} ✕
+          {{ i }} <span aria-hidden="true">✕</span>
         </span>
       </div>
 
@@ -94,7 +127,10 @@ function removerFiltroIdioma(valor) {
         <p>Buscando livros...</p>
       </div>
 
-      <div v-else-if="jaBuscou && googleBooksStore.resultados.length === 0" class="estado-vazio">
+      <div
+        v-else-if="jaBuscou && googleBooksStore.resultados.length === 0"
+        class="estado-vazio"
+      >
         <p>Nenhum livro encontrado para essa busca.</p>
       </div>
 
@@ -104,14 +140,13 @@ function removerFiltroIdioma(valor) {
 
       <GradeLivros v-else titulo="" :livros="googleBooksStore.resultados">
         <template #default="{ livro }">
-          <RouterLink :to="`/livro/google/${livro.id}`">
-            <BookCard :livro="livro" />
-          </RouterLink>
+          <BookCard :livro="livro" />
         </template>
       </GradeLivros>
     </main>
   </div>
-  <AppFooter/>
+
+  <AppFooter />
 </template>
 
 <style scoped>
@@ -126,12 +161,45 @@ function removerFiltroIdioma(valor) {
 
 .conteudo-busca {
   flex: 1;
+  min-width: 0;
   background: #ffffff;
   border-top-left-radius: 20px;
   box-shadow: -8px 0 20px -12px rgba(107, 66, 38, 0.1);
   padding: 22px 28px 26px 26px;
-  width: 100%;
   box-sizing: border-box;
+  transition: padding 0.25s ease;
+}
+
+.topo-explore {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topo-explore .barra-busca {
+  flex: 1;
+}
+
+.btn-filtros-mobile {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border: 1px solid #e8d8c3;
+  color: #6b4226;
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-filtros-mobile:hover {
+  background: #faf3e0;
+  border-color: #d6bea2;
 }
 
 .barra-resultados {
@@ -172,11 +240,12 @@ function removerFiltroIdioma(valor) {
   cursor: pointer;
   text-transform: capitalize;
   user-select: none;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s;
 }
 
 .chip-ativo:hover {
   background-color: #f0e2cd;
+  border-color: #d6bea2;
 }
 
 .estado-vazio {
@@ -186,12 +255,12 @@ function removerFiltroIdioma(valor) {
   font-size: 14px;
 }
 
-/* Responsividade para Dispositivos Móveis */
 @media (max-width: 768px) {
   .explore-view {
     flex-direction: column;
     margin: 16px 12px;
     border-radius: 16px;
+    overflow: visible;
   }
 
   .conteudo-busca {
@@ -199,6 +268,14 @@ function removerFiltroIdioma(valor) {
     border-radius: 0 0 16px 16px;
     padding: 16px;
     box-shadow: none;
+  }
+
+  .topo-explore {
+    align-items: stretch;
+  }
+
+  .btn-filtros-mobile {
+    display: flex;
   }
 
   .barra-resultados {
@@ -210,6 +287,5 @@ function removerFiltroIdioma(valor) {
   .estado-vazio {
     padding: 40px 16px;
   }
-  
 }
 </style>

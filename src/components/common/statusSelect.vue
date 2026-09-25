@@ -1,5 +1,7 @@
 <script setup>
 import { useLivrosStore } from "@/stores/livros";
+import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
 
 const props = defineProps({
   modelValue: {
@@ -27,6 +29,8 @@ const props = defineProps({
 
 const emit = defineEmits(["update:modelValue", "change"]);
 const livroStore = useLivrosStore();
+const authStore = useAuthStore();
+const router = useRouter();
 
 const statusOpcoes = [
   { value: "quero_ler", label: "Quero ler" },
@@ -35,7 +39,15 @@ const statusOpcoes = [
 ];
 
 const selecionarOpcao = async (valor) => {
-  if (props.disabled || valor === props.modelValue) return;
+  if (props.disabled) return;
+
+  // Se o usuário não estiver autenticado, redireciona sem alterar o estado
+  if (!authStore.isAuthenticated) {
+    router.push("/entrar");
+    return;
+  }
+
+  if (valor === props.modelValue) return;
 
   // 1. Emite a atualização do v-model para a interface atualizar instantaneamente no componente pai
   emit("update:modelValue", valor);
