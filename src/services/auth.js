@@ -16,7 +16,7 @@ export default {
   },
 
   me() {
-    return api.get("/usuarios/me");
+    return api.get("/usuarios/me/");
   },
 
 };
