@@ -5,6 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import AppHeader from "@/components/layout/AppHeader.vue";
 import AppFooter from "@/components/layout/AppFooter.vue";
 import StatusSelect from "../common/statusSelect.vue";
+import BotaoMarketplace from "@/components/marketplace/BotaoMarketplace.vue";
 import { useLivrosStore } from "@/stores/livros";
 import { useGoogleBooksStore } from "@/stores/googleBooks";
 
@@ -319,6 +320,7 @@ const removerDaEstante = async () => {
 
     <!-- STATUS -->
     <statusSelect v-model="status" variante="livro" @update:modelValue="onStatusChange" />
+     <BotaoMarketplace :meu-livro-item="meuLivroItem" />
 
     <!-- DETALHES RESUMIDOS -->
     <div class="detalhes">

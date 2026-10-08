@@ -1,35 +1,132 @@
 <script setup>
-import { ref, computed } from 'vue';
-import AppHeader from '@/components/layout/AppHeader.vue';
-import AppFooter from '@/components/layout/AppFooter.vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
+import { Search, X } from "lucide-vue-next";
 
-const busca = ref('');
-const tipoAtivo = ref('Troca');
-const categoriaAtiva = ref('Terror');
+import AppHeader from "@/components/layout/AppHeader.vue";
+import AppFooter from "@/components/layout/AppFooter.vue";
+import GradeBook from "@/components/books/GradeBook.vue";
+import OtherBookCard from "@/components/books/otherBookCard.vue";
+import AnuncioCard from "@/components/marketplace/AnuncioCard.vue";
+import CarrosselAnuncios from "@/components/marketplace/CarrosselAnuncios.vue";
 
-const tipos = ['Todos', 'Troca', 'Empréstimo'];
-const categorias = ['Todos', 'Drama', 'Terror', 'Ficção', 'Romance', 'Suspense'];
+import { useMarketplaceStore } from "@/stores/marketplace";
+import { useAuthStore } from "@/stores/auth";
+import { getAutoresTexto, normalizar } from "@/utils/marketplaceHelpers";
 
-const livros = ref([
-  { id: 1, titulo: 'Gravity Falls: Journal 3', dono: 'João', tipo: 'Troca', favorito: false, capa: null },
-  { id: 2, titulo: 'Gravity Falls: Journal 3', dono: 'João', tipo: 'Empréstimo', favorito: false, capa: null },
-  { id: 3, titulo: 'O Diário Perdido', dono: 'Maria', tipo: 'Troca', favorito: true, capa: null },
-  { id: 4, titulo: 'O Diário Perdido', dono: 'Maria', tipo: 'Empréstimo', favorito: false, capa: null },
-]);
+const router = useRouter();
+const store = useMarketplaceStore();
+const authStore = useAuthStore();
 
-const livrosFiltrados = computed(() => {
-  return livros.value.filter((livro) => {
-    const bateTipo = tipoAtivo.value === 'Todos' || livro.tipo === tipoAtivo.value;
-    const bateBusca = livro.titulo.toLowerCase().includes(busca.value.toLowerCase());
-    return bateTipo && bateBusca;
+// =========================================================
+// ESTADO DOS FILTROS
+// =========================================================
+const termo = ref("");
+const tipoAtivo = ref("todos");
+const categoriaAtiva = ref("todas");
+
+const tipos = [
+  { value: "todos", label: "Todos" },
+  { value: "troca", label: "Troca" },
+  { value: "emprestimo", label: "Empréstimo" },
+];
+
+const buscaAtiva = computed(() => termo.value.trim().length >= 2);
+const filtrosAtivos = computed(
+  () => tipoAtivo.value !== "todos" || categoriaAtiva.value !== "todas",
+);
+
+// Sem busca e sem filtro => carrosséis. Com busca ou filtro => grade de resultados.
+const modoCarrosseis = computed(() => !buscaAtiva.value && !filtrosAtivos.value);
+
+// =========================================================
+// DADOS
+// =========================================================
+const anunciosFiltrados = computed(() => {
+  const consulta = normalizar(termo.value.trim());
+
+  return store.anuncios.filter((anuncio) => {
+    if (tipoAtivo.value !== "todos" && anuncio.tipo !== tipoAtivo.value) {
+      return false;
+    }
+
+    if (
+      categoriaAtiva.value !== "todas" &&
+      !anuncio.livro?.categoria?.some((c) => c.id === categoriaAtiva.value)
+    ) {
+      return false;
+    }
+
+    if (buscaAtiva.value) {
+      const titulo = normalizar(anuncio.livro?.titulo);
+      const autores = normalizar(getAutoresTexto(anuncio.livro));
+      if (!titulo.includes(consulta) && !autores.includes(consulta)) {
+        return false;
+      }
+    }
+
+    return true;
   });
 });
 
-function alternarFavorito(livro) {
-  livro.favorito = !livro.favorito;
+// Um carrossel por categoria (as 6 mais cheias)
+const carrosseisCategorias = computed(() =>
+  store.categorias.slice(0, 6).map((categoria) => ({
+    ...categoria,
+    anuncios: store.anunciosDaCategoria(categoria.id),
+  })),
+);
+
+const marketplaceVazio = computed(
+  () => !store.loading && !store.error && store.anuncios.length === 0,
+);
+
+// =========================================================
+// BUSCA (também procura no Google Books, com debounce)
+// =========================================================
+let timerBusca = null;
+
+watch(termo, (valor) => {
+  clearTimeout(timerBusca);
+
+  if (valor.trim().length < 2) {
+    store.limparBuscaGoogle();
+    return;
+  }
+
+  timerBusca = setTimeout(() => store.buscarGoogle(valor), 400);
+});
+
+function limparBusca() {
+  termo.value = "";
 }
 
-// --- Drag to scroll (para funcionar arrastando com o mouse no desktop) ---
+function limparFiltros() {
+  tipoAtivo.value = "todos";
+  categoriaAtiva.value = "todas";
+}
+
+// =========================================================
+// CICLO DE VIDA
+// =========================================================
+onMounted(() => {
+  // O marketplace mostra dados de outros usuários (inclusive email no detalhe)
+  if (!authStore.isAuthenticated) {
+    router.push("/entrar");
+    return;
+  }
+
+  store.fetchAnuncios(true);
+});
+
+onBeforeUnmount(() => {
+  clearTimeout(timerBusca);
+  store.limparBuscaGoogle();
+});
+
+// =========================================================
+// ARRASTAR OS CHIPS DE CATEGORIA COM O MOUSE (desktop)
+// =========================================================
 const categoriaScroll = ref(null);
 let arrastando = false;
 let posInicialX = 0;
@@ -39,127 +136,198 @@ function iniciarArrasto(evento) {
   arrastando = true;
   posInicialX = evento.pageX - categoriaScroll.value.offsetLeft;
   scrollInicial = categoriaScroll.value.scrollLeft;
-  categoriaScroll.value.classList.add('arrastando');
+  categoriaScroll.value.classList.add("arrastando");
 }
 
 function pararArrasto() {
   arrastando = false;
-  categoriaScroll.value?.classList.remove('arrastando');
+  categoriaScroll.value?.classList.remove("arrastando");
 }
 
 function moverArrasto(evento) {
   if (!arrastando) return;
   evento.preventDefault();
   const posAtualX = evento.pageX - categoriaScroll.value.offsetLeft;
-  const distancia = posAtualX - posInicialX;
-  categoriaScroll.value.scrollLeft = scrollInicial - distancia;
+  categoriaScroll.value.scrollLeft = scrollInicial - (posAtualX - posInicialX);
 }
 </script>
 
 <template>
-  <AppHeader/>
-  <section class="marketplace">
-    <h1 class="titulo-secao">Trocas e empréstimos</h1>
+  <AppHeader />
 
+  <section class="marketplace">
+    <h1 class="titulo-pagina">Trocas e empréstimos</h1>
+
+    <!-- BUSCA -->
     <div class="busca-container">
-      <svg class="icone-busca" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
+      <Search :size="18" class="icone-busca" />
       <input
-        v-model="busca"
-        type="text"
+        v-model="termo"
+        type="search"
         class="input-busca"
-        placeholder="Digite o nome do livro"
+        placeholder="Busque por título ou autor"
+        aria-label="Buscar livros no marketplace"
       />
+      <button
+        v-if="termo"
+        type="button"
+        class="btn-limpar-busca"
+        aria-label="Limpar busca"
+        @click="limparBusca"
+      >
+        <X :size="16" />
+      </button>
     </div>
 
+    <!-- FILTRO: TIPO -->
     <div class="filtro-bloco">
       <span class="filtro-label">Tipo</span>
       <div class="filtro-opcoes">
         <button
           v-for="tipo in tipos"
-          :key="tipo"
+          :key="tipo.value"
+          type="button"
           class="chip"
-          :class="{ 'chip-ativo': tipoAtivo === tipo }"
-          @click="tipoAtivo = tipo"
+          :class="{ 'chip-ativo': tipoAtivo === tipo.value }"
+          @click="tipoAtivo = tipo.value"
         >
-          {{ tipo }}
+          {{ tipo.label }}
         </button>
       </div>
     </div>
 
-    <div class="filtro-bloco">
+    <!-- FILTRO: CATEGORIA -->
+    <div v-if="store.categorias.length" class="filtro-bloco">
       <span class="filtro-label">Categoria</span>
       <div
-        class="filtro-opcoes filtro-opcoes-scroll"
         ref="categoriaScroll"
+        class="filtro-opcoes filtro-opcoes-scroll"
         @mousedown="iniciarArrasto"
         @mouseleave="pararArrasto"
         @mouseup="pararArrasto"
         @mousemove="moverArrasto"
       >
         <button
-          v-for="categoria in categorias"
-          :key="categoria"
+          type="button"
           class="chip"
-          :class="{ 'chip-ativo': categoriaAtiva === categoria }"
-          @click="categoriaAtiva = categoria"
+          :class="{ 'chip-ativo': categoriaAtiva === 'todas' }"
+          @click="categoriaAtiva = 'todas'"
         >
-          {{ categoria }}
+          Todas
+        </button>
+        <button
+          v-for="categoria in store.categorias"
+          :key="categoria.id"
+          type="button"
+          class="chip"
+          :class="{ 'chip-ativo': categoriaAtiva === categoria.id }"
+          @click="categoriaAtiva = categoria.id"
+        >
+          {{ categoria.descricao }}
         </button>
       </div>
     </div>
 
-    <div class="grid-livros">
-      <div v-for="livro in livrosFiltrados" :key="livro.id + livro.tipo" class="card-livro">
-        <div class="capa-livro">
-          <span class="badge" :class="livro.tipo === 'Troca' ? 'badge-troca' : 'badge-emprestimo'">
-            {{ livro.tipo }}
-          </span>
-          <button class="btn-favorito" @click="alternarFavorito(livro)">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              :fill="livro.favorito ? '#e63946' : 'none'"
-              stroke="#e63946"
-              stroke-width="2"
-            >
-              <path d="M20.8 4.6c-1.9-1.9-5-1.9-6.9 0L12 6.5l-1.9-1.9c-1.9-1.9-5-1.9-6.9 0-1.9 1.9-1.9 5 0 6.9L12 20.3l8.8-8.8c1.9-1.9 1.9-5 0-6.9z"/>
-            </svg>
-          </button>
-          <div class="capa-placeholder">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#b0a89a" stroke-width="1.5">
-              <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15Z"/>
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-            </svg>
-          </div>
-        </div>
-        <p class="titulo-livro">{{ livro.titulo }}</p>
-        <div class="dono-livro">
-          <div class="avatar-dono"></div>
-          <span>{{ livro.dono }}</span>
-        </div>
-      </div>
+    <!-- ESTADOS GERAIS -->
+    <div v-if="store.loading && !store.anuncios.length" class="estado">
+      <div class="spinner-small"></div>
+      <p>Carregando o marketplace...</p>
     </div>
 
-    <p v-if="!livrosFiltrados.length" class="sem-resultados">
-      Nenhum livro encontrado.
-    </p>
+    <div v-else-if="store.error" class="estado estado-erro">
+      <p>{{ store.error }}</p>
+      <button type="button" class="btn-primario" @click="store.fetchAnuncios(true)">
+        Tentar novamente
+      </button>
+    </div>
+
+    <div v-else-if="marketplaceVazio && !buscaAtiva" class="estado">
+      <p class="estado-titulo">Ainda não há livros no marketplace</p>
+      <p>
+        Abra um livro da sua estante marcado como "Lendo" ou "Lido" e envie
+        para troca ou empréstimo.
+      </p>
+      <RouterLink to="/meus-livros" class="btn-primario">Ir para Meus Livros</RouterLink>
+    </div>
+
+    <!-- MODO CARROSSÉIS (sem busca e sem filtro) -->
+    <template v-else-if="modoCarrosseis">
+      <CarrosselAnuncios titulo="Adicionados recentemente" :anuncios="store.recentes" />
+      <CarrosselAnuncios titulo="Para troca" :anuncios="store.paraTroca" />
+      <CarrosselAnuncios titulo="Para empréstimo" :anuncios="store.paraEmprestimo" />
+      <CarrosselAnuncios
+        v-for="categoria in carrosseisCategorias"
+        :key="categoria.id"
+        :titulo="categoria.descricao"
+        :anuncios="categoria.anuncios"
+      />
+    </template>
+
+    <!-- MODO RESULTADOS (busca e/ou filtro) -->
+    <template v-else>
+      <div class="barra-resultados">
+        <p class="contagem">
+          <strong>{{ anunciosFiltrados.length }}</strong>
+          {{ anunciosFiltrados.length === 1 ? "livro encontrado" : "livros encontrados" }}
+        </p>
+
+        <button
+          v-if="filtrosAtivos"
+          type="button"
+          class="btn-link"
+          @click="limparFiltros"
+        >
+          Limpar filtros
+        </button>
+      </div>
+
+      <GradeBook v-if="anunciosFiltrados.length" :livros="anunciosFiltrados">
+        <template #default="{ livro: anuncio }">
+          <AnuncioCard :anuncio="anuncio" />
+        </template>
+      </GradeBook>
+
+      <p v-else class="sem-resultados">
+        Nenhum livro do marketplace corresponde a essa busca.
+      </p>
+    </template>
+
+    <!-- LIVROS DO GOOGLE BOOKS QUE NINGUÉM ANUNCIOU AINDA -->
+    <section
+      v-if="buscaAtiva && (store.buscandoGoogle || store.resultadosGoogle.length)"
+      class="secao-google"
+    >
+      <h2 class="titulo-secao">Ninguém anunciou ainda</h2>
+      <p class="subtitulo-secao">
+        Esses livros existem no Google Books, mas ainda não estão no marketplace.
+        Adicione à sua estante e, se tiver o exemplar, envie para troca ou
+        empréstimo.
+      </p>
+
+      <div v-if="store.buscandoGoogle" class="estado">
+        <div class="spinner-small"></div>
+        <p>Buscando no Google Books...</p>
+      </div>
+
+      <GradeBook v-else :livros="store.resultadosGoogle">
+        <template #default="{ livro }">
+          <OtherBookCard :livro="livro" />
+        </template>
+      </GradeBook>
+    </section>
   </section>
-  <AppFooter/>
+
+  <AppFooter />
 </template>
 
 <style scoped>
-/* ===== Base (desktop primeiro) ===== */
 .marketplace {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 40px 80px;
 }
 
-.titulo-secao {
+.titulo-pagina {
   position: relative;
   display: inline-block;
   padding-bottom: 8px;
@@ -169,6 +337,7 @@ function moverArrasto(evento) {
   font-size: 32px;
 }
 
+.titulo-pagina::after,
 .titulo-secao::after {
   content: "";
   position: absolute;
@@ -190,7 +359,7 @@ function moverArrasto(evento) {
   border-radius: 12px;
   padding: 14px 20px;
   margin-bottom: 30px;
-  max-width: 420px;
+  max-width: 480px;
   transition: border-color 0.2s;
 }
 
@@ -214,6 +383,28 @@ function moverArrasto(evento) {
 
 .input-busca::placeholder {
   color: #b0a89a;
+}
+
+.input-busca::-webkit-search-cancel-button {
+  display: none;
+}
+
+.btn-limpar-busca {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: #f3eee9;
+  color: #5a4636;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn-limpar-busca:hover {
+  background: #e8d8c3;
 }
 
 /* Filtros */
@@ -274,131 +465,143 @@ function moverArrasto(evento) {
   color: #ffffff;
 }
 
-/* Grid de livros */
-.grid-livros {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 28px;
-  padding-bottom: 80px;
+/* Seções */
+.titulo-secao {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 5px;
+  color: #2c2c2c;
+  font-weight: 500;
+  margin: 0 0 12px 0;
+  font-size: 25px;
 }
 
-.card-livro {
+.subtitulo-secao {
+  max-width: 640px;
+  margin: 0 0 24px;
+  color: #5a4636;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.secao-google {
+  margin-top: 56px;
+}
+
+.barra-resultados {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 28px 0 18px;
+}
+
+.contagem {
+  font-size: 14px;
+  color: #9c8a7a;
+  margin: 0;
+}
+
+.contagem strong {
+  color: #2c2c2c;
+}
+
+.btn-link {
+  border: none;
+  background: none;
+  color: #6b4226;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.btn-link:hover {
+  color: #52321c;
+}
+
+/* Estados */
+.estado {
   display: flex;
   flex-direction: column;
-}
-
-.capa-livro {
-  position: relative;
-  aspect-ratio: 3 / 4;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #efe7d8;
-  margin-bottom: 10px;
-  transition: transform 0.2s;
-}
-
-.card-livro:hover .capa-livro {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-}
-
-.capa-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
   align-items: center;
   justify-content: center;
-  background: #efe7d8;
+  gap: 8px;
+  padding: 48px 20px;
+  text-align: center;
+  color: #5a4636;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
-.badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 2;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #ffffff;
-}
-
-.badge-troca {
-  background: #3b6ea5;
-}
-
-.badge-emprestimo {
-  background: #4a8c5f;
-}
-
-.btn-favorito {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 2;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.15s;
-}
-
-.btn-favorito:hover {
-  transform: scale(1.1);
-}
-
-.titulo-livro {
-  font-size: 15px;
-  font-weight: 500;
+.estado-titulo {
   color: #2c2c2c;
-  margin: 0 0 6px 0;
-  line-height: 1.3;
+  font-size: 18px;
+  font-weight: 600;
 }
 
-.dono-livro {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #6b6b6b;
-}
-
-.avatar-dono {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #d8cfc0;
-  flex-shrink: 0;
+.estado-erro p {
+  color: #a4161a;
 }
 
 .sem-resultados {
   text-align: center;
-  color: #b0a89a;
-  padding: 60px 0;
+  color: #9c8a7a;
+  padding: 48px 0;
   font-size: 16px;
 }
 
-/* ===== Mobile (telas até 640px) ===== */
-@media (max-width: 640px) {
+.btn-primario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+  height: 40px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 50px;
+  background: #6b4226;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primario:hover {
+  background: #52321c;
+}
+
+.spinner-small {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e0d7d0;
+  border-top: 3px solid #6b4226;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile */
+@media (max-width: 650px) {
   .marketplace {
-    max-width: 100%;
-    padding: 0 25px;
+    padding: 0 20px 100px;
   }
 
-  .titulo-secao {
+  .titulo-pagina {
     font-size: 25px;
-    margin: 20px 0 30px 0;
+    margin: 20px 0 28px 0;
   }
 
   .busca-container {
     max-width: 100%;
     padding: 12px 16px;
-    margin-bottom: 25px;
+    margin-bottom: 24px;
   }
 
   .filtro-bloco {
@@ -409,19 +612,8 @@ function moverArrasto(evento) {
     padding: 8px 18px;
   }
 
-  .grid-livros {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 18px;
-    padding-bottom: 100px;
-  }
-
-  .card-livro:hover .capa-livro {
-    transform: none;
-    box-shadow: none;
-  }
-
-  .btn-favorito:hover {
-    transform: none;
+  .titulo-secao {
+    font-size: 20px;
   }
 }
 </style>

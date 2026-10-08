@@ -21,6 +21,7 @@ import {
 } from "lucide-vue-next";
 
 import statusSelect from "@/components/common/statusSelect.vue";
+import BotaoMarketplace from "@/components/marketplace/BotaoMarketplace.vue";
 
 const toast = useToast();
 
@@ -477,6 +478,7 @@ const categoriaNome = computed(() => {
               <span>Remover da estante</span>
             </button>
           </div>
+          <BotaoMarketplace :meu-livro-item="meuLivroItem" />  
         </div>
       </div>
 

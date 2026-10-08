@@ -42,6 +42,12 @@ const router = createRouter({
       component: MarketplaceView,
     },
     {
+      // :id(\\d+) garante que só números casam (anúncio), sem conflitar com outras rotas
+      path: "/marketplace/:id(\\d+)",
+      name: "marketplace-detalhe",
+      component: () => import("@/views/MarketplaceDetalheView.vue"),
+    },
+    {
       path: "/profile",
       name: "profile",
       component: ProfileView,
@@ -92,7 +98,6 @@ const router = createRouter({
       name: "manual",
       component: ManualBookView,
     },
-    ,
     {
       path: "/explore",
       name: "explore",
@@ -106,7 +111,8 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     // Redireciona para o login se tentar acessar rota privada sem estar autenticado
-    next({ name: "Login" });
+    // (o nome da rota é "login", em minúsculas)
+    next({ name: "login" });
   } else {
     next();
   }
