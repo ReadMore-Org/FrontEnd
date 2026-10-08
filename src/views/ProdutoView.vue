@@ -7,6 +7,7 @@ import { useRoute } from "vue-router";
 
 import { useLivrosStore } from "@/stores/livros";
 import { useGoogleBooksStore } from "@/stores/googleBooks";
+import { nomesCategoriasDoLivro } from "@/utils/categoriasLivro";
 
 const route = useRoute();
 
@@ -40,22 +41,9 @@ onMounted(async () => {
   window.addEventListener("resize", checkScreen);
 });
 
-const categoriaNome = computed(() => {
-  if (isGoogleBook.value) {
-    return "";
-  }
-
-  const livroAtual = livro.value;
-  const categorias = livroStore.categorias;
-
-  if (!livroAtual || !categorias.length) return "";
-
-  const categoria = categorias.find(
-    (c) => Number(c.id) === Number(livroAtual.categoria)
-  );
-
-  return categoria?.descricao || "Sem categoria";
-});
+const categoriaNome = computed(() =>
+  nomesCategoriasDoLivro(livro.value, livroStore.categorias).join(" · "),
+);
 
 const isMobile = ref(window.innerWidth <= 650);
 

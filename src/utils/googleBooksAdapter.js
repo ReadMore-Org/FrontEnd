@@ -1,3 +1,5 @@
+import { normalizarCategoriasGoogle } from "@/utils/categoriasLivro";
+
 export function googleBookToLivro(book) {
   const volumeInfo = book.volumeInfo ?? {};
   const ids = volumeInfo.industryIdentifiers ?? [];
@@ -33,8 +35,11 @@ export function googleBookToLivro(book) {
     sinopse: volumeInfo.description ?? "",
 
     capa: volumeInfo.imageLinks?.thumbnail ?? null,
-    
-    // 👈 Adiciona o campo mapeado aqui para bater com o seu componente
-    faixa_etaria: faixaEtaria, 
+
+    // Categorias do Google já em português, ex.: ["Ficção", "Romance"].
+    // O importador do backend usa este campo (chave "categorias").
+    categorias: normalizarCategoriasGoogle(volumeInfo.categories),
+
+    faixa_etaria: faixaEtaria,
   };
 }
