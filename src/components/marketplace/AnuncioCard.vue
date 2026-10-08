@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from "vue";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 import {
   getCapaUrl,
   getAutoresTexto,
@@ -17,12 +18,16 @@ const props = defineProps({
 });
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const livro = computed(() => props.anuncio.livro);
 const capa = computed(() => getCapaUrl(livro.value));
 const autores = computed(() => getAutoresTexto(livro.value));
 const foto = computed(() => getFotoDono(props.anuncio.dono));
 const nomeDono = computed(() => getPrimeiroNome(props.anuncio.dono));
+const ehMeu = computed(
+  () => !!props.anuncio.dono && authStore.user?.id === props.anuncio.dono.id,
+);
 const rotuloTipo = computed(() => ROTULO_TIPO[props.anuncio.tipo] ?? "");
 
 function abrir() {
@@ -55,7 +60,8 @@ function abrir() {
 
       <div class="dono">
         <img class="avatar" :src="foto" :alt="nomeDono" />
-        <span>{{ nomeDono }}</span>
+        <span>{{ ehMeu ? "Você" : nomeDono }}</span>
+        <span v-if="ehMeu" class="tag-meu">Seu livro</span>
       </div>
     </div>
   </article>
@@ -154,6 +160,17 @@ function abrir() {
   margin-top: 4px;
   font-size: 13px;
   color: #5a4636;
+}
+
+.tag-meu {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #faf3e0;
+  border: 1px solid #e8d8c3;
+  color: #6b4226;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .avatar {

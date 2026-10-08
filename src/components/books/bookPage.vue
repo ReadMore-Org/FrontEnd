@@ -22,6 +22,7 @@ import {
 
 import statusSelect from "@/components/common/statusSelect.vue";
 import BotaoMarketplace from "@/components/marketplace/BotaoMarketplace.vue";
+import { nomesCategoriasDoLivro } from "@/utils/categoriasLivro";
 
 const toast = useToast();
 
@@ -372,19 +373,9 @@ const getBookCover = (livro) => {
 // =========================================================
 // CATEGORIA
 // =========================================================
-
-const categoriaNome = computed(() => {
-  const livroAtual = livro.value;
-  const categorias = livroStore.categorias;
-
-  if (!livroAtual || !categorias?.length) {
-    return "";
-  }
-
-  const categoria = categorias.find((c) => Number(c.id) === Number(livroAtual.categoria));
-
-  return categoria?.descricao || "Sem categoria";
-});
+const categoriasNomes = computed(() =>
+  nomesCategoriasDoLivro(livro.value, livroStore.categorias)
+);
 </script>
 
 <template>
@@ -451,8 +442,8 @@ const categoriaNome = computed(() => {
             </div>
           </div>
 
-          <div class="categorias" v-if="categoriaNome">
-            <p>{{ categoriaNome }}</p>
+          <div class="categorias" v-if="categoriasNomes.length">
+            <p v-for="nome in categoriasNomes" :key="nome">{{ nome }}</p>
           </div>
 
           <div class="container-status-acoes">
@@ -478,7 +469,7 @@ const categoriaNome = computed(() => {
               <span>Remover da estante</span>
             </button>
           </div>
-          <BotaoMarketplace :meu-livro-item="meuLivroItem" />  
+          <BotaoMarketplace :meu-livro-item="meuLivroItem" />
         </div>
       </div>
 
@@ -754,6 +745,11 @@ const categoriaNome = computed(() => {
   color: #9c8a7a;
   font-size: 13px;
   margin: 0;
+}
+.categorias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .categorias p {

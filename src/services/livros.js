@@ -17,7 +17,7 @@ export const deleteLivro = (id) =>
   api.delete(`/livros/${id}/`);
 
 export const getCategorias = () =>
-  api.get('/categorias/');
+  api.get('/categorias/', { params: { page_size: 100 } });
 
 export const getEditoras = () =>
   api.get('/editoras/');

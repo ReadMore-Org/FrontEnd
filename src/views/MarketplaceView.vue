@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
-import { Search, X } from "lucide-vue-next";
+import { Search, X, ChevronDown } from "lucide-vue-next";
 
 import AppHeader from "@/components/layout/AppHeader.vue";
 import AppFooter from "@/components/layout/AppFooter.vue";
@@ -30,6 +30,16 @@ const tipos = [
   { value: "troca", label: "Troca" },
   { value: "emprestimo", label: "Empréstimo" },
 ];
+
+// Menu retrátil de categorias
+const categoriasAbertas = ref(false);
+
+const categoriaAtivaNome = computed(() => {
+  if (categoriaAtiva.value === "todas") return "";
+  return (
+    store.categorias.find((c) => c.id === categoriaAtiva.value)?.descricao ?? ""
+  );
+});
 
 const buscaAtiva = computed(() => termo.value.trim().length >= 2);
 const filtrosAtivos = computed(
@@ -123,33 +133,6 @@ onBeforeUnmount(() => {
   clearTimeout(timerBusca);
   store.limparBuscaGoogle();
 });
-
-// =========================================================
-// ARRASTAR OS CHIPS DE CATEGORIA COM O MOUSE (desktop)
-// =========================================================
-const categoriaScroll = ref(null);
-let arrastando = false;
-let posInicialX = 0;
-let scrollInicial = 0;
-
-function iniciarArrasto(evento) {
-  arrastando = true;
-  posInicialX = evento.pageX - categoriaScroll.value.offsetLeft;
-  scrollInicial = categoriaScroll.value.scrollLeft;
-  categoriaScroll.value.classList.add("arrastando");
-}
-
-function pararArrasto() {
-  arrastando = false;
-  categoriaScroll.value?.classList.remove("arrastando");
-}
-
-function moverArrasto(evento) {
-  if (!arrastando) return;
-  evento.preventDefault();
-  const posAtualX = evento.pageX - categoriaScroll.value.offsetLeft;
-  categoriaScroll.value.scrollLeft = scrollInicial - (posAtualX - posInicialX);
-}
 </script>
 
 <template>
@@ -196,18 +179,32 @@ function moverArrasto(evento) {
       </div>
     </div>
 
-    <!-- FILTRO: CATEGORIA -->
-    <div v-if="store.categorias.length" class="filtro-bloco">
-      <span class="filtro-label">Categoria</span>
-      <div
-        ref="categoriaScroll"
-        class="filtro-opcoes filtro-opcoes-scroll"
-        @mousedown="iniciarArrasto"
-        @mouseleave="pararArrasto"
-        @mouseup="pararArrasto"
-        @mousemove="moverArrasto"
+    <!-- FILTRO: CATEGORIA (menu retrátil) -->
+    <div class="filtro-bloco">
+      <button
+        type="button"
+        class="btn-categorias"
+        :class="{ 'btn-categorias-ativo': categoriaAtiva !== 'todas' }"
+        :aria-expanded="categoriasAbertas"
+        aria-controls="painel-categorias"
+        @click="categoriasAbertas = !categoriasAbertas"
       >
+        <span>
+          Categorias<template v-if="categoriaAtivaNome">: {{ categoriaAtivaNome }}</template>
+        </span>
+        <ChevronDown
+          :size="18"
+          class="seta-categorias"
+          :class="{ 'seta-aberta': categoriasAbertas }"
+        />
+      </button>
+
+      <div v-show="categoriasAbertas" id="painel-categorias" class="painel-categorias">
+        <p v-if="!store.categorias.length" class="categorias-vazio">
+          Os livros anunciados ainda não têm categoria cadastrada.
+        </p>
         <button
+          v-else
           type="button"
           class="chip"
           :class="{ 'chip-ativo': categoriaAtiva === 'todas' }"
@@ -224,6 +221,7 @@ function moverArrasto(evento) {
           @click="categoriaAtiva = categoria.id"
         >
           {{ categoria.descricao }}
+          <span class="chip-total">{{ categoria.total }}</span>
         </button>
       </div>
     </div>
@@ -426,23 +424,6 @@ function moverArrasto(evento) {
   flex-wrap: wrap;
 }
 
-.filtro-opcoes-scroll {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: none;
-  cursor: grab;
-  user-select: none;
-}
-
-.filtro-opcoes-scroll.arrastando {
-  cursor: grabbing;
-}
-
-.filtro-opcoes-scroll::-webkit-scrollbar {
-  display: none;
-}
-
 .chip {
   border: 1px solid #e5ded2;
   background: #ffffff;
@@ -463,6 +444,63 @@ function moverArrasto(evento) {
   background: #6b4226;
   border-color: #6b4226;
   color: #ffffff;
+}
+
+/* Menu retrátil de categorias */
+.btn-categorias {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border: 1px solid #e5ded2;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #2c2c2c;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.btn-categorias:hover,
+.btn-categorias-ativo {
+  border-color: #6b4226;
+}
+
+.btn-categorias-ativo {
+  background: #faf3e0;
+}
+
+.seta-categorias {
+  color: #6b4226;
+  transition: transform 0.2s ease;
+}
+
+.seta-aberta {
+  transform: rotate(180deg);
+}
+
+.painel-categorias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 18px;
+  background: #faf3e0;
+  border: 1px solid #e8d8c3;
+  border-radius: 12px;
+}
+
+.categorias-vazio {
+  margin: 0;
+  color: #9c8a7a;
+  font-size: 14px;
+}
+
+.chip-total {
+  margin-left: 6px;
+  font-size: 12px;
+  opacity: 0.6;
 }
 
 /* Seções */
