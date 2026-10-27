@@ -1,4 +1,8 @@
 <script setup>
+import BookCategories from "./BookCategories.vue";
+import AppImage from "@/components/common/AppImage.vue";
+import { getBookCover, bookImageFallbacks } from "@/utils/images";
+import BookInteraction from "@/components/social/BookInteraction.vue";
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useLivrosStore } from "@/stores/livros";
@@ -7,10 +11,6 @@ import { useAuthStore } from "@/stores/auth";
 import { useToast } from "vue-toastification";
 
 import {
-  Star,
-  Heart,
-  Share2,
-  Settings,
   ArrowLeft,
   Languages,
   BookOpen,
@@ -22,7 +22,7 @@ import {
 
 import statusSelect from "@/components/common/statusSelect.vue";
 import BotaoMarketplace from "@/components/marketplace/BotaoMarketplace.vue";
-import { nomesCategoriasDoLivro } from "@/utils/categoriasLivro";
+import { limparSinopse } from "@/utils/marketplaceHelpers";
 
 const toast = useToast();
 
@@ -45,15 +45,7 @@ const meuLivroId = ref(null);
 const isLoading = ref(true);
 const isUpdatingStatus = ref(false);
 const isDeleting = ref(false);
-const isFavorito = ref(false);
 
-// =========================================================
-// FAVORITO
-// =========================================================
-
-const toggleFavorito = () => {
-  isFavorito.value = !isFavorito.value;
-};
 
 // =========================================================
 // LIVRO ATUAL
@@ -180,7 +172,7 @@ const carregarDados = async () => {
 
   try {
     if (isGoogleBook.value) {
-      await googleBooksStore.buscarLivro(currentId);
+      if (String(googleBooksStore.livroSelecionado?.id) !== String(currentId)) await googleBooksStore.buscarLivro(currentId);
     } else {
       await Promise.all([livroStore.fetchLivros(), livroStore.fetchCategorias()]);
     }
@@ -350,32 +342,12 @@ const voltar = () => {
 // CAPA DO LIVRO
 // =========================================================
 
-const getBookCover = (livro) => {
-  if (!livro) {
-    return "/imgs/livro_sem_capa.png";
-  }
 
-  const capa = livro.capa;
-  const url = typeof capa === "string" ? capa : capa?.url;
-
-  if (!url) {
-    return "/imgs/livro_sem_capa.png";
-  }
-
-  if (url.startsWith("http")) {
-    const isLocal = /^https?:\/\/(127\.0\.0\.1|localhost)/i.test(url);
-    return isLocal ? url : url.replace(/^http:\/\//i, "https://");
-  }
-
-  return `${import.meta.env.VITE_API_BASE_URL}${url}`;
-};
 
 // =========================================================
 // CATEGORIA
 // =========================================================
-const categoriasNomes = computed(() =>
-  nomesCategoriasDoLivro(livro.value, livroStore.categorias)
-);
+
 </script>
 
 <template>
@@ -392,13 +364,14 @@ const categoriasNomes = computed(() =>
 
     <div v-else-if="livro" class="livroTodo">
       <div class="livro">
-        <img class="imagem-capa" :src="getBookCover(livro)" alt="Capa do livro" />
+        <AppImage class="imagem-capa" :src="getBookCover(livro)" :fallbacks="bookImageFallbacks(livro)" :alt="`Capa de ${livro.titulo}`" />
 
         <div class="info">
           <div class="cabecalho">
             <div>
               <h1 class="titulo">{{ livro.titulo }}</h1>
 
+              <p v-if="livro.subtitulo" class="subtitulo">{{ livro.subtitulo }}</p>
               <p v-if="livro.autores && livro.autores.length" class="autores">
                 por
                 <span class="autores-nome">{{
@@ -409,43 +382,14 @@ const categoriasNomes = computed(() =>
               </p>
             </div>
 
-            <div class="acoes">
-              <button class="icone-acao" @click="toggleFavorito" type="button">
-                <Heart
-                  :size="18"
-                  :fill="isFavorito ? '#a4161a' : 'none'"
-                  :color="isFavorito ? '#a4161a' : '#5a4636'"
-                />
-              </button>
-              <button class="icone-acao" type="button">
-                <Share2 :size="17" />
-              </button>
-              <button class="icone-acao" type="button">
-                <Settings :size="17" />
-              </button>
-            </div>
+
           </div>
 
-          <div class="nota">
-            <div class="estrelas">
-              <span
-                v-for="i in 5"
-                :key="i"
-                class="estrela"
-                :class="{ preenchida: i <= Math.round(parseFloat(livro.nota || 0)) }"
-                ><Star :size="16"
-              /></span>
-            </div>
-            <div class="nota-info">
-              <p class="nota-valor">{{ livro.nota ?? "N/A" }}</p>
-              <p class="nota-texto">({{ livro.avaliacoes ?? "0" }} avaliações)</p>
-            </div>
-          </div>
+          <BookCategories :livro="livro" :categorias="livroStore.categorias" />
+          <BookInteraction :livro="livro" :google="isGoogleBook" details />
 
-          <div class="categorias" v-if="categoriasNomes.length">
-            <p v-for="nome in categoriasNomes" :key="nome">{{ nome }}</p>
-          </div>
-
+          <section class="estante-section" aria-label="Organizar na estante">
+            <h2 class="estante-label">Na sua estante</h2>
           <div class="container-status-acoes">
             <div class="status-wrapper">
               <statusSelect
@@ -470,16 +414,14 @@ const categoriasNomes = computed(() =>
             </button>
           </div>
           <BotaoMarketplace :meu-livro-item="meuLivroItem" />
+          </section>
         </div>
       </div>
 
       <div class="infoMaior">
         <div class="secao-sinopse">
           <h2 class="titulo-secao">Sinopse</h2>
-          <p
-            class="texto-sinopse"
-            v-html="livro.sinopse || 'Sem sinopse disponível.'"
-          ></p>
+          <p class="texto-sinopse">{{ limparSinopse(livro.sinopse) || 'Sem sinopse disponível.' }}</p>
         </div>
 
         <div class="secao-detalhes">
@@ -711,56 +653,6 @@ const categoriasNomes = computed(() =>
 .icone-acao:hover {
   background-color: #faf3e0;
   color: #6b4226;
-}
-
-.nota {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.estrelas {
-  display: flex;
-  gap: 2px;
-  color: #e8d8c3;
-}
-
-.estrela.preenchida {
-  color: #c9a227;
-}
-
-.nota-info {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.nota-valor {
-  font-weight: 600;
-  color: #2c2c2c;
-  margin: 0;
-}
-
-.nota-texto {
-  color: #9c8a7a;
-  font-size: 13px;
-  margin: 0;
-}
-.categorias {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.categorias p {
-  display: inline-block;
-  background-color: #faf3e0;
-  border: 1px solid #e8d8c3;
-  color: #6b4226;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
 }
 
 .container-status-acoes {
@@ -1040,4 +932,24 @@ const categoriasNomes = computed(() =>
     width: 100%;
   }
 }
+
+/* Hierarquia visual dos detalhes */
+.pagina-livro { padding:0; min-height:80vh; }
+.livro { align-items:flex-start; gap:32px; padding:30px; background:#fffdf9; border:1px solid #e8d8c3; border-radius:20px; box-shadow:0 8px 28px rgba(107,66,38,.05); }
+.imagem-capa { flex:0 0 220px; width:220px; max-height:360px; align-self:flex-start; object-fit:contain; height:auto; }
+.info { min-width:0; gap:20px; }
+.titulo { font-size:clamp(24px,2.5vw,34px); line-height:1.2; overflow-wrap:anywhere; }
+.subtitulo { color:#9c8a7a; font-size:16px; line-height:1.5; margin-bottom:10px; }
+.autores { line-height:1.6; }
+.estante-section { display:flex; flex-direction:column; gap:12px; }
+.estante-label { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#9c8a7a; }
+.container-status-acoes { margin-top:0; flex-wrap:wrap; justify-content:flex-start; gap:12px; }
+.btn-deletar-estante { min-height:35px; font-size:12px; border-color:#e8d8c3; background:transparent; }
+.texto-sinopse { white-space:pre-line; overflow-wrap:anywhere; }
+.secao-sinopse,.secao-detalhes { background:#fffdf9; border-radius:16px; padding:24px; }
+.titulo-secao { font-size:17px; }
+.detalhe-item { flex-wrap:wrap; gap:8px; }
+.detalhe-valor { overflow-wrap:anywhere; }
+@media (max-width:1000px) { .livro { gap:24px; padding:24px; } .imagem-capa { flex-basis:180px; width:180px; } .infoMaior { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:16px; } }
+@media (max-width:800px) { .livro { gap:20px; padding:20px; } .imagem-capa { flex-basis:155px; width:155px; } .infoMaior { grid-template-columns:1fr; } .container-status-acoes { flex-direction:column; align-items:flex-start; } }
 </style>

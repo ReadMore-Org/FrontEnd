@@ -21,6 +21,8 @@ import ExploreView from "@/views/ExploreView.vue";
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    { path: "/usuarios/:id(\\d+)", name: "usuario-perfil", component: () => import("@/views/UserProfileView.vue"), meta: { requiresAuth: true } },
+    { path: "/usuarios", name: "usuarios", component: () => import("@/views/UsersView.vue"), meta: { requiresAuth: true } },
     {
       path: "/",
       name: "login",
@@ -97,6 +99,7 @@ const router = createRouter({
       path: "/manual",
       name: "manual",
       component: ManualBookView,
+      meta: { requiresAuth: true },
     },
     {
       path: "/explore",

@@ -1,4 +1,7 @@
 <script setup>
+import AppImage from "@/components/common/AppImage.vue";
+import { getUserPhoto } from "@/utils/images";
+import FavoriteBooks from "@/components/social/FavoriteBooks.vue";
 import { onMounted, ref, computed, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { useLivrosStore } from "@/stores/livros";
@@ -95,21 +98,7 @@ const totalLivros = computed(() => livroStore.totalMeusLivros);
 // Todos os livros do usuário
 const meusLivros = computed(() => livroStore.meusLivros);
 
-const userPhoto = computed(() => {
-  const url = authStore.user?.foto?.url;
-
-  if (url) {
-    return url.startsWith("http")
-      ? url
-      : `${import.meta.env.VITE_BACKEND_URL}${url}`;
-  }
-
-  if (authStore.user?.google_picture) {
-    return authStore.user.google_picture;
-  }
-
-  return "/imgs/avatar.jpeg";
-});
+const userPhoto = computed(() => getUserPhoto(authStore.user));
 
 const splideOptions = {
   perPage: 3,
@@ -132,11 +121,10 @@ const splideOptions = {
     <div class="topo-perfil">
       <div class="info">
         <div class="img">
-          <img
+          <AppImage avatar :fallbacks="[authStore.user?.google_picture]"
             :src="userPhoto"
             alt="avatar"
             class="avatar"
-            @error="($event) => ($event.target.src = '/imgs/avatar.jpeg')"
           />
         </div>
 
@@ -201,15 +189,16 @@ const splideOptions = {
   </div>
 
   <div id="livros">
+    <RouterLink to="/usuarios">Encontrar leitores</RouterLink>
+    <RouterLink v-if="user?.id" :to="`/usuarios/${user.id}`" class="perfil-publico">Ver meu perfil público e avaliações</RouterLink>
+    <FavoriteBooks />
     <!-- Seção Única: Livros Salvos -->
     <div class="secao-livros" v-if="meusLivros.length">
       <h1 class="titulo-secao">Livros Salvos</h1>
       <div class="lista-livros">
         <Splide :options="splideOptions">
           <SplideSlide v-for="item in meusLivros" :key="item.id">
-            <RouterLink :to="`/livro/${getLivroId(item)}`">
-              <BookCard :livro="getLivroObjeto(item)" />
-            </RouterLink>
+            <BookCard :livro="getLivroObjeto(item)" />
           </SplideSlide>
         </Splide>
       </div>
@@ -225,6 +214,8 @@ const splideOptions = {
 </template>
 
 <style scoped>
+.perfil-publico { display: inline-block; margin-left: 24px; color: #6b4226; }
+
 #me {
   background: #f3e7d7;
   padding: 40px 60px;

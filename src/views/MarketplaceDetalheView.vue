@@ -1,4 +1,7 @@
 <script setup>
+import AppImage from "@/components/common/AppImage.vue";
+import { bookImageFallbacks } from "@/utils/images";
+import BookInteraction from "@/components/social/BookInteraction.vue";
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
@@ -176,7 +179,7 @@ function voltar() {
     <template v-else-if="anuncio && livro">
       <!-- TOPO: capa + info do anúncio -->
       <div class="topo">
-        <img class="imagem-capa" :src="capa" :alt="`Capa de ${livro.titulo}`" />
+        <AppImage class="imagem-capa" :src="capa" :fallbacks="bookImageFallbacks(livro)" :alt="`Capa de ${livro.titulo}`" />
 
         <div class="info">
           <span
@@ -207,6 +210,8 @@ function voltar() {
             <p class="nota-texto">({{ livro.avaliacoes ?? 0 }} avaliações)</p>
           </div>
 
+          <BookInteraction :livro="livro" />
+
           <div class="tags">
             <span class="tag tag-condicao">
               {{ ROTULO_CONDICAO[anuncio.condicao] ?? anuncio.condicao }}
@@ -232,15 +237,15 @@ function voltar() {
       <section class="card-dono">
         <h2 class="titulo-card">{{ ehMeuAnuncio ? "Seu anúncio" : "Quem está anunciando" }}</h2>
 
-        <div class="dono-linha">
-          <img class="foto-dono" :src="fotoDono" :alt="dono.name || 'Dono do livro'" />
+        <RouterLink class="dono-linha" :to="`/usuarios/${dono.id}`">
+          <AppImage class="foto-dono" :src="fotoDono" avatar :fallbacks="[dono?.google_picture]" :alt="dono.name || 'Dono do livro'" />
 
           <div class="dono-dados">
             <p class="dono-nome">{{ dono.name || "Leitor do ReadMore" }}</p>
             <p v-if="dono.email" class="dono-email">{{ dono.email }}</p>
             <p v-if="dono.bio" class="dono-bio">{{ dono.bio }}</p>
           </div>
-        </div>
+        </RouterLink>
 
         <template v-if="ehMeuAnuncio">
           <button

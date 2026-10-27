@@ -1,5 +1,8 @@
 <script setup>
-import { onMounted, computed, ref, watch } from "vue";
+import { onMounted, onBeforeUnmount, computed, ref, watch } from "vue";
+import { useToast } from "vue-toastification";
+import { useReducedMotion } from "@/composables/useReducedMotion";
+import { GripVertical } from "lucide-vue-next";
 import { useLivrosStore } from "@/stores/livros";
 import { LibraryBig, BookOpenCheck, BookOpenText, Bookmark } from "lucide-vue-next";
 
@@ -12,6 +15,22 @@ import Voltar from "@/components/common/voltar.vue";
 import BookCard from "@/components/books/bookCard.vue";
 
 const livroStore = useLivrosStore();
+const toast = useToast();
+const reducedMotion = useReducedMotion();
+const arrastando = ref(false);
+const destino = ref(null);
+const livroMovido = ref(null);
+let feedbackTimer;
+let syncTimer;
+function iniciarArraste() { arrastando.value = true; }
+function terminarArraste() {
+  arrastando.value = false;
+  destino.value = null;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(sincronizarListasComStore, 0);
+}
+function aoMover(event) { destino.value = event.to?.dataset.status || null; }
+onBeforeUnmount(() => { clearTimeout(feedbackTimer); clearTimeout(syncTimer); });
 
 const getLivroObjeto = (item) => {
   if (!item) return {};
@@ -37,7 +56,7 @@ const listaLidos = ref([]);
 const atualizandoStatus = ref(false);
 
 function sincronizarListasComStore() {
-  if (atualizandoStatus.value) return;
+  if (atualizandoStatus.value || arrastando.value) return;
   listaQueroLer.value = livroStore.meusLivros.filter((i) => i.status === "quero_ler");
   listaLendo.value = livroStore.meusLivros.filter((i) => i.status === "lendo");
   listaLidos.value = livroStore.meusLivros.filter((i) => i.status === "lido");
@@ -64,8 +83,14 @@ async function aoMudarLista(evento, novoStatus) {
   try {
     // Essa função já existe no seu store e atualiza local + backend.
     await livroStore.atualizarStatusMeuLivro(item, novoStatus);
+    livroMovido.value = item.id;
+    clearTimeout(feedbackTimer);
+    feedbackTimer = setTimeout(() => { livroMovido.value = null; }, 700);
+  } catch {
+    toast.error("Não foi possível mover o livro. Ele voltou à lista anterior.");
   } finally {
     atualizandoStatus.value = false;
+    sincronizarListasComStore();
   }
 }
 </script>
@@ -74,13 +99,13 @@ async function aoMudarLista(evento, novoStatus) {
   <Voltar />
   <AppHeader class="header-principal" />
 
-  <div id="meus-livros-page">
+  <div id="meus-livros-page" :class="{ 'arraste-ativo': arrastando }">
     <!-- Cabeçalho Principal -->
     <header class="cabecalho-pagina">
       <div class="cabecalho-conteudo">
         <div class="titulos">
           <h1>Meus Livros</h1>
-          <p>Arraste os livros entre as listas para mudar o status de leitura</p>
+          <p>Arraste pela capa ou pelo ícone para organizar sua leitura. No celular, toque e segure.</p>
         </div>
 
         <!-- Painel de Estatísticas -->
@@ -130,7 +155,9 @@ async function aoMudarLista(evento, novoStatus) {
 
     <!-- Conteúdo Principal -->
     <main id="livros-container">
-      <div v-if="!totalLivros" class="sem-livros">
+      <div v-if="livroStore.loading && !totalLivros" class="sem-livros" role="status">Carregando sua estante...</div>
+      <div v-else-if="livroStore.error && !totalLivros" class="sem-livros" role="alert"><p>{{ livroStore.error }}</p><button type="button" class="retry-shelf" @click="livroStore.fetchMeusLivros()">Tentar novamente</button></div>
+      <div v-else-if="!totalLivros" class="sem-livros">
         <LibraryBig :size="48" class="icone-vazio" />
         <p class="titulo-vazio">Sua estante está vazia</p>
         <p class="subtitulo-vazio">
@@ -148,16 +175,35 @@ async function aoMudarLista(evento, novoStatus) {
 
           <draggable
             v-model="listaQueroLer"
-            :animation="200"
+            :animation="reducedMotion ? 0 : 260"
+            easing="cubic-bezier(0.22, 1, 0.36, 1)"
+            :force-fallback="true"
+            :fallback-on-body="true"
+            fallback-class="livro-em-voo"
+            chosen-class="livro-selecionado"
+            handle=".drag-handle, .imagem"
+            filter="button:not(.drag-handle), input, select, textarea"
+            :prevent-on-filter="false"
+            :delay="180"
+            :delay-on-touch-only="true"
+            :touch-start-threshold="6"
+            :fallback-tolerance="5"
+            :disabled="atualizandoStatus"
+            :move="aoMover"
+            @start="iniciarArraste"
+            @end="terminarArraste"
             group="livros"
             item-key="id"
             class="lista-livros"
             ghost-class="fantasma-arraste"
             drag-class="arrastando-item"
+            data-status="quero_ler"
+            :class="{ 'lista-destino': destino === 'quero_ler' }"
             @change="aoMudarLista($event, 'quero_ler')"
           >
             <template #item="{ element }">
-              <div class="item-livro">
+              <div class="item-livro" :class="{ 'livro-recem-movido': livroMovido === element.id }">
+                <button type="button" class="drag-handle" :aria-label="`Arrastar ${getLivroObjeto(element).titulo}`" title="Arraste para outra lista"><GripVertical :size="18" /></button>
                 <BookCard :livro="getLivroObjeto(element)" />
               </div>
             </template>
@@ -179,16 +225,35 @@ async function aoMudarLista(evento, novoStatus) {
 
           <draggable
             v-model="listaLendo"
-            :animation="200"
+            :animation="reducedMotion ? 0 : 260"
+            easing="cubic-bezier(0.22, 1, 0.36, 1)"
+            :force-fallback="true"
+            :fallback-on-body="true"
+            fallback-class="livro-em-voo"
+            chosen-class="livro-selecionado"
+            handle=".drag-handle, .imagem"
+            filter="button:not(.drag-handle), input, select, textarea"
+            :prevent-on-filter="false"
+            :delay="180"
+            :delay-on-touch-only="true"
+            :touch-start-threshold="6"
+            :fallback-tolerance="5"
+            :disabled="atualizandoStatus"
+            :move="aoMover"
+            @start="iniciarArraste"
+            @end="terminarArraste"
             group="livros"
             item-key="id"
             class="lista-livros"
             ghost-class="fantasma-arraste"
             drag-class="arrastando-item"
+            data-status="lendo"
+            :class="{ 'lista-destino': destino === 'lendo' }"
             @change="aoMudarLista($event, 'lendo')"
           >
             <template #item="{ element }">
-              <div class="item-livro">
+              <div class="item-livro" :class="{ 'livro-recem-movido': livroMovido === element.id }">
+                <button type="button" class="drag-handle" :aria-label="`Arrastar ${getLivroObjeto(element).titulo}`" title="Arraste para outra lista"><GripVertical :size="18" /></button>
                 <BookCard :livro="getLivroObjeto(element)" />
               </div>
             </template>
@@ -210,16 +275,35 @@ async function aoMudarLista(evento, novoStatus) {
 
           <draggable
             v-model="listaLidos"
-            :animation="200"
+            :animation="reducedMotion ? 0 : 260"
+            easing="cubic-bezier(0.22, 1, 0.36, 1)"
+            :force-fallback="true"
+            :fallback-on-body="true"
+            fallback-class="livro-em-voo"
+            chosen-class="livro-selecionado"
+            handle=".drag-handle, .imagem"
+            filter="button:not(.drag-handle), input, select, textarea"
+            :prevent-on-filter="false"
+            :delay="180"
+            :delay-on-touch-only="true"
+            :touch-start-threshold="6"
+            :fallback-tolerance="5"
+            :disabled="atualizandoStatus"
+            :move="aoMover"
+            @start="iniciarArraste"
+            @end="terminarArraste"
             group="livros"
             item-key="id"
             class="lista-livros"
             ghost-class="fantasma-arraste"
             drag-class="arrastando-item"
+            data-status="lido"
+            :class="{ 'lista-destino': destino === 'lido' }"
             @change="aoMudarLista($event, 'lido')"
           >
             <template #item="{ element }">
-              <div class="item-livro">
+              <div class="item-livro" :class="{ 'livro-recem-movido': livroMovido === element.id }">
+                <button type="button" class="drag-handle" :aria-label="`Arrastar ${getLivroObjeto(element).titulo}`" title="Arraste para outra lista"><GripVertical :size="18" /></button>
                 <BookCard :livro="getLivroObjeto(element)" />
               </div>
             </template>
@@ -468,4 +552,24 @@ async function aoMudarLista(evento, novoStatus) {
     font-size: 1.3rem;
   }
 }
+
+.retry-shelf { margin-top:16px; padding:10px 18px; border:1px solid #e8d8c3; background:#6b4226; color:white; border-radius:20px; cursor:pointer; }
+.lista-livros { border:1px solid transparent; border-radius:16px; transition:background-color .2s,border-color .2s; }
+.arraste-ativo .lista-livros { border-color:#dcc5a9; background:#fbf6ef; }
+.lista-livros.lista-destino { background:#f3e7d7; border:1px dashed #ad8157; box-shadow:inset 0 0 0 3px #e8d8c34d; }
+.item-livro { position:relative; padding:16px 12px 12px; border-radius:14px; background:#fffdf9; border:1px solid #e8d8c3; }
+.drag-handle { position:absolute; top:7px; right:7px; display:flex; padding:4px; border:0; border-radius:6px; color:#9c8a7a; background:#faf3e0; cursor:grab; touch-action:none; z-index:2; }
+.drag-handle:active { cursor:grabbing; }
+.item-livro :deep(.imagem) { -webkit-user-drag:none; user-select:none; cursor:grab; }
+.item-livro :deep(.card-livro) { transform-origin:50% 8%; }
+.livro-selecionado { box-shadow:0 10px 30px #6b422620; }
+.livro-selecionado :deep(.card-livro) { animation:livro-levantar .18s ease-out both; }
+.livro-em-voo { opacity:.96!important; border-color:#c9a97e; box-shadow:0 18px 38px #6b42262e; }
+.livro-em-voo :deep(.card-livro) { animation:livro-balanco .85s ease-in-out infinite alternate; }
+.fantasma-arraste { opacity:.25; border:1px dashed #ad8157; background:#e8d8c3; }
+.livro-recem-movido { animation:livro-soltar .45s cubic-bezier(.22,1,.36,1); }
+@keyframes livro-levantar { from { transform:rotate(0deg) scale(1); } to { transform:rotate(-2deg) scale(1.025); } }
+@keyframes livro-balanco { from { transform:rotate(-2.5deg) scale(1.025); } to { transform:rotate(2.5deg) scale(1.025); } }
+@keyframes livro-soltar { 0% { transform:translateY(-8px) rotate(-1deg); box-shadow:0 10px 25px #6b422626; } 65% { transform:translateY(2px) rotate(.3deg); } 100% { transform:translateY(0) rotate(0); box-shadow:none; } }
+@media(prefers-reduced-motion:reduce) { .livro-selecionado :deep(.card-livro),.livro-em-voo :deep(.card-livro),.livro-recem-movido { animation:none; transform:none; } }
 </style>

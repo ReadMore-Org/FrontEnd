@@ -1,23 +1,10 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import AppHeader from './components/layout/AppHeader.vue';
-import AppFooter from './components/layout/AppFooter.vue';
+import { RouterView } from 'vue-router';
 </script>
-
 <template>
-
-  <RouterView />
-
+  <RouterView v-slot="{ Component, route }">
+    <Transition name="page" mode="out-in">
+      <div :key="route.path" class="route-page"><component :is="Component" /></div>
+    </Transition>
+  </RouterView>
 </template>
-
-<style scoped>
-div.corpo{
-  padding: 0 120px;
-}
-@media (max-width: 650px) {
-  div.corpo {
-    padding: 0;
-  }
-}
-
-</style>

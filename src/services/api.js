@@ -1,9 +1,7 @@
 import axios from "axios";
 import router from "@/router";
 
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ??
-  "https://readmoreback.class.fabricadesoftware.ifc.edu.br";
+import { API_BASE_URL as BASE_URL } from "./apiConfig";
 
 const api = axios.create({
   baseURL: BASE_URL,

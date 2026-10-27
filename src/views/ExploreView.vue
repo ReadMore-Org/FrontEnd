@@ -1,7 +1,11 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { useExploreSearch } from "@/composables/useExploreSearch";
+import { SEARCH_CATEGORIES, SEARCH_LANGUAGES } from "@/utils/bookSearch";
 import { storeToRefs } from "pinia";
 import { SlidersHorizontal, BookOpen, SearchX } from "lucide-vue-next";
+import { useLivrosStore } from "@/stores/livros";
+import { useAuthStore } from "@/stores/auth";
 import { useGoogleBooksStore } from "@/stores/googleBooks";
 import BarraBusca from "@/components/explore/BarraBusca.vue";
 import FiltrosBusca from "@/components/explore/FiltrosBusca.vue";
@@ -13,6 +17,13 @@ import AppFooter from "@/components/layout/AppFooter.vue";
 import Voltar from "@/components/common/voltar.vue";
 
 const googleBooksStore = useGoogleBooksStore();
+const livroStore = useLivrosStore();
+const authStore = useAuthStore();
+onMounted(() => {
+  if (authStore.isAuthenticated) livroStore.fetchMeusLivros();
+  ordenacao.value = "relevance";
+  if (termo.value.trim() || categoriasSelecionadas.value.length) buscar();
+});
 
 const {
   termoBusca: termo,
@@ -33,37 +44,17 @@ const totalFiltros = computed(
   () => categoriasSelecionadas.value.length + idiomasSelecionados.value.length
 );
 
-const queryFinal = computed(() => {
-  const partes = [];
-  const termoLimpo = termo.value?.trim();
-
-  if (termoLimpo) partes.push(termoLimpo);
-  categoriasSelecionadas.value.forEach((c) => partes.push(`subject:${c}`));
-
-  return partes.join(" ");
-});
-
-let timerBusca = null;
-
-function buscar() {
-  if (!queryFinal.value) return;
-
-  clearTimeout(timerBusca);
-
-  timerBusca = setTimeout(() => {
-    jaBuscou.value = true;
-    googleBooksStore.pesquisarLivros(queryFinal.value);
-  }, 300);
-}
+const { buscar, agendandoBusca } = useExploreSearch(googleBooksStore);
+const buscaEmAndamento = computed(() => agendandoBusca.value || googleBooksStore.buscandoExplore);
+const labelCategoria = value => SEARCH_CATEGORIES.find(item => item.value === value)?.label || value;
+const labelIdioma = value => SEARCH_LANGUAGES.find(item => item.value === value)?.label || value;
 
 function removerFiltroCategoria(valor) {
   categoriasSelecionadas.value = categoriasSelecionadas.value.filter((v) => v !== valor);
-  buscar();
 }
 
 function removerFiltroIdioma(valor) {
   idiomasSelecionados.value = idiomasSelecionados.value.filter((v) => v !== valor);
-  buscar();
 }
 
 function alternarFiltros() {
@@ -104,46 +95,52 @@ function alternarFiltros() {
           v-model:idiomasSelecionados="idiomasSelecionados"
           v-model:categoriasSelecionadas="categoriasSelecionadas"
           @toggle="alternarFiltros"
-          @update:idiomasSelecionados="buscar"
-          @update:categoriasSelecionadas="buscar"
         />
 
         <main class="resultados">
           <div v-if="jaBuscou" class="barra-resultados">
             <p class="contagem">
-              <strong>{{ googleBooksStore.resultados.length }}</strong> livros encontrados
+              <strong>{{ googleBooksStore.resultadosExplore.length }}</strong> livros carregados
             </p>
 
-            <OrdenarDropdown v-model="ordenacao" @update:modelValue="buscar" />
+            <OrdenarDropdown v-model="ordenacao" />
           </div>
 
           <div v-if="totalFiltros" class="chips-ativos">
-            <span
+            <button
+              type="button"
               v-for="c in categoriasSelecionadas"
               :key="c"
               class="chip-ativo"
               @click="removerFiltroCategoria(c)"
             >
-              {{ c }} <span aria-hidden="true">✕</span>
-            </span>
+              {{ labelCategoria(c) }} <span aria-hidden="true">✕</span>
+            </button>
 
-            <span
+            <button
+              type="button"
               v-for="i in idiomasSelecionados"
               :key="i"
               class="chip-ativo"
               @click="removerFiltroIdioma(i)"
             >
-              {{ i }} <span aria-hidden="true">✕</span>
-            </span>
+              {{ labelIdioma(i) }} <span aria-hidden="true">✕</span>
+            </button>
           </div>
 
-          <div v-if="googleBooksStore.loading" class="estado">
+          <div v-if="buscaEmAndamento" class="estado" role="status">
             <div class="spinner"></div>
-            <p>Buscando livros...</p>
+            <p>{{ agendandoBusca ? "Preparando pesquisa..." : "Buscando livros..." }}</p>
+          </div>
+
+          <div v-else-if="googleBooksStore.erroExplore && !googleBooksStore.resultadosExplore.length" class="estado" role="alert">
+            <h2>Não foi possível buscar</h2>
+            <p>{{ googleBooksStore.erroExplore }}</p>
+            <button type="button" class="btn-catalogo" @click="buscar">Tentar novamente</button>
           </div>
 
           <div
-            v-else-if="jaBuscou && googleBooksStore.resultados.length === 0"
+            v-else-if="jaBuscou && googleBooksStore.resultadosExplore.length === 0"
             class="estado"
           >
             <span class="estado-icone"><SearchX :size="26" /></span>
@@ -154,14 +151,19 @@ function alternarFiltros() {
           <div v-else-if="!jaBuscou" class="estado">
             <span class="estado-icone"><BookOpen :size="26" /></span>
             <h2>Encontre seu próximo livro</h2>
-            <p>Busque por título, autor ou ISBN e adicione à sua biblioteca.</p>
+            <p>Busque por título, autor ou ISBN, ou selecione uma categoria.</p>
           </div>
 
-          <GradeLivros v-else titulo="" :livros="googleBooksStore.resultados">
+          <GradeLivros v-else titulo="" :livros="googleBooksStore.resultadosExplore" mostrar-todos>
             <template #default="{ livro }">
               <BookCard :livro="livro" />
             </template>
           </GradeLivros>
+          <p v-if="googleBooksStore.avisoExplore" class="aviso-busca" role="status">{{ googleBooksStore.avisoExplore }}</p>
+          <p v-if="googleBooksStore.erroExplore && googleBooksStore.resultadosExplore.length" class="aviso-busca" role="alert">{{ googleBooksStore.erroExplore }}</p>
+          <button v-if="googleBooksStore.temMaisExplore && !agendandoBusca" :disabled="googleBooksStore.buscandoExplore" type="button" class="btn-catalogo" @click="googleBooksStore.carregarMaisExplore">
+            {{ googleBooksStore.buscandoExplore ? "Carregando..." : "Carregar mais livros" }}
+          </button>
         </main>
       </div>
     </div>
@@ -171,6 +173,10 @@ function alternarFiltros() {
 </template>
 
 <style scoped>
+.btn-catalogo { display:block; margin:24px auto 0; padding:12px 24px; border:1px solid #e8d8c3; border-radius:24px; background:#6b4226; color:white; cursor:pointer; }
+.btn-catalogo:disabled { opacity:.6; cursor:wait; }
+.aviso-busca { margin:20px 0; color:#6b4226; font-size:14px; }
+
 .explore-page {
   background-color: #f5e6d3;
   min-height: 100vh;

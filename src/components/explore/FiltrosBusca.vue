@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch, onBeforeUnmount } from "vue";
+import { SEARCH_LANGUAGES as idiomas, SEARCH_CATEGORIES as categorias, normalizeSearch } from "@/utils/bookSearch";
 import {
   SlidersHorizontal,
   ChevronUp,
@@ -29,19 +30,11 @@ const emit = defineEmits([
   "update:categoriasSelecionadas",
 ]);
 
-const idiomas = [
-  { label: "Português", value: "pt" },
-  { label: "Inglês", value: "en" },
-  { label: "Espanhol", value: "es" },
-];
-
-const categorias = [
-  { label: "Ficção juvenil", value: "juvenile fiction" },
-  { label: "Ação e aventura", value: "action" },
-  { label: "Fantasia", value: "fantasy" },
-  { label: "Romance", value: "romance" },
-];
-
+const termoCategoria = ref("");
+const categoriasVisiveis = computed(() => {
+  const termo = normalizeSearch(termoCategoria.value);
+  return categorias.filter(categoria => !termo || normalizeSearch(`${categoria.label} ${categoria.value}`).includes(termo));
+});
 const secaoCategoriaAberta = ref(true);
 const secaoIdiomaAberta = ref(true);
 
@@ -113,6 +106,7 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
+        <p class="filtros-ajuda">Seleções do mesmo grupo somam opções. Idioma e categoria são combinados.</p>
         <div class="conteudo-secoes">
           <div class="f-secao">
             <button
@@ -125,8 +119,11 @@ onBeforeUnmount(() => {
               <component :is="secaoCategoriaAberta ? ChevronUp : ChevronDown" :size="15" />
             </button>
 
-            <div v-show="secaoCategoriaAberta" class="opcoes-filtro">
-              <label v-for="c in categorias" :key="c.value" class="f-linha">
+            <div v-show="secaoCategoriaAberta">
+              <input v-model="termoCategoria" class="busca-categoria" type="search" placeholder="Filtrar categorias..." aria-label="Filtrar lista de categorias" />
+              <div class="opcoes-filtro categorias-opcoes">
+              <p v-if="!categoriasVisiveis.length" class="categoria-vazia">Nenhuma categoria corresponde ao termo.</p>
+              <label v-for="c in categoriasVisiveis" :key="c.value" class="f-linha">
                 <input
                   type="checkbox"
                   :checked="categoriasSelecionadas.includes(c.value)"
@@ -137,6 +134,7 @@ onBeforeUnmount(() => {
                 </span>
                 <span class="label-filtro">{{ c.label }}</span>
               </label>
+              </div>
             </div>
           </div>
 
@@ -188,6 +186,11 @@ onBeforeUnmount(() => {
 
 <style scoped>
 /* ---------- desktop ---------- */
+.busca-categoria { box-sizing:border-box; width:100%; margin-bottom:10px; padding:9px 10px; border:1px solid #e8d8c3; border-radius:8px; color:#5a4636; background:#faf7f4; font-size:12px; }
+.busca-categoria:focus { outline:2px solid #c9b09a; outline-offset:1px; }
+.categorias-opcoes { max-height:330px; overflow-y:auto; overscroll-behavior:contain; padding-right:6px; scrollbar-width:thin; }
+.categoria-vazia { font-size:12px; color:#9c8a7a; padding:8px 0; }
+.filtros-ajuda { color:#9c8a7a; font-size:12px; line-height:1.5; margin:14px 8px; }
 .filtros-root {
   position: sticky;
   top: 16px; /* se o seu header for fixo, aumente esse valor */

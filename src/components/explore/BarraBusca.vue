@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { Search } from "lucide-vue-next";
 
 const props = defineProps({
@@ -12,6 +12,7 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue", "buscar"]);
 
 const termoLocal = ref(props.modelValue);
+watch(() => props.modelValue, value => { termoLocal.value = value; });
 
 const onInput = (e) => {
   termoLocal.value = e.target.value;
@@ -27,7 +28,8 @@ const onSubmit = () => {
   <form class="barra-busca" role="search" @submit.prevent="onSubmit">
     <Search :size="19" class="icone-busca" />
     <input
-      type="text"
+      type="search"
+      aria-label="Buscar livros por título, autor ou ISBN"
       placeholder="Busque por título, autor ou ISBN..."
       autocomplete="off"
       enterkeyhint="search"

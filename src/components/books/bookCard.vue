@@ -1,4 +1,7 @@
 <script setup>
+import AppImage from "@/components/common/AppImage.vue";
+import { getBookCover, bookImageFallbacks } from "@/utils/images";
+import BookInteraction from "@/components/social/BookInteraction.vue";
 import { ref, computed } from "vue";
 import { Check } from "lucide-vue-next";
 import { useLivrosStore } from "@/stores/livros";
@@ -72,23 +75,14 @@ const marcarComoLido = async () => {
   }
 };
 
-const getBookCover = (livro) => {
-  const capa = livro?.capa || livro?.livro?.capa;
-  const url = typeof capa === "string" ? capa : capa?.url;
 
-  if (url) {
-    return url.startsWith("http") ? url : `${import.meta.env.VITE_API_BASE_URL}${url}`;
-  }
-
-  return "/imgs/livro_sem_capa.png";
-};
 </script>
 
 <template>
   <div class="card-livro">
     <!-- Link clicável apenas na Capa -->
     <RouterLink :to="`/livro/${livro.id || livro.livro_id}`" class="link-detalhes">
-      <img class="imagem" :src="getBookCover(livro)" alt="Capa do livro" />
+      <AppImage class="imagem" :src="getBookCover(livro)" :fallbacks="bookImageFallbacks(livro)" alt="Capa do livro" />
     </RouterLink>
 
     <div class="detalhes">
@@ -116,6 +110,8 @@ const getBookCover = (livro) => {
           <p class="detalheInfo">{{ livro?.paginas || livro?.livro?.paginas }}</p>
         </div>
       </div>
+
+      <BookInteraction :livro="livro" compact />
 
       <!-- Botão isolado sem nenhuma tag <a> por fora -->
       <button 

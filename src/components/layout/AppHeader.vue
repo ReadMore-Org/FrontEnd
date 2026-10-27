@@ -1,4 +1,6 @@
 <script setup>
+import AppImage from "@/components/common/AppImage.vue";
+import { getUserPhoto } from "@/utils/images";
 import { BellDot } from "lucide-vue-next";
 import { Plus } from "lucide-vue-next";
 import { MoonStar, Search } from "lucide-vue-next";
@@ -23,19 +25,7 @@ const menuAberto = ref(false);
 
 const userEmail = computed(() => user.value?.email || "");
 
-const userPhoto = computed(() => {
-  const url = authStore.user?.foto?.url;
-
-  if (url) {
-    return url.startsWith("http") ? url : `${import.meta.env.VITE_BACKEND_URL}${url}`;
-  }
-
-  if (authStore.user?.google_picture) {
-    return authStore.user.google_picture;
-  }
-
-  return "/imgs/avatar.jpeg";
-});
+const userPhoto = computed(() => getUserPhoto(authStore.user));
 
 function handleLogout() {
   authStore.logout();
@@ -67,6 +57,10 @@ console.count("AppHeader");
 
           <li :class="{ active: isMarketplace }">
             <RouterLink to="/marketplace">Marketplace</RouterLink>
+          </li>
+
+          <li v-if="authStore.isAuthenticated" :class="{ active: route.path.startsWith('/usuarios') }">
+            <RouterLink to="/usuarios">Leitores</RouterLink>
           </li>
 
           <li :class="{ active: isExplore }">
@@ -105,7 +99,7 @@ console.count("AppHeader");
       </div>
 
       <div class="imagem">
-        <img
+        <AppImage avatar :fallbacks="[authStore.user?.google_picture]"
           :src="userPhoto"
           alt="avatar"
           class="avatar"
@@ -118,7 +112,7 @@ console.count("AppHeader");
 
         <div v-if="menuAberto" class="menu-usuario">
           <div class="menu-header">
-            <img :src="userPhoto" alt="avatar" class="menu-avatar" />
+            <AppImage avatar :fallbacks="[authStore.user?.google_picture]" :src="userPhoto" alt="avatar" class="menu-avatar" />
 
             <div class="menu-info">
               <strong>{{ authStore.user?.name }}</strong>

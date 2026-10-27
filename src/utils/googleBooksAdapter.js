@@ -19,6 +19,7 @@ export function googleBookToLivro(book) {
 
   return {
     id: book.id,
+    google_book_id: book.id,
     titulo: volumeInfo.title ?? "",
     subtitulo: volumeInfo.subtitle ?? "",
 
@@ -27,6 +28,11 @@ export function googleBookToLivro(book) {
     })),
 
     isbn,
+    nota: null,
+    avaliacoes: 0,
+    popularidade_google: volumeInfo.ratingsCount ?? 0,
+    nota_google: volumeInfo.averageRating ?? 0,
+    categorias_originais: volumeInfo.categories ?? [],
 
     paginas: volumeInfo.pageCount ?? null,
     idioma: volumeInfo.language ?? null,

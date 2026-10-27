@@ -1,4 +1,6 @@
 import { ref } from "vue";
+import { loadBookRatings, markBookRatingsUnavailable } from "@/services/bookRatings";
+import { buildSearchSources, buildTitleFallbackSources, matchesSearchFilters, mergeSearchBooks, sortSearchBooks } from "@/utils/bookSearch";
 import { defineStore } from "pinia";
 
 import axios from "axios";
@@ -39,88 +41,140 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
   const ordenacao = ref("relevance");
   const jaBuscou = ref(false);
 
-  // Controle de cancelamento de requisições sobrepostas
+  // O Explore não compartilha resultados/carregamento com as recomendações da Home.
+  const resultadosExplore = ref([]);
+  const buscandoExplore = ref(false);
+  const erroExplore = ref(null);
+  const avisoExplore = ref(null);
+  const temMaisExplore = ref(false);
   let controllerAtual = null;
+  let requestId = 0;
+  let fontes = [];
+  let buscaAtual = null;
+  const cacheBusca = new Map();
 
-  // =========================
-  // PESQUISAR LIVROS (COM ORDENAÇÃO POR POPULARIDADE)
-  // =========================
-  async function pesquisarLivros(query) {
-    const queryLimpa = query?.trim();
+  function cancelarBusca() {
+    controllerAtual?.abort();
+    requestId++;
+    buscandoExplore.value = false;
+  }
 
-    if (!queryLimpa) {
-      loading.value = false;
+  let activeSearch = null;
+  function pesquisarLivros(query = termoBusca.value, options = {}) {
+    const key = JSON.stringify([query.trim(), idiomasSelecionados.value, categoriasSelecionadas.value, ordenacao.value, !!options.append]);
+    if (activeSearch?.key === key && controllerAtual && !controllerAtual.signal.aborted) return activeSearch.promise;
+    const promise = executarBusca(query, options);
+    activeSearch = { key, promise };
+    promise.then(() => { if (activeSearch?.promise === promise) activeSearch = null; });
+    return promise;
+  }
+
+  async function executarBusca(query, { append = false, refresh = false } = {}) {
+    cancelarBusca();
+    const current = requestId;
+    const controller = new AbortController();
+    controllerAtual = controller;
+    const snapshot = append ? buscaAtual : {
+      term: query.trim(), languages: [...idiomasSelecionados.value], categories: [...categoriasSelecionadas.value], orderBy: ordenacao.value,
+    };
+    // Cada execução possui suas próprias fontes; respostas antigas não alteram paginação.
+    const sources = append ? fontes.map(source => ({ ...source })) : buildSearchSources(snapshot.term, snapshot);
+    if (!append) {
+      resultadosExplore.value = [];
+      temMaisExplore.value = false;
+    }
+    erroExplore.value = null;
+    avisoExplore.value = null;
+    if (!sources.length) {
+      jaBuscou.value = false;
       return;
     }
-
-    // Cancela a requisição anterior se ainda estiver rodando
-    if (controllerAtual) {
-      controllerAtual.abort();
-    }
-    controllerAtual = new AbortController();
-
-    loading.value = true;
-    error.value = null;
+    buscandoExplore.value = true;
     jaBuscou.value = true;
-
-    try {
-      const response = await searchBooks(queryLimpa, {
-        signal: controllerAtual.signal,
-      });
-
-      const itens = response?.items ?? [];
-
-      // Mapeia os livros e calcula a pontuação para trazer os mais populares para o topo
-      const livrosFormatados = itens
-        .map((item) => {
-          const livro = googleBookToLivro(item);
-          const info = item.volumeInfo || {};
-
-          const avaliacoes = info.ratingsCount ?? 0;
-          const nota = info.averageRating ?? 0;
-          const temCapa =
-            livro.capa && !livro.capa.includes("no-cover") ? 30 : -100;
-          const eEmPortugues = info.language === "pt" ? 20 : 0;
-
-          const score =
-            Math.log10(avaliacoes + 1) * 25 +
-            nota * 10 +
-            temCapa +
-            eEmPortugues;
-
-          return { livro, score };
-        })
-        .filter(({ livro }) => livro.titulo && livro.capa);
-
-      // Ordena do maior score (mais popular) para o menor
-      livrosFormatados.sort((a, b) => b.score - a.score);
-
-      resultados.value = livrosFormatados.map(({ livro }) => livro);
-    } catch (err) {
-      // Ignora erros de cancelamento do Axios
-      if (
-        axios.isCancel(err) ||
-        err.name === "AbortError" ||
-        err.code === "ERR_CANCELED"
-      ) {
-        return;
-      }
-
-      console.error("Erro ao pesquisar livros:", err);
-      error.value = "Não foi possível carregar os livros. Tente novamente.";
-      resultados.value = [];
-    } finally {
-      if (controllerAtual && !controllerAtual.signal.aborted) {
-        loading.value = false;
+    const failures = [];
+    let succeeded = 0;
+    const collected = [];
+    async function fetchSources(pending) {
+      for (let offset = 0; offset < pending.length; offset += 3) {
+        const batch = await Promise.allSettled(pending.slice(offset, offset + 3).map(async source => {
+          const key = JSON.stringify([source.q, source.langRestrict, source.orderBy, source.startIndex]);
+          const cached = cacheBusca.get(key);
+          const data = !refresh && cached && Date.now() - cached.time < 300000
+            ? cached.data : await searchBooks(source.q, { ...source, signal: controller.signal });
+          if (current !== requestId) return [];
+          const items = data.items ?? [];
+          // Uma resposta vazia ocasional do provedor nunca bloqueia novas tentativas.
+          if (items.length) {
+            if (cacheBusca.size >= 40) cacheBusca.delete(cacheBusca.keys().next().value);
+            cacheBusca.set(key, { data, time: Date.now() });
+          }
+          const books = items.filter(item => item.volumeInfo?.title).map(googleBookToLivro);
+          const previousIds = new Set(resultadosExplore.value.map(book => book.id));
+          source.done = items.length < 40 || (append && books.every(book => previousIds.has(book.id)));
+          source.startIndex += 40;
+          return books;
+        }));
+        if (current !== requestId) return;
+        for (const result of batch) {
+          if (result.status === "fulfilled") { succeeded++; collected.push(...result.value); }
+          else failures.push(result.reason);
+        }
+        if (failures.some(err => [403, 429].includes(err.response?.status))) return;
       }
     }
+    try {
+      await fetchSources(sources.filter(source => !source.done));
+      if (current !== requestId) return;
+      if (!append && !collected.length && !failures.length) {
+        // Ex.: "diario de um banana" -> intitle:diario intitle:banana.
+        const fallbacks = buildTitleFallbackSources(snapshot.term, snapshot);
+        if (fallbacks.length) {
+          sources.push(...fallbacks);
+          await fetchSources(fallbacks);
+        }
+      }
+      if (current !== requestId) return;
+      const books = mergeSearchBooks([...(append ? resultadosExplore.value : []), ...collected])
+        .filter(book => matchesSearchFilters(book, snapshot.languages, snapshot.categories, { allowMissingCategories: true }));
+      if (!succeeded || (!books.length && failures.length)) throw failures[0] || new Error("Busca indisponível");
+      resultadosExplore.value = sortSearchBooks(books, snapshot.term, snapshot.orderBy);
+      fontes = sources;
+      buscaAtual = snapshot;
+      temMaisExplore.value = sources.some(source => !source.done);
+      if (failures.length) avisoExplore.value = "Alguns resultados não carregaram. Tente buscar novamente para completar a pesquisa.";
+      // Consultar as notas locais não bloqueia nem muda o estado da busca do catálogo.
+      const displayedBooks = [...resultadosExplore.value];
+      loadBookRatings(displayedBooks, { signal: controller.signal }).catch(() => {
+        if (current === requestId) markBookRatingsUnavailable(displayedBooks);
+      });
+    } catch (err) {
+      if (current !== requestId || axios.isCancel(err) || err.code === "ERR_CANCELED") return;
+      const status = err.response?.status;
+      erroExplore.value = status === 429
+        ? "O catálogo atingiu o limite de consultas. Aguarde um pouco e tente novamente."
+        : status === 403
+          ? "O Google Books recusou a consulta. Verifique a chave da API e as restrições de acesso."
+          : "Não foi possível consultar o catálogo. Confira sua conexão e tente novamente.";
+    } finally {
+      if (current === requestId) buscandoExplore.value = false;
+    }
+  }
+
+  async function carregarMaisExplore() {
+    if (buscandoExplore.value || !temMaisExplore.value) return;
+    return pesquisarLivros(buscaAtual.term, { append: true });
   }
   // =========================
   // RECOMENDADOS
   // =========================
-  const CACHE_KEY_RECOMENDADOS = "recomendados_google_books";
-  const CACHE_KEY_TIMESTAMP = "recomendados_google_books_time";
+  const CACHE_KEY_RECOMENDADOS = "recomendados_google_books_v2";
+  const CACHE_KEY_TIMESTAMP = "recomendados_google_books_time_v2";
   const CACHE_EXPIRATION_MS = 12 * 60 * 60 * 1000; // 12 horas em milissegundos
+
+  async function refreshRecommendedRatings() {
+    try { await loadBookRatings(resultados.value); }
+    catch { markBookRatingsUnavailable(resultados.value); }
+  }
 
   async function buscarRecomendados(forceRefresh = false) {
     loading.value = true;
@@ -137,6 +191,7 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
         if (!isExpired) {
           try {
             resultados.value = JSON.parse(cachedData);
+            await refreshRecommendedRatings();
             loading.value = false;
             return;
           } catch (e) {
@@ -157,7 +212,7 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
       ];
 
       const responses = await Promise.all(
-        queries.map((query) => searchBooks(query)),
+        queries.map((query) => searchBooks(query, { langRestrict: "pt" })),
       );
 
       const todosAutoresComSucesso = responses.every(
@@ -209,6 +264,7 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
         .filter((livro) => livro.titulo && livro.capa);
 
       resultados.value = livros;
+      await refreshRecommendedRatings();
 
       // 3. SALVA NO CACHE SE TODOS OS AUTORES CARREGARAM
       localStorage.setItem(CACHE_KEY_RECOMENDADOS, JSON.stringify(livros));
@@ -219,6 +275,7 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
       const cachedData = localStorage.getItem(CACHE_KEY_RECOMENDADOS);
       if (cachedData) {
         resultados.value = JSON.parse(cachedData);
+        await refreshRecommendedRatings();
       } else {
         error.value =
           "Não foi possível carregar todas as recomendações no momento.";
@@ -277,6 +334,13 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
 
   return {
     resultados,
+    resultadosExplore,
+    buscandoExplore,
+    erroExplore,
+    avisoExplore,
+    temMaisExplore,
+    carregarMaisExplore,
+    cancelarBusca,
     livroSelecionado,
     loading,
     error,

@@ -1,6 +1,9 @@
 <script setup>
+import BookRatingSummary from "@/components/social/BookRatingSummary.vue";
+import AppImage from "@/components/common/AppImage.vue";
+import { getBookCover, bookImageFallbacks } from "@/utils/images";
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
-import { Plus, Star, Check } from "lucide-vue-next";
+import { Plus, Check } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useLivrosStore } from "@/stores/livros";
 import { useAuthStore } from "@/stores/auth";
@@ -16,20 +19,7 @@ const router = useRouter();
 const livroStore = useLivrosStore();
 const authStore = useAuthStore();
 
-onMounted(async () => {
-  document.addEventListener("click", aoClicarFora);
 
-  // Sempre busca a lista atualizada do backend ao carregar o componente
-  try {
-    if (livroStore.fetchMeusLivros) {
-      await livroStore.fetchMeusLivros();
-    } else if (livroStore.buscarMeusLivros) {
-      await livroStore.buscarMeusLivros();
-    }
-  } catch (err) {
-    console.error("Erro ao sincronizar estante:", err);
-  }
-});
 
 function abrirLivro() {
   if (props.livro?.id) {
@@ -104,22 +94,7 @@ const statusSalvo = computed(() => {
 /* Estado visual do botão */
 const adicionado = computed(() => statusAdicionadoLocal.value || jaEstaNaEstante.value);
 
-const getBookCover = (livro) => {
-  if (!livro) return "/imgs/livro_sem_capa.png";
 
-  const capa = livro.capa;
-  const url = typeof capa === "string" ? capa : capa?.url;
-
-  if (url) {
-    if (url.startsWith("http")) {
-      const isLocal = /^https?:\/\/(127\.0\.0\.1|localhost)/i.test(url);
-      return isLocal ? url : url.replace(/^http:\/\//i, "https://");
-    }
-    return `${import.meta.env.VITE_API_BASE_URL}${url}`;
-  }
-
-  return "/imgs/livro_sem_capa.png";
-};
 
 const getAutores = (livro) => {
   if (!livro?.autores || !livro.autores.length) return "";
@@ -175,17 +150,7 @@ function aoClicarFora(e) {
   }
 }
 
-onMounted(async () => {
-  document.addEventListener("click", aoClicarFora);
-
-  if (!livroStore.meusLivros || livroStore.meusLivros.length === 0) {
-    if (livroStore.fetchMeusLivros) {
-      await livroStore.fetchMeusLivros();
-    } else if (livroStore.buscarMeusLivros) {
-      await livroStore.buscarMeusLivros();
-    }
-  }
-});
+onMounted(() => document.addEventListener("click", aoClicarFora));
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", aoClicarFora);
@@ -195,9 +160,9 @@ onBeforeUnmount(() => {
 <template>
   <div class="card-livro-grid">
     <div class="capa-wrapper" @click="abrirLivro">
-      <img
+      <AppImage
         class="capa"
-        :src="getBookCover(livro)"
+        :src="getBookCover(livro)" :fallbacks="bookImageFallbacks(livro)"
         :alt="livro?.titulo || 'Capa do livro'"
       />
 
@@ -239,10 +204,7 @@ onBeforeUnmount(() => {
         {{ getAutores(livro) }}
       </p>
 
-      <div class="avaliacao" v-if="livro?.nota">
-        <Star :size="12" class="estrela-icone" fill="currentColor" stroke="none" />
-        <span>{{ Number(livro.nota).toFixed(1) }}</span>
-      </div>
+      <BookRatingSummary :livro="livro" />
 
       <p v-if="erro" class="erro-msg">{{ erro }}</p>
     </div>

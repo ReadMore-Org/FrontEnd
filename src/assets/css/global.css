@@ -44,3 +44,25 @@ a{
   text-decoration: none;
 }
 
+
+/* Movimento discreto, com a mesma cadência nas páginas e controles. */
+:root { --motion-fast:160ms; --motion-normal:240ms; --motion-ease:cubic-bezier(.22,1,.36,1); }
+button, a.button, .button, input, select, textarea { transition-property:background-color,border-color,color,box-shadow,opacity,transform; transition-duration:var(--motion-fast); transition-timing-function:var(--motion-ease); }
+button:not(:disabled):active, a.button:active, .button:active { transform:scale(.975); }
+button:focus-visible,a:focus-visible { outline:2px solid #ad8157; outline-offset:3px; }
+@media(hover:hover) and (pointer:fine) {
+  button:not(:disabled):hover { filter:brightness(.98); }
+  .card-anuncio,.card-livro-grid,.reader { transition:transform var(--motion-normal) var(--motion-ease),box-shadow var(--motion-normal) var(--motion-ease); }
+  .card-anuncio:hover,.card-livro-grid:hover { transform:translateY(-3px); }
+}
+.page-enter-active { transition:opacity 160ms ease-out; }
+.page-leave-active { transition:opacity 100ms ease-in; }
+.page-enter-from,.page-leave-to { opacity:0; }
+.modal-overlay,.modal-remocao,.modal { animation:surface-enter 180ms var(--motion-ease); }
+@keyframes surface-enter { from { opacity:0; } to { opacity:1; } }
+html { scroll-behavior:smooth; }
+@media(prefers-reduced-motion:reduce) {
+  html { scroll-behavior:auto; }
+  *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; scroll-behavior:auto!important; }
+  button:not(:disabled):active,.card-anuncio:hover,.card-livro-grid:hover { transform:none; }
+}
