@@ -4,12 +4,14 @@ import { Plus } from "lucide-vue-next";
 import { MoonStar, Search } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
+import { useChatStore } from "@/features/chat/stores/chat";
 import { useRouter } from "vue-router";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const chatStore = useChatStore();
 const user = computed(() => authStore.user);
 
 const avatarLoaded = ref(false);
@@ -18,6 +20,7 @@ const isHome = computed(() => route.path === "/home");
 const isLivros = computed(() => route.path === "/meus-livros");
 const isMarketplace = computed(() => route.path === "/marketplace");
 const isExplore = computed(() => route.path === "/explore");
+const isConversas = computed(() => route.path.startsWith("/conversas"));
 
 const menuAberto = ref(false);
 
@@ -71,6 +74,19 @@ console.count("AppHeader");
 
           <li :class="{ active: isExplore }">
             <RouterLink to="/explore">Explore</RouterLink>
+          </li>
+
+          <li v-if="authStore.isAuthenticated" :class="{ active: isConversas }">
+            <RouterLink to="/conversas" class="link-conversas">
+              Conversas
+              <span
+                v-if="chatStore.unreadTotal > 0"
+                class="badge-conversas"
+                :aria-label="`${chatStore.unreadTotal} mensagens não lidas`"
+              >
+                {{ chatStore.unreadTotal > 99 ? "99+" : chatStore.unreadTotal }}
+              </span>
+            </RouterLink>
           </li>
         </ul>
       </nav>
@@ -191,6 +207,25 @@ nav ul li a {
 
 nav ul li.active a {
   color: #654321;
+}
+
+.link-conversas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-conversas {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #654321;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
 }
 
 .left {

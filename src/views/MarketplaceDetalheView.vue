@@ -20,6 +20,7 @@ import { getAnuncio } from "@/services/marketplace";
 import { useMarketplaceStore } from "@/stores/marketplace";
 import { useLivrosStore } from "@/stores/livros";
 import { useAuthStore } from "@/stores/auth";
+import { useChatStore } from "@/features/chat/stores/chat";
 import {
   getCapaUrl,
   getAutoresTexto,
@@ -40,6 +41,7 @@ const toast = useToast();
 const marketplaceStore = useMarketplaceStore();
 const livroStore = useLivrosStore();
 const authStore = useAuthStore();
+const chatStore = useChatStore();
 
 const anuncio = ref(null);
 const loading = ref(true);
@@ -110,21 +112,30 @@ const nota = computed(() => Number(livro.value?.nota) || 0);
 // =========================================================
 // CONTATO
 // =========================================================
-// Por enquanto abre o email do dono. Quando o chat existir, troque este
-// computed por uma função que faz router.push(`/chat/${dono.value.id}`)
-const linkContato = computed(() => {
-  const email = dono.value?.email;
-  if (!email || !livro.value) return "#";
+// "Entrar em contato" cria (ou reaproveita) a conversa com o dono e abre o chat.
+// É a única forma de iniciar uma conversa no ReadMore.
+const contatando = ref(false);
 
-  const tipo = (ROTULO_TIPO[anuncio.value.tipo] ?? "").toLowerCase();
-  const assunto = `ReadMore: tenho interesse em "${livro.value.titulo}"`;
-  const corpo =
-    `Olá, ${primeiroNomeDono.value}! ` +
-    `Vi seu anúncio de ${tipo} do livro "${livro.value.titulo}" no ReadMore ` +
-    `e gostaria de conversar.`;
+async function entrarEmContato() {
+  if (contatando.value || !anuncio.value) return;
 
-  return `mailto:${email}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
-});
+  if (!authStore.isAuthenticated) {
+    toast.info("Entre na sua conta para conversar com o dono do livro.");
+    router.push({ name: "login" });
+    return;
+  }
+
+  contatando.value = true;
+
+  try {
+    const sala = await chatStore.contactAnuncio(anuncio.value.id);
+    router.push({ name: "conversa", params: { roomId: sala.id } });
+  } catch (err) {
+    toast.error(extrairErroApi(err, "Não foi possível abrir a conversa."));
+  } finally {
+    contatando.value = false;
+  }
+}
 
 // =========================================================
 // REMOVER (somente o dono)
@@ -255,11 +266,16 @@ function voltar() {
         </template>
 
         <template v-else>
-          <a :href="linkContato" class="btn-contato">
+          <button
+            type="button"
+            class="btn-contato"
+            :disabled="contatando"
+            @click="entrarEmContato"
+          >
             <Mail :size="17" />
-            <span>Entrar em contato</span>
-          </a>
-          <p class="aviso-chat">Em breve você poderá conversar direto pelo ReadMore.</p>
+            <span>{{ contatando ? "Abrindo conversa..." : "Entrar em contato" }}</span>
+          </button>
+          <p class="aviso-chat">Converse direto com o dono pelo ReadMore.</p>
         </template>
       </section>
 
@@ -593,8 +609,13 @@ function voltar() {
   color: #ffffff;
 }
 
-.btn-contato:hover {
+.btn-contato:hover:not(:disabled) {
   background: #52321c;
+}
+
+.btn-contato:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 .btn-remover {

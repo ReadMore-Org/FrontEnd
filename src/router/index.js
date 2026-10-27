@@ -103,6 +103,18 @@ const router = createRouter({
       name: "explore",
       component: ExploreView,
     },
+    {
+      path: "/conversas",
+      name: "conversas",
+      component: () => import("@/features/chat/views/ConversasView.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/conversas/:roomId(\\d+)",
+      name: "conversa",
+      component: () => import("@/features/chat/views/ConversasView.vue"),
+      meta: { requiresAuth: true },
+    },
   ],
 });
 
