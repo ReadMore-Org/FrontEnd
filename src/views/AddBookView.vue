@@ -25,9 +25,7 @@ import voltar from  "@/components/common/voltar.vue"
       </RouterLink>
       <p class="text">Busque o livro pelo nome</p>
 
-      <div class="button brown">
-        Buscar pelo nome
-      </div>
+      <RouterLink to="/explore" class="button brown">Buscar pelo nome</RouterLink>
 
       <div class="divider">
         <div class="divider-line"></div>
@@ -36,7 +34,7 @@ import voltar from  "@/components/common/voltar.vue"
       </div>
 
       <p class="text">Preencha as informações do livro</p>
-      <RouterLink to="manual">
+      <RouterLink to="/manual">
         <div class="button white">
           Cadastrar manualmente
         </div>
@@ -86,7 +84,7 @@ h1 {
 .button {
   width: 100%;
   height: 50px;
-  border-radius: 4px;
+  border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -1,7 +1,5 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import AppHeader from './components/layout/AppHeader.vue';
-import AppFooter from './components/layout/AppFooter.vue';
+import { RouterView } from 'vue-router';
 import { onBeforeUnmount, onMounted, watch } from 'vue';
 import { useAuthStore } from './stores/auth';
 import { useChatStore } from './features/chat/stores/chat';
@@ -47,21 +45,10 @@ function onStorage(event) {
 onMounted(() => window.addEventListener("storage", onStorage));
 onBeforeUnmount(() => window.removeEventListener("storage", onStorage));
 </script>
-
 <template>
-
-  <RouterView />
-
+  <RouterView v-slot="{ Component, route }">
+    <Transition name="page" mode="out-in">
+      <div :key="route.path" class="route-page"><component :is="Component" /></div>
+    </Transition>
+  </RouterView>
 </template>
-
-<style scoped>
-div.corpo{
-  padding: 0 120px;
-}
-@media (max-width: 650px) {
-  div.corpo {
-    padding: 0;
-  }
-}
-
-</style>

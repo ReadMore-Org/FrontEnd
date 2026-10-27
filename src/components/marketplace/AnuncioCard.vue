@@ -1,4 +1,6 @@
 <script setup>
+import AppImage from "@/components/common/AppImage.vue";
+import { bookImageFallbacks } from "@/utils/images";
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
@@ -45,7 +47,7 @@ function abrir() {
     @keydown.enter="abrir"
   >
     <div class="capa-wrapper">
-      <img class="capa" :src="capa" :alt="livro?.titulo || 'Capa do livro'" loading="lazy" />
+      <AppImage class="capa" :src="capa" :fallbacks="bookImageFallbacks(livro)" :alt="livro?.titulo || 'Capa do livro'" loading="lazy" />
       <span
         class="badge"
         :class="anuncio.tipo === 'troca' ? 'badge-troca' : 'badge-emprestimo'"
@@ -58,11 +60,11 @@ function abrir() {
       <h3 class="titulo">{{ livro?.titulo }}</h3>
       <p v-if="autores" class="autor">{{ autores }}</p>
 
-      <div class="dono">
-        <img class="avatar" :src="foto" :alt="nomeDono" />
+      <RouterLink class="dono" :to="`/usuarios/${anuncio.dono.id}`" @click.stop @keydown.enter.stop>
+        <AppImage class="avatar" :src="foto" avatar :fallbacks="[anuncio.dono?.google_picture]" :alt="nomeDono" />
         <span>{{ ehMeu ? "Você" : nomeDono }}</span>
         <span v-if="ehMeu" class="tag-meu">Seu livro</span>
-      </div>
+      </RouterLink>
     </div>
   </article>
 </template>

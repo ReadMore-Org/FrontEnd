@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 
 const props = defineProps({ 
+  mostrarTodos: Boolean,
   livros: {
     type: Array,
     required: true,
@@ -47,10 +48,10 @@ onBeforeUnmount(() => {
 const quantidadeVisivel = computed(() => colunas.value * linhasVisiveis.value);
 
 const livrosVisiveis = computed(() =>
-  props.livros.slice(0, quantidadeVisivel.value)
+  props.mostrarTodos ? props.livros : props.livros.slice(0, quantidadeVisivel.value)
 );
 
-const temMais = computed(() => quantidadeVisivel.value < props.livros.length);
+const temMais = computed(() => !props.mostrarTodos && quantidadeVisivel.value < props.livros.length);
 
 function carregarMais() {
   linhasVisiveis.value += props.linhasPorClique;

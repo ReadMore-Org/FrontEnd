@@ -1,8 +1,9 @@
 <script setup>
+import { getLivro } from "@/services/livros";
 import BookPage from "@/components/books/bookPage.vue";
 import BookPageMobile from "@/components/books/bookPageMobile.vue";
 
-import { ref, onMounted, computed, onUnmounted } from "vue";
+import { ref, onMounted, computed, onUnmounted, watch } from "vue";
 import { useRoute } from "vue-router";
 
 import { useLivrosStore } from "@/stores/livros";
@@ -14,7 +15,23 @@ const route = useRoute();
 const livroStore = useLivrosStore();
 const googleBooksStore = useGoogleBooksStore();
 
-const id = route.params.id;
+const livroDireto = ref(null);
+const erro = ref("");
+let generation = 0;
+watch(() => [route.params.id, route.name], async ([value]) => {
+  const current = ++generation;
+  livroDireto.value = null;
+  erro.value = "";
+  try {
+    if (route.name === "livro-google") { await googleBooksStore.buscarLivro(value); return; }
+    const { data } = await getLivro(value);
+    if (current !== generation) return;
+    livroDireto.value = data;
+    const index = livroStore.livros.findIndex(item => item.id === data.id);
+    if (index < 0) livroStore.livros.push(data);
+    else livroStore.livros[index] = data;
+  } catch { if (current === generation) erro.value = "Não foi possível carregar este livro."; }
+}, { immediate: true });
 
 // verifica se é um livro da Google Books
 const isGoogleBook = computed(() => route.name === "livro-google");
@@ -25,19 +42,11 @@ const livro = computed(() => {
     return googleBooksStore.livroSelecionado;
   }
 
-  return livroStore.livros.find((l) => l.id === Number(id));
+  return livroDireto.value;
 });
 
-onMounted(async () => {
-  if (isGoogleBook.value) {
-    await googleBooksStore.buscarLivro(id);
-  } else {
-    await Promise.all([
-      livroStore.fetchLivros(),
-      livroStore.fetchCategorias(),
-    ]);
-  }
-
+onMounted(() => {
+  livroStore.fetchCategorias();
   window.addEventListener("resize", checkScreen);
 });
 
@@ -57,19 +66,24 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="margin">
+  <div class="book-details-page">
+    <p v-if="erro" role="alert">{{ erro }}</p>
+    <p v-else-if="!livro" role="status">Carregando livro...</p>
     <BookPageMobile
-      v-if="isMobile"
+      v-if="!erro && livro && isMobile"
       :livro="livro"
       :categoriaNome="categoriaNome"
     />
 
     <BookPage
-      v-else
+      v-else-if="!erro && livro"
       :livro="livro"
       :categoriaNome="categoriaNome"
     />
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.book-details-page { max-width:1160px; margin:0 auto; padding:24px 28px 80px; }
+@media (max-width:650px) { .book-details-page { padding:0 0 80px; } }
+</style>

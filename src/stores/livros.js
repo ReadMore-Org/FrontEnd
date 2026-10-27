@@ -74,8 +74,16 @@ export const useLivrosStore = defineStore("livros", () => {
     error.value = null;
 
     try {
-      const response = await getLivrosUsuario(status);
-      meusLivros.value = response.data.results ?? response.data;
+      const all = [];
+      let page = 1;
+      let total = 1;
+      do {
+        const response = await getLivrosUsuario(status, page);
+        all.push(...(response.data.results ?? response.data));
+        total = response.data.total_pages || 1;
+        page++;
+      } while (page <= total);
+      meusLivros.value = all;
     } catch (err) {
       error.value = "Erro ao carregar meus livros.";
       console.error(err);
@@ -84,43 +92,27 @@ export const useLivrosStore = defineStore("livros", () => {
     }
   }
 
-async function atualizarStatusMeuLivro(livroOuPayload, novoStatus) {
-  const livroId =
-    typeof livroOuPayload === "object" ? livroOuPayload.id : livroOuPayload;
-
-  // Encontra o índice no array
-  const index = meusLivros.value.findIndex(
-    (item) =>
-      item.livro?.id === livroId ||
-      item.livro === livroId ||
-      item.id === livroId
-  );
-
-  if (index !== -1) {
-    // 🟢 Atualização reativa direta substituindo o objeto no array
-    meusLivros.value[index] = {
-      ...meusLivros.value[index],
-      status: novoStatus
-    };
-
-    // Atualiza no backend em segundo plano
-    try {
-      await updateStatusLivroUsuario(meusLivros.value[index].id, novoStatus);
-    } catch (err) {
-      console.error("Erro ao atualizar no backend:", err);
-      await fetchMeusLivros(); // Recarrega se houver erro
-    }
-  } else {
-    // 🟢 Se o livro não estava na estante (novo registro)
-    try {
+  async function atualizarStatusMeuLivro(livroOuPayload, novoStatus) {
+    const isShelf = typeof livroOuPayload === "object" && livroOuPayload?.livro != null;
+    const livroId = typeof livroOuPayload === "object" ? livroOuPayload.id : livroOuPayload;
+    const index = meusLivros.value.findIndex(item => isShelf
+      ? item.id === livroOuPayload.id
+      : (item.livro?.id ?? item.livro) === livroId);
+    if (index >= 0) {
+      const previous = meusLivros.value[index];
+      meusLivros.value[index] = { ...previous, status: novoStatus };
+      try {
+        await updateStatusLivroUsuario(previous.id, novoStatus);
+      } catch (err) {
+        const currentIndex = meusLivros.value.findIndex(item => item.id === previous.id);
+        if (currentIndex >= 0) meusLivros.value[currentIndex] = previous;
+        throw err;
+      }
+    } else {
       await createLivroUsuario({ livro: livroId, status: novoStatus });
-      // Busca novamente os livros para trazer o novo registro com ID gerado pelo backend
       await fetchMeusLivros();
-    } catch (err) {
-      console.error("Erro ao adicionar livro:", err);
     }
   }
-}
 
   // Ação para remover livro da estante do usuário
   async function removerMeuLivro(meuLivroId) {
@@ -139,77 +131,42 @@ async function atualizarStatusMeuLivro(livroOuPayload, novoStatus) {
     }
   }
 
-  async function fetchCategorias() {
-    try {
-      const res = await getCategorias();
-      categorias.value = res.data.results || [];
-    } catch (err) {
-      console.error("Erro ao carregar categorias", err);
-    }
+  async function fetchOptions(fetchPage) {
+    const all = [];
+    let page = 1;
+    let total = 1;
+    do {
+      const response = await fetchPage(page);
+      all.push(...(response.data.results ?? response.data));
+      total = response.data.total_pages || 1;
+      page++;
+    } while (page <= total);
+    return all;
   }
-
-  async function fetchEditoras() {
-    try {
-      const res = await getEditoras();
-      editoras.value = res.data.results || [];
-    } catch (err) {
-      console.error("Erro ao carregar editoras", err);
-    }
+  async function fetchCategorias({ throwOnError = false } = {}) {
+    try { categorias.value = await fetchOptions(getCategorias); }
+    catch (err) { if (throwOnError) throw err; }
   }
-
+  async function fetchEditoras({ throwOnError = false } = {}) {
+    try { editoras.value = await fetchOptions(getEditoras); }
+    catch (err) { if (throwOnError) throw err; }
+  }
   async function addLivro(data) {
     error.value = null;
-
     try {
-      let payload = { ...data };
-
+      const payload = { ...data };
+      delete payload.capaFile;
       if (data.capaFile) {
         const upload = await uploadImagem(data.capaFile);
         payload.capa_attachment_key = upload.attachment_key;
       }
-
-      delete payload.capaFile;
-
-      if (typeof payload.autores === "string") {
-        payload.autores_nomes = payload.autores
-          .split(",")
-          .map((nome) => nome.trim())
-          .filter((nome) => nome.length > 0);
-      }
-      delete payload.autores;
-
-      [
-        "isbn",
-        "idioma",
-        "paginas",
-        "nota",
-        "publicacao",
-        "tipo_capa",
-        "faixa_etaria",
-        "editora",
-        "subtitulo",
-        "sinopse",
-      ].forEach((key) => {
-        if (payload[key] === "" || payload[key] === undefined) {
-          payload[key] = null;
-        }
-      });
-
-      if (
-        payload.categoria === null ||
-        payload.categoria === "" ||
-        payload.categoria === undefined
-      ) {
-        payload.categoria = [];
-      } else {
-        payload.categoria = [payload.categoria];
-      }
-
-      const response = await createLivro(payload);
-      livros.value.push(response.data);
+      const response = await api.post("/livros/cadastrar-manual/", payload);
+      livros.value.push(response.data.livro);
+      meusLivros.value.push(response.data.livro_usuario);
+      return response.data.livro;
     } catch (err) {
-      console.log("ERRO COMPLETO:", err.response?.data);
-      error.value = "Erro ao adicionar livro.";
+      error.value = "Não foi possível cadastrar o livro.";
+      throw err;
     }
   }
 

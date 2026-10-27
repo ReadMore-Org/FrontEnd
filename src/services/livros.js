@@ -16,15 +16,14 @@ export const updateLivro = (id, data) =>
 export const deleteLivro = (id) =>
   api.delete(`/livros/${id}/`);
 
-export const getCategorias = () =>
-  api.get('/categorias/', { params: { page_size: 100 } });
+export const getCategorias = (page = 1) =>
+  api.get('/categorias/', { params: { page, page_size: 100 } });
 
-export const getEditoras = () =>
-  api.get('/editoras/');
+export const getEditoras = (page = 1) =>
+  api.get('/editoras/', { params: { page, page_size: 100 } });
 
-export function getLivrosUsuario(status = null) {
-  const query = status ? `?status=${status}` : '';
-  return api.get(`/livros-usuario/${query}`);
+export function getLivrosUsuario(status = null, page = 1) {
+  return api.get("/livros-usuario/", { params: { status: status || undefined, page, page_size: 100 } });
 }
 
 export function createLivroUsuario(data) {
@@ -40,8 +39,9 @@ export async function deleteLivroUsuario(id) {
   return await api.delete(`/livros-usuario/${id}/`);
 }
 
-export function importarLivroGoogle(livro, status) {
+export function importarLivroGoogle(livro, status, somenteCatalogo = false) {
   const payload = {
+    google_book_id: livro.google_book_id || livro.googleBookId || (typeof livro.id === "string" ? livro.id : null),
     titulo: livro.titulo,
     subtitulo: livro.subtitulo || null,
     isbn: livro.isbn || null,
@@ -52,7 +52,7 @@ export function importarLivroGoogle(livro, status) {
     publicacao: livro.publicacao || null,
 
     editora: typeof livro.editora === 'object'
-      ? livro.editora.id
+      ? livro.editora?.nome
       : livro.editora || null,
 
     autores: (livro.autores || []).map((a) =>
@@ -67,5 +67,5 @@ export function importarLivroGoogle(livro, status) {
     status,
   };
 
-  return api.post('/livros/importar-google/', payload);
+  return api.post(somenteCatalogo ? '/livros/importar-interacao/' : '/livros/importar-google/', payload);
 }

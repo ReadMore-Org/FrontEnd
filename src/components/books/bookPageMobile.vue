@@ -1,5 +1,10 @@
 <script setup>
-import { Heart, Share2, Settings, ArrowLeft, Trash2 } from "lucide-vue-next";
+import BookCategories from "./BookCategories.vue";
+import { getAutoresTexto, limparSinopse } from "@/utils/marketplaceHelpers";
+import AppImage from "@/components/common/AppImage.vue";
+import { getBookCover, bookImageFallbacks } from "@/utils/images";
+import BookInteraction from "@/components/social/BookInteraction.vue";
+import { ArrowLeft, Trash2 } from "lucide-vue-next";
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import AppHeader from "@/components/layout/AppHeader.vue";
@@ -23,21 +28,7 @@ const googleBooksStore = useGoogleBooksStore();
 
 const toast = useToast();
 
-const getBookCover = (livro) => {
-  if (!livro) return "/imgs/livro_sem_capa.png";
 
-  const capa = livro.capa;
-  const url = typeof capa === "string" ? capa : capa?.url;
-
-  if (!url) return "/imgs/livro_sem_capa.png";
-
-  if (url.startsWith("http")) {
-    const isLocal = /^https?:\/\/(127\.0\.0\.1|localhost)/i.test(url);
-    return isLocal ? url : url.replace(/^http:\/\//i, "https://");
-  }
-
-  return `${import.meta.env.VITE_API_BASE_URL}${url}`;
-};
 
 const voltar = () => {
   window.history.back();
@@ -57,15 +48,7 @@ const meuLivroId = ref(null);
 const isLoading = ref(true);
 const isUpdatingStatus = ref(false);
 const isDeleting = ref(false);
-const isFavorito = ref(false);
 
-// =========================================================
-// FAVORITO
-// =========================================================
-
-const toggleFavorito = () => {
-  isFavorito.value = !isFavorito.value;
-};
 
 // =========================================================
 // LIVRO ATUAL
@@ -169,7 +152,7 @@ const carregarDados = async () => {
 
   try {
     if (isGoogleBook.value) {
-      await googleBooksStore.buscarLivro(currentId);
+      if (String(googleBooksStore.livroSelecionado?.id) !== String(currentId)) await googleBooksStore.buscarLivro(currentId);
     } else {
       await Promise.all([livroStore.fetchLivros(), livroStore.fetchCategorias()]);
     }
@@ -294,48 +277,52 @@ const removerDaEstante = async () => {
   <div v-if="livro" class="mobile">
     <!-- TOPO -->
     <div class="topo">
-      <button @click="voltar" class="btn-voltar">
+      <button @click="voltar" class="btn-voltar" type="button" aria-label="Voltar">
         <ArrowLeft />
       </button>
 
       <p>Detalhes</p>
-      <div class="acoes">
-        <Share2 />
-        <Settings />
-      </div>
+      <span class="topo-spacer" aria-hidden="true"></span>
     </div>
 
     <!-- CAPA -->
     <div class="capa">
-      <img :src="getBookCover(livro)" class="imagem" />
-      <div class="coracao" @click="toggleFavorito">
-        <Heart :size="24" :class="{ favoritado: isFavorito }" />
-      </div>
+      <AppImage :src="getBookCover(livro)" :fallbacks="bookImageFallbacks(livro)" :alt="`Capa de ${livro.titulo}`" class="imagem" />
+
     </div>
 
     <div class="info">
       <h1>{{ livro.titulo }}</h1>
-      <p>{{ livro.autores.map((a) => a.nome).join(", ") }}</p>
+      <p v-if="livro.subtitulo" class="subtitulo">{{ livro.subtitulo }}</p>
+      <p v-if="getAutoresTexto(livro)">por {{ getAutoresTexto(livro) }}</p>
     </div>
 
-    <!-- STATUS -->
-    <statusSelect v-model="status" variante="livro" @update:modelValue="onStatusChange" />
-     <BotaoMarketplace :meu-livro-item="meuLivroItem" />
+    <BookCategories :livro="livro" :categorias="livroStore.categorias" />
+    <BookInteraction :livro="livro" :google="isGoogleBook" details />
+
+    <section class="estante-section" aria-label="Organizar na estante">
+      <h2 class="estante-label">Na sua estante</h2>
+      <StatusSelect :model-value="status || ''" variante="livro" esconder-label :disabled="isUpdatingStatus || isDeleting" @update:modelValue="onStatusChange" />
+      <BotaoMarketplace :meu-livro-item="meuLivroItem" />
+      <button v-if="meuLivroItem" class="btn-deletar-estante" @click="abrirModalRemocao" :disabled="isDeleting" type="button">
+        <Trash2 :size="16" /><span>Remover da estante</span>
+      </button>
+    </section>
 
     <!-- DETALHES RESUMIDOS -->
     <div class="detalhes">
       <div>
-        <p>{{ livro.idioma === "pt" ? "Português" : livro.idioma }}</p>
+        <p>{{ { pt: "Português", "pt-BR": "Português", en: "Inglês", es: "Espanhol" }[livro.idioma] || livro.idioma || "—" }}</p>
         <span>Idioma</span>
       </div>
 
       <div class="paginas">
-        <p>{{ livro.paginas }}</p>
+        <p>{{ livro.paginas || "—" }}</p>
         <span>Páginas</span>
       </div>
 
       <div class="ano">
-        <p>{{ new Date(livro.publicacao).getFullYear() }}</p>
+        <p>{{ livro.publicacao ? String(livro.publicacao).slice(0, 4) : "—" }}</p>
         <span>Ano</span>
       </div>
     </div>
@@ -344,20 +331,10 @@ const removerDaEstante = async () => {
       <!-- SINOPSE -->
       <div class="sinopse">
         <h2>Sinopse</h2>
-        <p>{{ livro.sinopse }}</p>
+        <p>{{ limparSinopse(livro.sinopse) || "Sem sinopse disponível." }}</p>
       </div>
 
-      <button
-        v-if="meuLivroItem"
-        class="btn-deletar-estante"
-        @click="abrirModalRemocao"
-        :disabled="isDeleting"
-        type="button"
-        title="Remover da estante"
-      >
-        <Trash2 :size="18" />
-        <span>Remover da estante</span>
-      </button>
+
     </div>
 
     <!-- MODAL DE CONFIRMAÇÃO DE REMOÇÃO DA ESTANTE -->
@@ -697,4 +674,27 @@ const removerDaEstante = async () => {
     transform: translateY(0) scale(1);
   }
 }
+
+.mobile { display:flex; flex-direction:column; gap:22px; padding:20px 20px 40px; }
+.topo { gap:12px; color:#6b4226; font-size:13px; font-weight:500; }
+.topo-spacer { width:40px; }
+.btn-voltar { display:flex; align-items:center; justify-content:center; width:40px; height:40px; border:1px solid #e8d8c3; background:#fffdf9; color:#6b4226; }
+.capa { width:180px; margin:0 auto; padding:12px 0; }
+.imagem { border-radius:12px; box-shadow:0 12px 24px rgba(107,66,38,.16); }
+.info h1 { font-size:26px; line-height:1.25; margin-bottom:10px; overflow-wrap:anywhere; }
+.info p { line-height:1.6; }
+.info .subtitulo { margin-bottom:8px; color:#9c8a7a; }
+.estante-section { display:flex; flex-direction:column; gap:12px; padding:18px; background:#fffdf9; border:1px solid #e8d8c3; border-radius:14px; }
+.estante-label { color:#9c8a7a; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+.estante-section :deep(.toggle-group) { gap:6px; width:100%; }
+.estante-section :deep(.toggle-btn) { flex:1; min-width:0; padding:0 8px; font-size:12px; }
+.estante-section .btn-deletar-estante { align-self:flex-start; margin:0; font-size:12px; border-color:#e8d8c3; }
+.detalhes { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:0; padding:18px 12px; border:1px solid #e8d8c3; border-radius:14px; background:#faf7f2; text-align:center; }
+.detalhes .paginas { padding:0 8px; border-left:1px solid #e8d8c3; border-right:1px solid #e8d8c3; }
+.detalhes .ano { text-align:center; }
+.detalhes p { font-size:14px; overflow-wrap:anywhere; }
+.detalhes span { display:block; margin-top:4px; font-size:11px; }
+.sinopse { padding:20px; background:#fffdf9; border:1px solid #e8d8c3; border-radius:14px; }
+.sinopse h2 { font-size:18px; }
+.sinopse p { white-space:pre-line; overflow-wrap:anywhere; line-height:1.8; }
 </style>

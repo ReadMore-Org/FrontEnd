@@ -1,5 +1,5 @@
-export const FALLBACK_CAPA = "/imgs/livro_sem_capa.png";
-export const FALLBACK_AVATAR = "/imgs/avatar.jpeg";
+import { getBookCover, getUserPhoto } from "@/utils/images";
+export { FALLBACK_CAPA, FALLBACK_AVATAR } from "@/utils/images";
 
 export const ROTULO_TIPO = {
   troca: "Troca",
@@ -14,22 +14,7 @@ export const ROTULO_CONDICAO = {
 };
 
 // Mesma regra de capa que você já usa nos outros cards
-export function getCapaUrl(livro) {
-  if (!livro) return FALLBACK_CAPA;
-
-  const capa = livro.capa;
-  const url = typeof capa === "string" ? capa : capa?.url;
-
-  if (!url) return FALLBACK_CAPA;
-
-  if (url.startsWith("http")) {
-    const isLocal = /^https?:\/\/(127\.0\.0\.1|localhost)/i.test(url);
-    return isLocal ? url : url.replace(/^http:\/\//i, "https://");
-  }
-
-  const base = import.meta.env.VITE_BACKEND_URL || window.location.origin;
-  return new URL(url, base).href;
-}
+export const getCapaUrl = getBookCover;
 
 export function getAutoresTexto(livro) {
   if (!livro?.autores?.length) return "";
@@ -45,7 +30,7 @@ export function getCategoriasLivro(livro) {
 }
 
 export function getFotoDono(dono) {
-  return dono?.foto_url || FALLBACK_AVATAR;
+  return getUserPhoto(dono);
 }
 
 export function getPrimeiroNome(dono) {

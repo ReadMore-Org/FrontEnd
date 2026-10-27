@@ -1,4 +1,6 @@
 <script setup>
+import AppImage from "@/components/common/AppImage.vue";
+import { getUserPhoto } from "@/utils/images";
 import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "../stores/auth";
 import { Camera } from "lucide-vue-next";
@@ -36,25 +38,7 @@ const previewUrl = ref(null);
 const imgAttachmentKey = ref(null);
 const uploading = ref(false);
 
-const userPhoto = computed(() => {
-  if (previewUrl.value) {
-    return previewUrl.value;
-  }
-
-  const url = authStore.user?.foto?.url;
-
-  if (url) {
-    return url.startsWith("http")
-      ? url
-      : `${import.meta.env.VITE_BACKEND_URL}${url}`;
-  }
-
-  if (authStore.user?.google_picture) {
-    return authStore.user.google_picture;
-  }
-
-  return "/imgs/avatar.jpeg";
-});
+const userPhoto = computed(() => previewUrl.value || getUserPhoto(authStore.user));
 
 const fileInput = ref(null);
 
@@ -129,7 +113,7 @@ const salvarPerfil = async () => {
             :class="{ disabled: uploading }"
             @click="selecionarFoto"
           >
-            <img
+            <AppImage avatar :fallbacks="[authStore.user?.google_picture]"
               :src="userPhoto"
               alt="avatar"
               class="avatar"
