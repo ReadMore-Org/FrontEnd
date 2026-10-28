@@ -177,8 +177,9 @@ function onEdit(payload) {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--color-border);
+  padding: 0.875rem 1.5rem;
+  color: #ffffff;
+  background: linear-gradient(135deg, #654321 0%, #85572c 100%);
 }
 
 .window__title {
@@ -188,18 +189,19 @@ function onEdit(payload) {
 
 .window__title h2 {
   overflow: hidden;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.0625rem;
+  font-weight: 700;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 .window__title small {
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .window__typing {
-  color: var(--color-primary) !important;
+  color: #ffffff !important;
+  font-weight: 600;
 }
 
 .window__back,
@@ -210,18 +212,14 @@ function onEdit(payload) {
   min-width: 2.75rem;
   min-height: 2.75rem;
   padding: 0.5rem;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.9);
   border-radius: 50%;
 }
 
 .window__back:hover,
 .window__info:hover {
-  color: var(--color-text);
-  background-color: color-mix(
-    in srgb,
-    var(--color-primary) 8%,
-    var(--chat-bg, var(--color-background))
-  );
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.16);
 }
 
 /* Só no celular existe a lista como tela separada. */

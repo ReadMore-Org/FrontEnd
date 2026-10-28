@@ -198,6 +198,8 @@ onMounted(() => scrollToBottom())
   overflow-y: auto;
   overscroll-behavior: contain;
   background-color: var(--chat-deep, var(--chat-bg, var(--color-background)));
+  background-image: radial-gradient(rgba(101, 67, 33, 0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
 }
 
 .list__items {

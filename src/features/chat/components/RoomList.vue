@@ -118,8 +118,9 @@ function preview(room) {
 }
 
 .rooms__title {
-  font-size: 1.125rem;
-  font-weight: 600;
+  color: #654321;
+  font-size: 1.25rem;
+  font-weight: 800;
 }
 
 .rooms__search {
@@ -185,13 +186,17 @@ function preview(room) {
   text-align: left;
 }
 
-.room:hover,
+.room {
+  border-left: 3px solid transparent;
+}
+
+.room:hover {
+  background-color: #faf3e0;
+}
+
 .room--active {
-  background-color: color-mix(
-    in srgb,
-    var(--color-primary) 7%,
-    var(--chat-bg, var(--color-background))
-  );
+  border-left-color: #654321;
+  background-color: #f5e6d3;
 }
 
 .room__body {

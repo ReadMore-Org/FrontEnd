@@ -139,6 +139,9 @@ function selectRoom(id) {
   --chat-bg: #ffffff;
   --chat-deep: #faf3e0;
 
+  --chat-deep: #f7ecda;
+
+  font-family: "Nunito", "Segoe UI", sans-serif;
   display: grid;
   grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
@@ -148,6 +151,12 @@ function selectRoom(id) {
   border-radius: 16px;
   background-color: var(--chat-bg);
   box-shadow: 0 2px 12px rgba(101, 67, 33, 0.08);
+}
+
+.chat :deep(button),
+.chat :deep(input),
+.chat :deep(textarea) {
+  font-family: inherit;
 }
 
 .chat__banner {

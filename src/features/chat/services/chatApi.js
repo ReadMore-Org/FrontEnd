@@ -35,7 +35,14 @@ export function sendMessage(roomId, { body = null, file = null, replyTo = null }
     form.append('file', file)
     if (replyTo) form.append('reply_to', String(replyTo))
 
-    return api.post(`/chat/rooms/${roomId}/messages/`, form).then(unwrap)
+    // A instância do axios tem Content-Type: application/json por padrão, e com ele o axios converte
+    // o FormData em JSON (o arquivo se perde). O multipart força o envio como formulário de verdade;
+    // o navegador acrescenta o boundary sozinho.
+    return api
+      .post(`/chat/rooms/${roomId}/messages/`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then(unwrap)
   }
 
   return api.post(`/chat/rooms/${roomId}/messages/`, { body, reply_to: replyTo }).then(unwrap)

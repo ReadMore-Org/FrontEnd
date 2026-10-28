@@ -252,17 +252,14 @@ function replyPreview(reply) {
   min-width: 0;
   padding: 0.4375rem 0.875rem;
   color: var(--color-text);
-  border-radius: 1rem;
+  border-radius: 1.125rem;
   background-color: var(--bubble-bg);
-  --bubble-bg: color-mix(in srgb, var(--color-primary) 7%, var(--chat-bg, var(--color-background)));
+  box-shadow: 0 1px 2px rgba(101, 67, 33, 0.12);
+  --bubble-bg: #ffffff;
 }
 
 .message--own .message__bubble {
-  --bubble-bg: color-mix(
-    in srgb,
-    var(--color-primary) 13%,
-    var(--chat-bg, var(--color-background))
-  );
+  --bubble-bg: #ecd5b6;
 }
 
 /* Rabinho de balão de fala apontando para a foto de perfil (só na 1ª mensagem da sequência). */
