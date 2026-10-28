@@ -1,3 +1,13 @@
+// Remove o worker de desenvolvimento antigo que pode servir versões anteriores.
+if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (const registration of registrations) {
+      const worker = registration.active || registration.waiting || registration.installing;
+      if (worker && new URL(worker.scriptURL).pathname.endsWith('/dev-sw.js')) registration.unregister();
+    }
+  }).catch(() => {});
+}
+
 import { createApp } from 'vue';
 import { createPinia } from 'pinia'
 import App from './App.vue';

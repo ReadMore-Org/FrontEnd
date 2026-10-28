@@ -33,7 +33,7 @@ const googleBooksStore = useGoogleBooksStore();
 const livroStore = useLivrosStore();
 const authStore = useAuthStore();
 
-const isGoogleBook = computed(() => route.path.startsWith("/livro/google"));
+const isGoogleBook = computed(() => ["livro-google", "livro-catalogo"].includes(route.name));
 
 // =========================================================
 // ESTADOS DA PÁGINA

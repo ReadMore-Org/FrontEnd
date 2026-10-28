@@ -35,10 +35,12 @@ async function loadInteraction() {
       return;
     }
     if (props.google) {
-      const googleId = props.livro.google_book_id || props.livro.id;
-      const { data } = await api.get('/livros/', { params: { google_book_id: googleId } });
-      if (current !== generation) return;
-      backendId.value = (data.results ?? data)[0]?.id ?? null;
+      const googleId = props.livro.google_book_id || (props.livro.origem !== 'openlibrary' ? props.livro.id : null);
+      if (googleId) {
+        const { data } = await api.get('/livros/', { params: { google_book_id: googleId } });
+        if (current !== generation) return;
+        backendId.value = (data.results ?? data)[0]?.id ?? null;
+      }
       if (!backendId.value && props.livro.isbn) {
         const response = await api.get('/livros/', { params: { isbn: props.livro.isbn } });
         if (current !== generation) return;

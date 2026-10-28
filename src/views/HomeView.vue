@@ -24,6 +24,8 @@ const livroStore = useLivrosStore();
 const isLoading = ref(true);
 
 onMounted(async () => {
+  // As recomendações independem da disponibilidade da API da estante.
+  googleBooksStore.buscarRecomendados();
   try {
     // Carrega dados essenciais da sua API primeiro
     await Promise.all([livroStore.fetchLivros(), livroStore.fetchMeusLivros()]);
@@ -33,8 +35,6 @@ onMounted(async () => {
     isLoading.value = false;
   }
 
-  // Busca os recomendados em segundo plano para não travar a tela
-  googleBooksStore.buscarRecomendados();
 });
 
 // Consome exatamente as mesmas propriedades reativas da store usadas no "meusLivros"
@@ -67,6 +67,9 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
       <barraProgresso />
 
       <h1 class="titulo-secao">Recomendados</h1>
+      <p v-if="googleBooksStore.avisoRecomendados && googleBooksStore.resultados.length" role="status">
+        {{ googleBooksStore.avisoRecomendados }}
+      </p>
       <!-- 1. Estado de Carregamento dos Recomendados -->
       <div v-if="googleBooksStore.loading" class="status-recomendados">
         <div class="spinner-small"></div>
@@ -74,7 +77,7 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
       </div>
 
       <!-- 2. Estado de Erro / Falha de API -->
-      <div v-else-if="googleBooksStore.error" class="status-recomendados erro">
+      <div v-else-if="googleBooksStore.error" class="status-recomendados erro" role="alert">
         <p>{{ googleBooksStore.error }}</p>
         <button
           @click="googleBooksStore.buscarRecomendados(true)"
@@ -87,17 +90,31 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
       <!-- 3. Estado de Sucesso (Lista de Livros) -->
       <GradeBook
         v-else-if="googleBooksStore.resultados.length > 0"
-        titulo="testando"
         :livros="googleBooksStore.resultados"
+        :tem-mais-remoto="googleBooksStore.temMaisRecomendados"
+        :carregando-mais="googleBooksStore.carregandoMaisRecomendados"
+        @carregar-mais="googleBooksStore.carregarMaisRecomendados()"
       >
         <template #default="{ livro }">
           <OtherBookCard :livro="livro" />
         </template>
       </GradeBook>
 
+      <div v-if="googleBooksStore.erroMaisRecomendados" class="status-recomendados erro" role="alert">
+        <p>{{ googleBooksStore.erroMaisRecomendados }}</p>
+        <button type="button" class="btn-tentar-novamente"
+          :disabled="googleBooksStore.carregandoMaisRecomendados"
+          @click="googleBooksStore.carregarMaisRecomendados()">
+          {{ googleBooksStore.carregandoMaisRecomendados ? 'Buscando livros...' : 'Tentar carregar mais' }}
+        </button>
+      </div>
+
       <!-- 4. Fallback se não retornar nenhum item -->
-      <div v-else class="status-recomendados">
-        <p>Nenhuma recomendação encontrada no momento.</p>
+      <div v-if="!googleBooksStore.loading && !googleBooksStore.error && !googleBooksStore.resultados.length" class="status-recomendados">
+        <p>Ainda não encontramos recomendações disponíveis. Tente buscar novamente em instantes.</p>
+        <button type="button" class="btn-tentar-novamente" @click="googleBooksStore.buscarRecomendados(true)">
+          Buscar recomendações
+        </button>
       </div>
     </div>
 

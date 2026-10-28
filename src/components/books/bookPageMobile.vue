@@ -36,7 +36,7 @@ const voltar = () => {
 
 const livroStore = useLivrosStore();
 
-const isGoogleBook = computed(() => route.path.startsWith("/livro/google"));
+const isGoogleBook = computed(() => ["livro-google", "livro-catalogo"].includes(route.name));
 
 // =========================================================
 // ESTADOS DA PÁGINA

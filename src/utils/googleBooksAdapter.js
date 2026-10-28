@@ -19,7 +19,8 @@ export function googleBookToLivro(book) {
 
   return {
     id: book.id,
-    google_book_id: book.id,
+    google_book_id: book.source === 'openlibrary' ? null : book.id,
+    origem: book.source || 'google',
     titulo: volumeInfo.title ?? "",
     subtitulo: volumeInfo.subtitle ?? "",
 
@@ -40,7 +41,10 @@ export function googleBookToLivro(book) {
     editora: volumeInfo.publisher ?? null,
     sinopse: volumeInfo.description ?? "",
 
-    capa: volumeInfo.imageLinks?.thumbnail ?? null,
+    capa: volumeInfo.imageLinks?.thumbnail ?? volumeInfo.imageLinks?.smallThumbnail ?? null,
+    capa_google: book.source === 'openlibrary' ? book.googleCover ?? null
+      : volumeInfo.imageLinks?.thumbnail ?? volumeInfo.imageLinks?.smallThumbnail ?? null,
+    imageLinks: volumeInfo.imageLinks ?? {},
 
     // Categorias do Google já em português, ex.: ["Ficção", "Romance"].
     // O importador do backend usa este campo (chave "categorias").

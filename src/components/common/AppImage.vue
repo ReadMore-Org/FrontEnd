@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { resolveImageUrl, FALLBACK_CAPA, FALLBACK_AVATAR } from '@/utils/images';
+import { displayImageUrl, FALLBACK_CAPA, FALLBACK_AVATAR } from '@/utils/images';
 const props = defineProps({
   src: String,
   avatar: Boolean,
@@ -12,7 +12,7 @@ const candidates = computed(() => [...new Set([
   props.src,
   ...props.fallbacks,
   props.avatar ? FALLBACK_AVATAR : FALLBACK_CAPA,
-].map(value => resolveImageUrl(value)).filter(Boolean))]);
+].map(value => displayImageUrl(value, { avatar: props.avatar })).filter(Boolean))]);
 watch(() => JSON.stringify(candidates.value), () => { index.value = 0; });
 function onError(event) {
   if (index.value < candidates.value.length - 1) index.value++;
