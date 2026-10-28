@@ -5,10 +5,14 @@ import { API_BASE_URL } from './apiConfig.js';
 const client = axios.create({ baseURL: API_BASE_URL, timeout: 8000 });
 const ratings = reactive(new Map());
 const normalizedISBN = value => String(value || '').replace(/[\s-]/g, '').toUpperCase();
+function googleId(book) {
+  return book?.google_book_id || (book?.origem !== 'openlibrary' && typeof book?.id === 'string'
+    && !book.id.startsWith('isbn:') ? book.id : null);
+}
 function keys(book) {
   return [
     typeof book?.id === 'number' ? `id:${book.id}` : null,
-    book?.google_book_id || typeof book?.id === 'string' ? `google:${book.google_book_id || book.id}` : null,
+    googleId(book) ? `google:${googleId(book)}` : null,
     book?.isbn ? `isbn:${normalizedISBN(book.isbn)}` : null,
   ].filter(Boolean);
 }
@@ -29,7 +33,7 @@ export async function loadBookRatings(books, { signal } = {}) {
     const chunk = books.slice(index, index + 80);
     const { data } = await client.get('/livros/avaliacoes/', { signal, params: {
       ids: chunk.filter(book => typeof book.id === 'number').map(book => book.id).join(','),
-      google_ids: chunk.map(book => book.google_book_id || (typeof book.id === 'string' ? book.id : null)).filter(Boolean).join(','),
+      google_ids: chunk.map(book => googleId(book)).filter(Boolean).join(','),
       isbns: chunk.map(book => normalizedISBN(book.isbn)).filter(Boolean).join(','),
     } });
     summaries.push(...data);
@@ -38,7 +42,7 @@ export async function loadBookRatings(books, { signal } = {}) {
   for (const summary of summaries) setBookRating(summary, summary);
   for (const book of books) {
     const summary = summaries.find(item => (typeof book.id === 'number' && item.id === book.id)
-      || (item.google_book_id && item.google_book_id === (book.google_book_id || book.id))
+      || (item.google_book_id && item.google_book_id === googleId(book))
       || (book.isbn && normalizedISBN(item.isbn) === normalizedISBN(book.isbn)));
     setBookRating(book, summary || { media: null, total: 0 });
   }

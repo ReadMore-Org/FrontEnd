@@ -40,7 +40,7 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: true /*temporariamente alterado para false*/,
+        enabled: false,
       },
     }),
     vueDevTools(),

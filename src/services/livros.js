@@ -41,7 +41,8 @@ export async function deleteLivroUsuario(id) {
 
 export function importarLivroGoogle(livro, status, somenteCatalogo = false) {
   const payload = {
-    google_book_id: livro.google_book_id || livro.googleBookId || (typeof livro.id === "string" ? livro.id : null),
+    google_book_id: livro.origem === 'openlibrary' ? null
+      : livro.google_book_id || livro.googleBookId || (typeof livro.id === "string" ? livro.id : null),
     titulo: livro.titulo,
     subtitulo: livro.subtitulo || null,
     isbn: livro.isbn || null,

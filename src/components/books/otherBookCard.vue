@@ -23,7 +23,9 @@ const authStore = useAuthStore();
 
 function abrirLivro() {
   if (props.livro?.id) {
-    router.push(`/livro/google/${props.livro.id}`);
+    router.push(props.livro.origem === "local"
+      ? `/livro/${props.livro.id}` : props.livro.origem === 'openlibrary'
+        ? `/livro/catalogo/${props.livro.id}` : `/livro/google/${props.livro.id}`);
   }
 }
 
@@ -127,7 +129,11 @@ async function escolherStatus(status) {
   erro.value = null;
 
   try {
-    await livroStore.importarLivroDoGoogle(props.livro, status);
+    if (props.livro.origem === "local") {
+      await livroStore.atualizarStatusMeuLivro(props.livro, status);
+    } else {
+      await livroStore.importarLivroDoGoogle(props.livro, status);
+    }
 
     if (livroStore.fetchMeusLivros) {
       await livroStore.fetchMeusLivros();

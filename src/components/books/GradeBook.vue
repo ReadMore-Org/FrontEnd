@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 
 const props = defineProps({ 
   mostrarTodos: Boolean,
+  temMaisRemoto: Boolean,
+  carregandoMais: Boolean,
   livros: {
     type: Array,
     required: true,
@@ -16,6 +18,8 @@ const props = defineProps({
     default: 3,
   },
 });
+
+const emit = defineEmits(["carregar-mais"]);
 
 const ITEM_WIDTH = 180;
 const GAP = 24;
@@ -51,9 +55,12 @@ const livrosVisiveis = computed(() =>
   props.mostrarTodos ? props.livros : props.livros.slice(0, quantidadeVisivel.value)
 );
 
-const temMais = computed(() => !props.mostrarTodos && quantidadeVisivel.value < props.livros.length);
+const temMais = computed(() => !props.mostrarTodos && (quantidadeVisivel.value < props.livros.length || props.temMaisRemoto));
 
 function carregarMais() {
+  if (props.carregandoMais) return;
+  const proximaQuantidade = colunas.value * (linhasVisiveis.value + props.linhasPorClique);
+  if (proximaQuantidade > props.livros.length && props.temMaisRemoto) emit("carregar-mais");
   linhasVisiveis.value += props.linhasPorClique;
 }
 </script>
@@ -68,8 +75,8 @@ function carregarMais() {
     </div>
 
     <div class="acoes-grade" v-if="temMais">
-      <button class="btn-carregar-mais" @click="carregarMais">
-        Carregar mais
+      <button class="btn-carregar-mais" :disabled="carregandoMais" @click="carregarMais">
+        {{ carregandoMais ? "Buscando mais livros..." : "Carregar mais" }}
       </button>
     </div>
   </section>

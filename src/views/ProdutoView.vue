@@ -23,7 +23,7 @@ watch(() => [route.params.id, route.name], async ([value]) => {
   livroDireto.value = null;
   erro.value = "";
   try {
-    if (route.name === "livro-google") { await googleBooksStore.buscarLivro(value); return; }
+    if (["livro-google", "livro-catalogo"].includes(route.name)) { await googleBooksStore.buscarLivro(value); return; }
     const { data } = await getLivro(value);
     if (current !== generation) return;
     livroDireto.value = data;
@@ -34,7 +34,7 @@ watch(() => [route.params.id, route.name], async ([value]) => {
 }, { immediate: true });
 
 // verifica se é um livro da Google Books
-const isGoogleBook = computed(() => route.name === "livro-google");
+const isGoogleBook = computed(() => ["livro-google", "livro-catalogo"].includes(route.name));
 
 // livro exibido na página
 const livro = computed(() => {

@@ -1,0 +1,148 @@
+// Seleção editorial geral, independente das preferências do usuário.
+// Cada obra aparece uma única vez, mesmo quando o catálogo possui várias edições.
+export const GENERAL_RECOMMENDATIONS = [
+  ['Dom Casmurro', 'Machado de Assis'],
+  ['O Pequeno Príncipe', 'Antoine de Saint-Exupéry'],
+  ['1984', 'George Orwell'],
+  ['Harry Potter e a Pedra Filosofal', 'Rowling'],
+  ['Memórias Póstumas de Brás Cubas', 'Machado de Assis'],
+  ['A Hora da Estrela', 'Clarice Lispector'],
+  ['O Hobbit', 'Tolkien'],
+  ['Capitães da Areia', 'Jorge Amado'],
+  ['A Revolução dos Bichos', 'George Orwell'],
+  ['O Alquimista', 'Paulo Coelho'],
+  ['Vidas Secas', 'Graciliano Ramos'],
+  ['Orgulho e Preconceito', 'Jane Austen'],
+  ['Grande Sertão: Veredas', 'Guimarães Rosa'],
+  ['Quarto de Despejo', 'Carolina Maria de Jesus'],
+  ['O Cortiço', 'Aluísio Azevedo'],
+  ['A Menina que Roubava Livros', 'Markus Zusak'],
+  ['O Meu Pé de Laranja Lima', 'José Mauro de Vasconcelos'],
+  ['Cem Anos de Solidão', 'Gabriel García Márquez'],
+  ['O Senhor dos Anéis', 'Tolkien'],
+  ['Jogos Vorazes', 'Suzanne Collins'],
+  ['Torto Arado', 'Itamar Vieira Junior'],
+  ['A Metamorfose', 'Franz Kafka'],
+  ['Fahrenheit 451', 'Ray Bradbury'],
+  ['Ensaio sobre a Cegueira', 'José Saramago'],
+  ['O Auto da Compadecida', 'Ariano Suassuna'],
+  ['Iracema', 'José de Alencar'],
+  ['O Guarani', 'José de Alencar'],
+  ['A Moreninha', 'Joaquim Manuel de Macedo'],
+  ['Triste Fim de Policarpo Quaresma', 'Lima Barreto'],
+  ['Macunaíma', 'Mário de Andrade'],
+  ['O Alienista', 'Machado de Assis'],
+  ['Quincas Borba', 'Machado de Assis'],
+  ['Gabriela, Cravo e Canela', 'Jorge Amado'],
+  ['Dona Flor e Seus Dois Maridos', 'Jorge Amado'],
+  ['São Bernardo', 'Graciliano Ramos'],
+  ['Laços de Família', 'Clarice Lispector'],
+  ['Felicidade Clandestina', 'Clarice Lispector'],
+  ['A Paixão Segundo G.H.', 'Clarice Lispector'],
+  ['O Tempo e o Vento', 'Erico Verissimo'],
+  ['Olhos d’Água', 'Conceição Evaristo'],
+  ['Ponciá Vicêncio', 'Conceição Evaristo'],
+  ['Dom Quixote', 'Miguel de Cervantes'],
+  ['Crime e Castigo', 'Dostoiévski'],
+  ['O Retrato de Dorian Gray', 'Oscar Wilde'],
+  ['Frankenstein', 'Mary Shelley'],
+  ['Drácula', 'Bram Stoker'],
+  ['O Morro dos Ventos Uivantes', 'Emily Brontë'],
+  ['Jane Eyre', 'Charlotte Brontë'],
+  ['O Diário de Anne Frank', 'Anne Frank'],
+  ['Duna', 'Frank Herbert'],
+  ['Fundação', 'Isaac Asimov'],
+  ['O Guia do Mochileiro das Galáxias', 'Douglas Adams'],
+  ['As Crônicas de Nárnia', 'Lewis'],
+  ['O Ladrão de Raios', 'Rick Riordan'],
+  ['A Culpa é das Estrelas', 'John Green'],
+  ['Extraordinário', 'Palacio'],
+  ['O Código Da Vinci', 'Dan Brown'],
+  ['O Nome da Rosa', 'Umberto Eco'],
+  ['A Sombra do Vento', 'Carlos Ruiz Zafón'],
+  ['O Caçador de Pipas', 'Khaled Hosseini'],
+  ['Sapiens', 'Yuval Noah Harari'],
+  ['Uma Breve História do Tempo', 'Stephen Hawking'],
+  ['O Mundo de Sofia', 'Jostein Gaarder'],
+  ['A Biblioteca da Meia-Noite', 'Matt Haig'],
+  ['O Conto da Aia', 'Margaret Atwood'],
+  ['Mulherzinhas', 'Louisa May Alcott'],
+  ['Os Miseráveis', 'Victor Hugo'],
+  ['O Conde de Monte Cristo', 'Alexandre Dumas'],
+  ['A Ilha do Tesouro', 'Robert Louis Stevenson'],
+  ['Alice no País das Maravilhas', 'Lewis Carroll'],
+  ['O Jardim Secreto', 'Frances Hodgson Burnett'],
+  ['A Bolsa Amarela', 'Lygia Bojunga'],
+  ['Diário de um Banana', 'Jeff Kinney'],
+  ['Harry Potter e a Câmara dos Segredos', 'Rowling'],
+  ['Harry Potter e o Prisioneiro de Azkaban', 'Rowling'],
+  ['Harry Potter e o Cálice de Fogo', 'Rowling'],
+  ['Harry Potter e a Ordem da Fênix', 'Rowling'],
+  ['Harry Potter e o Enigma do Príncipe', 'Rowling'],
+  ['Harry Potter e as Relíquias da Morte', 'Rowling'],
+  ['A Sociedade do Anel', 'Tolkien'],
+  ['As Duas Torres', 'Tolkien'],
+  ['O Retorno do Rei', 'Tolkien'],
+  ['Tieta', 'Jorge Amado'],
+  ['Perto do Coração Selvagem', 'Clarice Lispector'],
+  ['A Legião Estrangeira', 'Clarice Lispector'],
+  ['A Via Crucis do Corpo', 'Clarice Lispector'],
+  ['Os Contos de Beedle, o Bardo', 'Rowling'],
+  ['Meditações', 'Marco Aurélio'],
+  ['Fogo & Sangue', 'George R. R. Martin'],
+  ['A Divina Comédia', 'Dante Alighieri'],
+  ['O Quinze', 'Rachel de Queiroz'],
+  ['Menino de Engenho', 'José Lins do Rego'],
+  ['Fogo Morto', 'José Lins do Rego'],
+  ['Angústia', 'Graciliano Ramos'],
+  ['Infância', 'Graciliano Ramos'],
+  ['Sagarana', 'Guimarães Rosa'],
+  ['Primeiras Estórias', 'Guimarães Rosa'],
+  ['Memórias de um Sargento de Milícias', 'Manuel Antônio de Almeida'],
+  ['Senhora', 'José de Alencar'],
+  ['Lucíola', 'José de Alencar'],
+  ['O Ateneu', 'Raul Pompeia'],
+  ['Clara dos Anjos', 'Lima Barreto'],
+  ['O Pagador de Promessas', 'Dias Gomes'],
+  ['Morte e Vida Severina', 'João Cabral de Melo Neto'],
+  ['Alguma Poesia', 'Carlos Drummond de Andrade'],
+  ['A Rosa do Povo', 'Carlos Drummond de Andrade'],
+  ['Romanceiro da Inconfidência', 'Cecília Meireles'],
+  ['Mar Morto', 'Jorge Amado'],
+  ['Terras do Sem-Fim', 'Jorge Amado'],
+  ['O Velho e o Mar', 'Ernest Hemingway'],
+  ['A Peste', 'Albert Camus'],
+  ['O Estrangeiro', 'Albert Camus'],
+  ['Admirável Mundo Novo', 'Aldous Huxley'],
+  ['A Cor Púrpura', 'Alice Walker'],
+  ['O Sol é para Todos', 'Harper Lee'],
+  ['O Apanhador no Campo de Centeio', 'J. D. Salinger'],
+  ['As Aventuras de Tom Sawyer', 'Mark Twain'],
+  ['Vinte Mil Léguas Submarinas', 'Júlio Verne'],
+  ['Viagem ao Centro da Terra', 'Júlio Verne'],
+  ['A Volta ao Mundo em Oitenta Dias', 'Júlio Verne'],
+];
+
+const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+export function matchesRecommendedWork(title, authors, [expected, author]) {
+  const expectedTitle = normalize(expected);
+  const actualTitle = normalize(title);
+  const actualAuthor = normalize(authors.map(value => typeof value === 'string' ? value : value.nome).join(' '));
+  const editionTitle = normalize(String(title || '').replace(/\s*\([^)]*\)\s*$/u, '').split(/[:–—]/u)[0]);
+  return (actualTitle === expectedTitle || editionTitle === expectedTitle)
+    && !/\b(resumo|analise|guia de estudo|summary|study guide|adaptado)\b/.test(actualTitle)
+    && normalize(author).split(' ').filter(word => word.length > 2 && !['das', 'dos'].includes(word))
+      .every(word => actualAuthor.includes(word));
+}
+
+export function selectRecommendedEdition(items, entry) {
+  return items.filter(book => {
+    const info = book.volumeInfo;
+    if (!book.id || !info || (info.language && info.language !== 'pt')) return false;
+    return matchesRecommendedWork(info.title, info.authors || [], entry)
+      && !/\b(resumo|analise|guia de estudo|summary|study guide)\b/.test(normalize(info.subtitle));
+  }).sort((a, b) => Number(!!b.volumeInfo.imageLinks?.thumbnail) - Number(!!a.volumeInfo.imageLinks?.thumbnail)
+    || (b.volumeInfo.ratingsCount || 0) - (a.volumeInfo.ratingsCount || 0))[0];
+}

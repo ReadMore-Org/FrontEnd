@@ -1,3 +1,6 @@
+import { recommendationErrorMessage } from "@/utils/recommendationMessages";
+import { getSavedRecommendations, searchRecommendedBooks } from "@/services/recommendations";
+import { GENERAL_RECOMMENDATIONS, selectRecommendedEdition, matchesRecommendedWork } from "@/utils/generalRecommendations";
 import { ref } from "vue";
 import { loadBookRatings, markBookRatingsUnavailable } from "@/services/bookRatings";
 import { buildSearchSources, buildTitleFallbackSources, matchesSearchFilters, mergeSearchBooks, sortSearchBooks } from "@/utils/bookSearch";
@@ -11,19 +14,6 @@ import {
   searchBookByISBN,
   getBookById,
 } from "@/services/googleBooks";
-
-// =========================
-// SHUFFLE
-// =========================
-function shuffle(array) {
-  return array
-    .map((value) => ({
-      value,
-      sort: Math.random(),
-    }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ value }) => value);
-}
 
 export const useGoogleBooksStore = defineStore("googleBooks", () => {
   const resultados = ref([]);
@@ -167,122 +157,145 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
   // =========================
   // RECOMENDADOS
   // =========================
-  const CACHE_KEY_RECOMENDADOS = "recomendados_google_books_v2";
-  const CACHE_KEY_TIMESTAMP = "recomendados_google_books_time_v2";
-  const CACHE_EXPIRATION_MS = 12 * 60 * 60 * 1000; // 12 horas em milissegundos
+  const CACHE_KEY_RECOMENDADOS = "recomendados_google_books_v8";
+  const CACHE_EXPIRATION_MS = 12 * 60 * 60 * 1000;
+  let recomendadosEmAndamento = null;
+  let recomendacoesPendentes = GENERAL_RECOMMENDATIONS.map((_, index) => index);
+  const temMaisRecomendados = ref(true);
+  const carregandoMaisRecomendados = ref(false);
+  const erroMaisRecomendados = ref(null);
+  const avisoRecomendados = ref(null);
 
-  async function refreshRecommendedRatings() {
-    try { await loadBookRatings(resultados.value); }
-    catch { markBookRatingsUnavailable(resultados.value); }
+  function lerCacheRecomendados() {
+    try {
+      const cache = JSON.parse(localStorage.getItem(CACHE_KEY_RECOMENDADOS));
+      return cache && Array.isArray(cache.livros) && cache.livros.length
+        && cache.livros.every(livro => livro?.id && livro?.titulo)
+        && Array.isArray(cache.pendentes) && cache.pendentes.every(index => Number.isInteger(index)
+          && index >= 0 && index < GENERAL_RECOMMENDATIONS.length) ? cache : null;
+    } catch { return null; }
   }
 
-  async function buscarRecomendados(forceRefresh = false) {
+  function buscarRecomendados(forceRefresh = false) {
+    if (recomendadosEmAndamento) return recomendadosEmAndamento;
+    recomendadosEmAndamento = carregarRecomendados(forceRefresh)
+      .finally(() => { recomendadosEmAndamento = null; });
+    return recomendadosEmAndamento;
+  }
+
+  async function carregarRecomendados(forceRefresh) {
     loading.value = true;
     error.value = null;
-
-    // 1. TENTA LER DO CACHE LOCAL (se não for atualização forçada)
-    if (!forceRefresh) {
-      const cachedData = localStorage.getItem(CACHE_KEY_RECOMENDADOS);
-      const cachedTime = localStorage.getItem(CACHE_KEY_TIMESTAMP);
-
-      if (cachedData && cachedTime) {
-        const isExpired = Date.now() - Number(cachedTime) > CACHE_EXPIRATION_MS;
-
-        if (!isExpired) {
-          try {
-            resultados.value = JSON.parse(cachedData);
-            await refreshRecommendedRatings();
-            loading.value = false;
-            return;
-          } catch (e) {
-            console.warn("Erro ao ler cache:", e);
-          }
-        }
-      }
-    }
-
-    // 2. BUSCA DA API DO GOOGLE
+    const cache = lerCacheRecomendados();
     try {
-      const queries = [
-        "inauthor:Machado de Assis",
-        "inauthor:Clarice Lispector",
-        "inauthor:Jorge Amado",
-        "inauthor:George Orwell",
-        "inauthor:J.K. Rowling",
-      ];
-
-      const responses = await Promise.all(
-        queries.map((query) => searchBooks(query, { langRestrict: "pt" })),
-      );
-
-      const todosAutoresComSucesso = responses.every(
-        (res) => res?.items && res.items.length > 0,
-      );
-
-      if (!todosAutoresComSucesso) {
-        throw new Error("Nem todos os autores retornaram resultados.");
+      if (!forceRefresh && cache && Date.now() - cache.time < CACHE_EXPIRATION_MS) {
+        resultados.value = cache.livros;
+        recomendacoesPendentes = [...cache.pendentes];
+        temMaisRecomendados.value = recomendacoesPendentes.length > 0;
+        return;
       }
 
-      const allBooks = responses.flatMap((res) => res.items ?? []);
-
-      // REMOVE DUPLICADOS
-      const uniqueBooks = Array.from(
-        new Map(allBooks.map((book) => [book.id, book])).values(),
-      );
-
-      // FILTRA LIVROS VÁLIDOS
-      const validBooks = uniqueBooks.filter((book) => {
-        const info = book.volumeInfo;
-        return info?.title && info?.imageLinks?.thumbnail;
-      });
-
-      // CALCULA POPULARIDADE
-      const scoredBooks = validBooks.map((book) => {
-        const info = book.volumeInfo;
-        const ratingsCount = info.ratingsCount ?? 0;
-        const averageRating = info.averageRating ?? 0;
-
-        const popularityScore = Math.log10(ratingsCount + 1) * 10;
-        const ratingScore = averageRating * 2;
-
-        return {
-          book,
-          score: popularityScore + ratingScore,
-        };
-      });
-
-      const shuffledBooks = shuffle(scoredBooks);
-
-      shuffledBooks.sort((a, b) => {
-        const randomA = Math.random() * 15;
-        const randomB = Math.random() * 15;
-        return b.score + randomB - (a.score + randomA);
-      });
-
-      const livros = shuffledBooks
-        .map(({ book }) => googleBookToLivro(book))
-        .filter((livro) => livro.titulo && livro.capa);
-
+      recomendacoesPendentes = GENERAL_RECOMMENDATIONS.map((_, index) => index);
+      const livros = await consultarProximasRecomendacoes();
+      if (!livros.length) throw new Error("Nenhuma recomendação disponível");
       resultados.value = livros;
-      await refreshRecommendedRatings();
-
-      // 3. SALVA NO CACHE SE TODOS OS AUTORES CARREGARAM
-      localStorage.setItem(CACHE_KEY_RECOMENDADOS, JSON.stringify(livros));
-      localStorage.setItem(CACHE_KEY_TIMESTAMP, String(Date.now()));
+      salvarCacheRecomendados();
     } catch (err) {
-      console.error("Erro completo em buscarRecomendados:", err);
-
-      const cachedData = localStorage.getItem(CACHE_KEY_RECOMENDADOS);
-      if (cachedData) {
-        resultados.value = JSON.parse(cachedData);
-        await refreshRecommendedRatings();
-      } else {
-        error.value =
-          "Não foi possível carregar todas as recomendações no momento.";
+      if (cache) {
+        resultados.value = cache.livros;
+        recomendacoesPendentes = [...cache.pendentes];
+      }
+      temMaisRecomendados.value = recomendacoesPendentes.length > 0;
+      if (resultados.value.length) avisoRecomendados.value = recommendationErrorMessage(err, { partial: true });
+      if (!resultados.value.length) {
+        error.value = recommendationErrorMessage(err);
       }
     } finally {
       loading.value = false;
+      // As notas ReadMore não bloqueiam a exibição das recomendações.
+      const displayedBooks = [...resultados.value];
+      if (displayedBooks.length) loadBookRatings(displayedBooks)
+        .catch(() => markBookRatingsUnavailable(displayedBooks));
     }
+  }
+
+  function salvarCacheRecomendados() {
+    try {
+      localStorage.setItem(CACHE_KEY_RECOMENDADOS, JSON.stringify({
+        time: Date.now(), livros: resultados.value, pendentes: recomendacoesPendentes,
+      }));
+    } catch { /* Armazenamento indisponível não bloqueia a busca. */ }
+  }
+
+  async function consultarProximasRecomendacoes() {
+    const collected = [];
+    const candidates = [...recomendacoesPendentes];
+    avisoRecomendados.value = null;
+    let firstError;
+    let saved = [];
+    try {
+      saved = await getSavedRecommendations(recomendacoesPendentes.map(index => GENERAL_RECOMMENDATIONS[index]));
+    } catch { /* Uma falha no servidor local não impede consultar o Google. */ }
+
+    // Prioriza edições persistidas, que abrem e podem ser adicionadas sem o Google.
+    for (const index of [...recomendacoesPendentes]) {
+      if (collected.length >= 12) break;
+      const book = saved.filter(book => matchesRecommendedWork(book.titulo, book.autores || [], GENERAL_RECOMMENDATIONS[index]))
+        .sort((a, b) => Number(!!(b.google_book_id || b.capa_google)) - Number(!!(a.google_book_id || a.capa_google))
+          || Number(!!(typeof b.capa === 'string' ? b.capa : b.capa?.url))
+          - Number(!!(typeof a.capa === 'string' ? a.capa : a.capa?.url)))[0];
+      if (book) {
+        collected.push({ ...book, origem: "local" });
+        recomendacoesPendentes = recomendacoesPendentes.filter(value => value !== index);
+      }
+    }
+    const pending = candidates.filter(index => recomendacoesPendentes.includes(index));
+    const failedIndices = [];
+    // Esgota candidatos vazios e continua após falhas isoladas, até completar a página.
+    for (let offset = 0; offset < pending.length && collected.length < 12;) {
+      const indices = pending.slice(offset, offset + Math.min(3, 12 - collected.length));
+      offset += indices.length;
+      const batch = await Promise.allSettled(indices.map(async index => {
+        const data = await searchRecommendedBooks(GENERAL_RECOMMENDATIONS[index]);
+        return selectRecommendedEdition(data.items || [], GENERAL_RECOMMENDATIONS[index]);
+      }));
+      let failures = 0;
+      batch.forEach((response, i) => {
+        const index = indices[i];
+        if (response.status === "fulfilled") {
+          recomendacoesPendentes = recomendacoesPendentes.filter(value => value !== index);
+          if (response.value) collected.push(googleBookToLivro(response.value));
+        } else {
+          firstError ||= response.reason;
+          failedIndices.push(index);
+          failures++;
+        }
+      });
+      if (failures === batch.length) break;
+    }
+    // Uma nova tentativa busca outros títulos antes dos que falharam.
+    recomendacoesPendentes = [
+      ...recomendacoesPendentes.filter(index => !failedIndices.includes(index)), ...failedIndices,
+    ];
+    if (firstError && collected.length) avisoRecomendados.value = recommendationErrorMessage(firstError, { partial: true });
+    temMaisRecomendados.value = recomendacoesPendentes.length > 0;
+    if (!collected.length && firstError) throw firstError;
+    return collected;
+  }
+
+  async function carregarMaisRecomendados() {
+    if (loading.value || carregandoMaisRecomendados.value || !temMaisRecomendados.value) return;
+    carregandoMaisRecomendados.value = true;
+    erroMaisRecomendados.value = null;
+    try {
+      const books = await consultarProximasRecomendacoes();
+      resultados.value = mergeSearchBooks([...resultados.value, ...books]);
+      salvarCacheRecomendados();
+      if (books.length) loadBookRatings(books).catch(() => markBookRatingsUnavailable(books));
+    } catch (err) {
+      avisoRecomendados.value = null;
+      erroMaisRecomendados.value = recommendationErrorMessage(err, { more: true });
+    } finally { carregandoMaisRecomendados.value = false; }
   }
 
   // =========================
@@ -355,6 +368,11 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
     // Funções
     pesquisarLivros,
     buscarRecomendados,
+    carregarMaisRecomendados,
+    temMaisRecomendados,
+    carregandoMaisRecomendados,
+    erroMaisRecomendados,
+    avisoRecomendados,
     pesquisarPorISBN,
     buscarLivro,
     limparResultados,

@@ -203,8 +203,10 @@ async function aoMudarLista(evento, novoStatus) {
           >
             <template #item="{ element }">
               <div class="item-livro" :class="{ 'livro-recem-movido': livroMovido === element.id }">
+                <div class="cartao-arrastavel">
                 <button type="button" class="drag-handle" :aria-label="`Arrastar ${getLivroObjeto(element).titulo}`" title="Arraste para outra lista"><GripVertical :size="18" /></button>
                 <BookCard :livro="getLivroObjeto(element)" />
+                </div>
               </div>
             </template>
 
@@ -253,8 +255,10 @@ async function aoMudarLista(evento, novoStatus) {
           >
             <template #item="{ element }">
               <div class="item-livro" :class="{ 'livro-recem-movido': livroMovido === element.id }">
+                <div class="cartao-arrastavel">
                 <button type="button" class="drag-handle" :aria-label="`Arrastar ${getLivroObjeto(element).titulo}`" title="Arraste para outra lista"><GripVertical :size="18" /></button>
                 <BookCard :livro="getLivroObjeto(element)" />
+                </div>
               </div>
             </template>
 
@@ -303,8 +307,10 @@ async function aoMudarLista(evento, novoStatus) {
           >
             <template #item="{ element }">
               <div class="item-livro" :class="{ 'livro-recem-movido': livroMovido === element.id }">
+                <div class="cartao-arrastavel">
                 <button type="button" class="drag-handle" :aria-label="`Arrastar ${getLivroObjeto(element).titulo}`" title="Arraste para outra lista"><GripVertical :size="18" /></button>
                 <BookCard :livro="getLivroObjeto(element)" />
+                </div>
               </div>
             </template>
 
@@ -557,19 +563,19 @@ async function aoMudarLista(evento, novoStatus) {
 .lista-livros { border:1px solid transparent; border-radius:16px; transition:background-color .2s,border-color .2s; }
 .arraste-ativo .lista-livros { border-color:#dcc5a9; background:#fbf6ef; }
 .lista-livros.lista-destino { background:#f3e7d7; border:1px dashed #ad8157; box-shadow:inset 0 0 0 3px #e8d8c34d; }
-.item-livro { position:relative; padding:16px 12px 12px; border-radius:14px; background:#fffdf9; border:1px solid #e8d8c3; }
+.cartao-arrastavel { position:relative; padding:16px 12px 12px; border-radius:14px; background:#fffdf9; border:1px solid #e8d8c3; }
 .drag-handle { position:absolute; top:7px; right:7px; display:flex; padding:4px; border:0; border-radius:6px; color:#9c8a7a; background:#faf3e0; cursor:grab; touch-action:none; z-index:2; }
 .drag-handle:active { cursor:grabbing; }
 .item-livro :deep(.imagem) { -webkit-user-drag:none; user-select:none; cursor:grab; }
-.item-livro :deep(.card-livro) { transform-origin:50% 8%; }
-.livro-selecionado { box-shadow:0 10px 30px #6b422620; }
-.livro-selecionado :deep(.card-livro) { animation:livro-levantar .18s ease-out both; }
-.livro-em-voo { opacity:.96!important; border-color:#c9a97e; box-shadow:0 18px 38px #6b42262e; }
-.livro-em-voo :deep(.card-livro) { animation:livro-balanco .85s ease-in-out infinite alternate; }
+.cartao-arrastavel { transform-origin:50% 8%; }
+.livro-selecionado .cartao-arrastavel { box-shadow:0 10px 30px #6b422620; }
+.livro-selecionado .cartao-arrastavel { animation:livro-levantar .18s ease-out both; }
+.livro-em-voo .cartao-arrastavel { opacity:.96!important; border-color:#c9a97e; box-shadow:0 18px 38px #6b42262e; }
+.livro-em-voo .cartao-arrastavel { animation:livro-balanco .85s ease-in-out infinite alternate; }
 .fantasma-arraste { opacity:.25; border:1px dashed #ad8157; background:#e8d8c3; }
 .livro-recem-movido { animation:livro-soltar .45s cubic-bezier(.22,1,.36,1); }
 @keyframes livro-levantar { from { transform:rotate(0deg) scale(1); } to { transform:rotate(-2deg) scale(1.025); } }
 @keyframes livro-balanco { from { transform:rotate(-2.5deg) scale(1.025); } to { transform:rotate(2.5deg) scale(1.025); } }
 @keyframes livro-soltar { 0% { transform:translateY(-8px) rotate(-1deg); box-shadow:0 10px 25px #6b422626; } 65% { transform:translateY(2px) rotate(.3deg); } 100% { transform:translateY(0) rotate(0); box-shadow:none; } }
-@media(prefers-reduced-motion:reduce) { .livro-selecionado :deep(.card-livro),.livro-em-voo :deep(.card-livro),.livro-recem-movido { animation:none; transform:none; } }
+@media(prefers-reduced-motion:reduce) { .livro-selecionado .cartao-arrastavel,.livro-em-voo .cartao-arrastavel,.livro-recem-movido { animation:none; transform:none; } }
 </style>
