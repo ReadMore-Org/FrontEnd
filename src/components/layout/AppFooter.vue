@@ -1,9 +1,13 @@
 <script setup>
-import { House, Book, Plus, Store, User, Mail, Phone, MapPin } from "lucide-vue-next";
+import { House, Book, Plus, Store, User, Mail, Phone, MapPin, MessageCircle } from "lucide-vue-next";
 import { computed } from "vue";
 import { useRoute, RouterLink } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { useChatStore } from "@/features/chat/stores/chat";
 
 const route = useRoute();
+const authStore = useAuthStore();
+const chatStore = useChatStore();
 
 // Função para verificar se o item está ativo de acordo com a rota atual
 const isActive = (path) => {
@@ -88,6 +92,15 @@ const isActive = (path) => {
         <li>
           <RouterLink to="/marketplace" :class="{ active: isActive('/marketplace') }">
             <Store :size="25" />
+          </RouterLink>
+        </li>
+
+        <li v-if="authStore.isAuthenticated">
+          <RouterLink to="/conversas" class="link-conversas" :class="{ active: isActive('/conversas') }">
+            <MessageCircle :size="25" />
+            <span v-if="chatStore.unreadTotal > 0" class="badge-conversas">
+              {{ chatStore.unreadTotal > 99 ? "99+" : chatStore.unreadTotal }}
+            </span>
           </RouterLink>
         </li>
 
@@ -211,6 +224,30 @@ ul li h1 {
     align-items: center;
     gap: 47px;
     padding: 15px 0;
+  }
+
+  #mobile ul:has(.link-conversas) {
+    gap: 28px;
+  }
+
+  .link-conversas {
+    position: relative;
+  }
+
+  .badge-conversas {
+    position: absolute;
+    top: -6px;
+    right: -9px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #6b4226;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 16px;
+    text-align: center;
   }
 
   #mobile a {
