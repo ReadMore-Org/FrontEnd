@@ -64,15 +64,40 @@ export function googleBookCoverUrls(livro) {
 }
 
 export function getBookCover(livro) {
-  const book = bookData(livro);
-  return googleBookCoverUrls(book)[0] || resolveImageUrl(book.capa) || isbnCoverUrl(book) || FALLBACK_CAPA;
+  return bookImageFallbacks(livro)[0];
 }
 
 export function bookImageFallbacks(livro) {
   const book = bookData(livro);
+  const stored = resolveImageUrl(book.capa);
   return [...new Set([
-    ...googleBookCoverUrls(book), resolveImageUrl(book.capa), isbnCoverUrl(book), FALLBACK_CAPA,
+    // Capas explícitas vêm antes das URLs geradas, que podem não existir.
+    stored !== FALLBACK_CAPA ? stored : '',
+    ...googleBookCoverUrls(book), isbnCoverUrl(book), FALLBACK_CAPA,
   ].filter(Boolean))];
+}
+
+export function hasExplicitBookCover(livro) {
+  const book = bookData(livro);
+  const links = book.imageLinks || book.volumeInfo?.imageLinks || {};
+  return [book.capa, links.thumbnail, links.smallThumbnail].some(value => {
+    const url = resolveImageUrl(value);
+    return url && !/livro_sem_capa|\/no_cover[^/]*\.(gif|png|jpe?g)/i.test(url);
+  });
+}
+
+export function bookCoverKey(book) {
+  return `${book.origem || ''}:${book.id}`;
+}
+
+export function prioritizeBooksWithCovers(books, statuses = {}) {
+  const priority = book => {
+    const status = statuses[bookCoverKey(book)];
+    if (status === true) return 2;
+    if (status === false) return -1;
+    return hasExplicitBookCover(book) ? 1 : 0;
+  };
+  return [...books].sort((a, b) => priority(b) - priority(a));
 }
 
 export function getUserPhoto(user) {
@@ -85,7 +110,13 @@ export function displayImageUrl(value, { avatar = false } = {}) {
   try {
     const parsed = new URL(url);
     if (['books.google.com', 'books.googleusercontent.com'].includes(parsed.hostname)) {
-      return `${API_BASE_URL.replace(/\/$/, '')}/livros/capa-google/?${new URLSearchParams({ url })}`;
+      if (/\/no_cover[^/]*\.(gif|png|jpe?g)$/i.test(parsed.pathname)) return FALLBACK_CAPA;
+      return `${API_BASE_URL.replace(/\/$/, '')}/livros/capa-google/?${new URLSearchParams({ url, v: '4' })}`;
+    }
+    if (parsed.hostname === 'covers.openlibrary.org') {
+      // Sem capa, exige HTTP 404 para o AppImage usar livro_sem_capa.png.
+      parsed.searchParams.set('default', 'false');
+      return parsed.href;
     }
   } catch { /* Imagens locais continuam usando seu caminho original. */ }
   return url;

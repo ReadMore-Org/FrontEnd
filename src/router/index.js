@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { needsReadingPreferences } from "@/utils/readingPreferences";
 
 import HomeView from "../views/HomeView.vue";
 import MarketplaceView from "@/views/MarketplaceView.vue";
@@ -21,6 +22,7 @@ import ExploreView from "@/views/ExploreView.vue";
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    { path: '/preferencias-leitura', name: 'reading-preferences', component: () => import('@/views/ReadingPreferencesView.vue'), meta: { requiresAuth: true } },
     { path: "/usuarios/:id(\\d+)", name: "usuario-perfil", component: () => import("@/views/UserProfileView.vue"), meta: { requiresAuth: true } },
     { path: "/usuarios", name: "usuarios", component: () => import("@/views/UsersView.vue"), meta: { requiresAuth: true } },
     {
@@ -126,7 +128,7 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
@@ -134,6 +136,14 @@ router.beforeEach((to, from, next) => {
     // (o nome da rota é "login", em minúsculas)
     next({ name: "login" });
   } else {
+    if (authStore.isAuthenticated && !['login', 'signup', 'onboarding', 'EntrarCTA'].includes(to.name)) {
+      try {
+        await authStore.ensureProfile();
+        if (to.name !== 'reading-preferences' && needsReadingPreferences(authStore.user)) {
+          return next({ name: 'reading-preferences' });
+        }
+      } catch { /* Falhas de rede não impedem usar a navegação existente. */ }
+    }
     next();
   }
 });

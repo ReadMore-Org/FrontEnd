@@ -467,3 +467,93 @@ test('botão real da grade carrega novas obras após esgotar os 20 livros locais
   assert.equal(grid.children.filter(el => el.props?.class === 'item-livro').length, s.resultados.length);
   assert.equal(s.erroMaisRecomendados, null);
 });
+
+test('novos recomendados aparecem antes de terminar a página, sem repetir consulta local', async t => {
+  const previousSaved = savedHandler;
+  t.after(() => { savedHandler = previousSaved; });
+  let localCalls = 0;
+  savedHandler = async config => {
+    localCalls++;
+    return { data: [], status: 200, headers: {}, config };
+  };
+  handler = async config => recommendationHandler(config);
+  const s = store();
+  await s.buscarRecomendados(true);
+  const initial = s.resultados.map(book => book.id);
+  const blocked = [];
+  handler = config => {
+    const index = GENERAL_RECOMMENDATIONS.findIndex(([title]) => title === config.params.titulo);
+    if (index >= 15) return new Promise(resolve => blocked.push(() => resolve(recommendationHandler(config))));
+    return Promise.resolve(recommendationHandler(config));
+  };
+  const more = s.carregarMaisRecomendados();
+  try {
+    await flush();
+    assert.equal(s.resultados.length, 15);
+    assert.equal(s.carregandoMaisRecomendados, true);
+    assert.deepEqual(s.resultados.slice(0, 12).map(book => book.id), initial);
+    assert.equal(localCalls, 1);
+  } finally {
+    handler = async config => recommendationHandler(config);
+    blocked.forEach(resolve => resolve());
+    await more;
+  }
+  assert.equal(s.resultados.length, 24);
+  assert.equal(new Set(s.resultados.map(book => book.id)).size, 24);
+  assert.equal(s.carregandoMaisRecomendados, false);
+});
+
+test('recomendados priorizam capas salvas e continuam oferecendo as demais obras', async t => {
+  const previousSaved = savedHandler;
+  t.after(() => { savedHandler = previousSaved; });
+  savedHandler = async config => ({ data: GENERAL_RECOMMENDATIONS.slice(0, 20).map(([titulo, author], i) => ({
+    id: i + 1, titulo, autores: [{ nome: author }],
+    capa: i >= 8 ? { url: `/media/capa-${i}.jpg` } : null,
+  })), status: 200, headers: {}, config });
+  handler = async config => recommendationHandler(config);
+  const s = store();
+  await s.buscarRecomendados(true);
+  assert.equal(s.resultados.length, 12);
+  assert.ok(s.resultados.every(book => book.capa?.url));
+  assert.deepEqual(s.resultados.map(book => book.id), Array.from({ length: 12 }, (_, i) => i + 9));
+  await s.carregarMaisRecomendados();
+  assert.ok(s.resultados.some(book => book.id === 1));
+  assert.equal(new Set(s.resultados.map(book => `${book.origem}:${book.id}`)).size, s.resultados.length);
+});
+
+test('preferências ampliam os recomendados e o cache não mistura contas ou versões das escolhas', async t => {
+  const memory = new Map();
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
+    getItem: key => memory.get(key) ?? null,
+    setItem: (key, value) => memory.set(key, value),
+  } });
+  t.after(() => {
+    if (previous) Object.defineProperty(globalThis, 'localStorage', previous);
+    else delete globalThis.localStorage;
+  });
+  let discoveryCalls = 0;
+  handler = async config => {
+    if (config.url === '/usuarios/recomendacoes-preferencias/') {
+      discoveryCalls++;
+      return { config, data: [['Uma nova história', 'Autora Nova']], status: 200, headers: {} };
+    }
+    if (config.params?.titulo === 'Uma nova história') return ok(config, [{ id: 'new-personal', volumeInfo: {
+      title: 'Uma nova história', authors: ['Autora Nova'], language: 'pt', imageLinks: { thumbnail: 'https://example.com/real.jpg' },
+    } }]);
+    return recommendationHandler(config);
+  };
+  const profile = { id: 1, reading_preferences_status: 'completed', reading_preferences: { categories: [], authors: ['Autora Nova'], books: [] } };
+  const s = store();
+  await s.buscarRecomendados(false, profile);
+  assert.equal(s.resultados[0].titulo, 'Uma nova história');
+  assert.equal(discoveryCalls, 1);
+  await s.buscarRecomendados(false, profile);
+  assert.equal(discoveryCalls, 1);
+  await s.buscarRecomendados(false, { id: 2, reading_preferences_status: 'skipped', reading_preferences: {} });
+  assert.equal(s.resultados[0].titulo, 'Dom Casmurro');
+  assert.ok(!s.resultados.some(book => book.id === 'new-personal'));
+  await s.buscarRecomendados(false, { ...profile, reading_preferences: { categories: [], authors: ['Tolkien'], books: [] } });
+  assert.equal(discoveryCalls, 2);
+  assert.equal(s.resultados[0].autores[0].nome, 'Tolkien');
+});
