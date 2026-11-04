@@ -14,6 +14,7 @@ const props = defineProps({
     required: true,
   },
 });
+const emit = defineEmits(['cover-status']);
 
 const router = useRouter();
 const livroStore = useLivrosStore();
@@ -170,6 +171,7 @@ onBeforeUnmount(() => {
         class="capa"
         :src="getBookCover(livro)" :fallbacks="bookImageFallbacks(livro)"
         :alt="livro?.titulo || 'Capa do livro'"
+        @cover-status="emit('cover-status', $event)"
       />
 
       <div class="popover-wrapper" ref="raizPopover" @click.stop>

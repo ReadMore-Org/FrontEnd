@@ -1,3 +1,5 @@
+import { hasExplicitBookCover } from './images.js';
+
 // Seleção editorial geral, independente das preferências do usuário.
 // Cada obra aparece uma única vez, mesmo quando o catálogo possui várias edições.
 export const GENERAL_RECOMMENDATIONS = [
@@ -143,6 +145,6 @@ export function selectRecommendedEdition(items, entry) {
     if (!book.id || !info || (info.language && info.language !== 'pt')) return false;
     return matchesRecommendedWork(info.title, info.authors || [], entry)
       && !/\b(resumo|analise|guia de estudo|summary|study guide)\b/.test(normalize(info.subtitle));
-  }).sort((a, b) => Number(!!b.volumeInfo.imageLinks?.thumbnail) - Number(!!a.volumeInfo.imageLinks?.thumbnail)
+  }).sort((a, b) => Number(hasExplicitBookCover(b)) - Number(hasExplicitBookCover(a))
     || (b.volumeInfo.ratingsCount || 0) - (a.volumeInfo.ratingsCount || 0))[0];
 }
