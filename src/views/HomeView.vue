@@ -17,15 +17,11 @@ import ProdutoView from "@/views/ProdutoView.vue";
 import ListaRecursos from "@/components/home/listaRecursos.vue";
 import OtherBookCard from "@/components/books/otherBookCard.vue";
 import GradeBook from "@/components/books/GradeBook.vue";
-import { bookCoverKey, prioritizeBooksWithCovers } from "@/utils/images";
 
 const googleBooksStore = useGoogleBooksStore();
 const livroStore = useLivrosStore();
 
 const isLoading = ref(true);
-const coverStatuses = ref({});
-const recomendadosComCapaPrimeiro = computed(() =>
-  prioritizeBooksWithCovers(googleBooksStore.resultados, coverStatuses.value));
 
 onMounted(async () => {
   // As recomendações independem da disponibilidade da API da estante.
@@ -94,13 +90,13 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
       <!-- 3. Estado de Sucesso (Lista de Livros) -->
       <GradeBook
         v-else-if="googleBooksStore.resultados.length > 0"
-        :livros="recomendadosComCapaPrimeiro"
+        :livros="googleBooksStore.resultados"
         :tem-mais-remoto="googleBooksStore.temMaisRecomendados"
         :carregando-mais="googleBooksStore.carregandoMaisRecomendados"
         @carregar-mais="googleBooksStore.carregarMaisRecomendados()"
       >
         <template #default="{ livro }">
-          <OtherBookCard :livro="livro" @cover-status="coverStatuses[bookCoverKey(livro)] = $event" />
+          <OtherBookCard :livro="livro" />
         </template>
       </GradeBook>
 

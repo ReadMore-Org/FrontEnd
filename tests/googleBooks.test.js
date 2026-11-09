@@ -547,3 +547,91 @@ test('recomendados gerais reutilizam o cache sem consultar endpoints de preferê
   assert.deepEqual(restored.resultados.map(book => book.id), s.resultados.map(book => book.id));
   assert.equal(catalogCalls, calls);
 });
+
+test('uma obra lenta não bloqueia as próximas e cliques repetidos compartilham a paginação', async () => {
+  handler = async config => recommendationHandler(config);
+  const s = store(); await s.buscarRecomendados(true);
+  let release;
+  let active = 0;
+  let maximum = 0;
+  handler = async config => {
+    active++; maximum = Math.max(maximum, active);
+    try {
+      if (config.params.titulo === GENERAL_RECOMMENDATIONS[12][0]) await new Promise(resolve => { release = resolve; });
+      return recommendationHandler(config);
+    } finally { active--; }
+  };
+  const more = s.carregarMaisRecomendados();
+  const repeated = s.carregarMaisRecomendados();
+  await flush();
+  try {
+    assert.equal(s.resultados.length, 23);
+    assert.ok(s.resultados.some(book => book.titulo === GENERAL_RECOMMENDATIONS[23][0]));
+    assert.ok(maximum >= 2 && maximum <= 3);
+  } finally { release(); await Promise.all([more, repeated]); }
+  assert.equal(s.resultados.length, 24);
+});
+
+test('atualizar recomendados repõe a página mesmo com os mesmos livros já exibidos', async () => {
+  handler = async config => recommendationHandler(config);
+  const s = store(); await s.buscarRecomendados(true);
+  const initial = s.resultados.map(book => book.id);
+  await s.buscarRecomendados(true);
+  assert.deepEqual(s.resultados.map(book => book.id), initial);
+  assert.equal(s.error, null);
+});
+
+test('consultas travadas liberam o botão e uma nova tentativa continua a seleção', async t => {
+  handler = async config => recommendationHandler(config);
+  const s = store(); await s.buscarRecomendados(true);
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const late = [];
+  const signals = [];
+  handler = config => {
+    signals.push(config.signal);
+    return new Promise(resolve => late.push(() => resolve(recommendationHandler(config))));
+  };
+  const more = s.carregarMaisRecomendados(); await flush();
+  t.mock.timers.tick(6000); await more;
+  assert.equal(s.carregandoMaisRecomendados, false);
+  assert.equal(s.resultados.length, 12);
+  assert.equal(s.temMaisRecomendados, true);
+  assert.match(s.erroMaisRecomendados, /demorou/);
+  assert.ok(signals.every(signal => signal.aborted));
+  handler = async config => recommendationHandler(config);
+  await s.carregarMaisRecomendados();
+  assert.equal(s.resultados.length, 24);
+  assert.equal(s.erroMaisRecomendados, null);
+  late.forEach(resolve => resolve()); await flush();
+  assert.equal(s.resultados.length, 24);
+});
+
+test('a rodada encerra em oito segundos preservando os livros parciais e os títulos pendentes', async t => {
+  handler = async config => recommendationHandler(config);
+  const s = store(); await s.buscarRecomendados(true);
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  handler = config => new Promise(resolve => setTimeout(() => resolve(recommendationHandler(config)), 3000));
+  const more = s.carregarMaisRecomendados(); await flush();
+  for (let i = 0; i < 2; i++) { t.mock.timers.tick(3000); await flush(); }
+  assert.equal(s.resultados.length, 18);
+  t.mock.timers.tick(2000); await more;
+  assert.equal(s.carregandoMaisRecomendados, false);
+  assert.equal(s.resultados.length, 18);
+  assert.equal(s.temMaisRecomendados, true);
+  handler = async config => recommendationHandler(config);
+  await s.carregarMaisRecomendados();
+  assert.equal(s.resultados.length, 30);
+  t.mock.timers.tick(1000); await flush();
+  assert.equal(s.resultados.length, 30);
+});
+
+test('catálogo local travado não impede consultar as fontes de recomendados', async t => {
+  const previous = savedHandler; t.after(() => { savedHandler = previous; });
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  savedHandler = () => new Promise(() => {});
+  handler = async config => recommendationHandler(config);
+  const s = store(); const initial = s.buscarRecomendados(true); await flush();
+  t.mock.timers.tick(2000); await initial;
+  assert.equal(s.resultados.length, 12);
+  assert.equal(s.error, null);
+});

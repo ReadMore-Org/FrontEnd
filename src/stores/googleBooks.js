@@ -209,7 +209,7 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
       }
 
       recomendacoesPendentes = recommendationEntries.map((_, index) => index);
-      const livros = await consultarProximasRecomendacoes();
+      const livros = await consultarProximasRecomendacoes(partial => { resultados.value = partial; });
       if (!livros.length) throw new Error("Nenhuma recomendação disponível");
       resultados.value = livros;
       salvarCacheRecomendados();
@@ -241,8 +241,20 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
     } catch { /* Armazenamento indisponível não bloqueia a busca. */ }
   }
 
-  async function consultarProximasRecomendacoes(onProgress = () => {}) {
+  async function consultarProximasRecomendacoes(onProgress = () => {}, existingBooks = []) {
+    const controller = new AbortController();
+    const deadline = setTimeout(() => controller.abort(), 8000);
+    try {
+      return await consultarPaginaRecomendacoes(onProgress, existingBooks, controller.signal);
+    } finally { clearTimeout(deadline); }
+  }
+
+  async function consultarPaginaRecomendacoes(onProgress, existingBooks, signal) {
     const collected = [];
+    function append(book) {
+      const existing = mergeSearchBooks([...existingBooks, ...collected]);
+      if (mergeSearchBooks([...existing, book]).length > existing.length) collected.push(book);
+    }
     const candidates = [...recomendacoesPendentes];
     avisoRecomendados.value = null;
     let firstError;
@@ -251,7 +263,7 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
       if (catalogoLocalRecomendados && Date.now() - catalogoLocalRecomendados.time < 60000) {
         saved = catalogoLocalRecomendados.livros;
       } else {
-        saved = await getSavedRecommendations(recomendacoesPendentes.map(index => recommendationEntries[index]));
+        saved = await getSavedRecommendations(recomendacoesPendentes.map(index => recommendationEntries[index]), { signal });
         catalogoLocalRecomendados = { time: Date.now(), livros: saved };
       }
     } catch { /* Uma falha no servidor local não impede consultar o Google. */ }
@@ -268,39 +280,38 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
       if (collected.length >= 12) break;
       const book = savedByIndex.get(index);
       if (book) {
-        collected.push({ ...book, origem: "local" });
+        append({ ...book, origem: "local" });
         recomendacoesPendentes = recomendacoesPendentes.filter(value => value !== index);
       }
     }
     if (collected.length) onProgress([...collected]);
     const pending = candidates.filter(index => recomendacoesPendentes.includes(index));
     const failedIndices = [];
-    // Esgota candidatos vazios e continua após falhas isoladas, até completar a página.
-    for (let offset = 0; offset < pending.length && collected.length < 12;) {
-      const indices = pending.slice(offset, offset + Math.min(3, 12 - collected.length));
-      offset += indices.length;
-      const batch = await Promise.allSettled(indices.map(async index => {
-        const local = savedByIndex.get(index);
-        if (local) return { ...local, origem: 'local' };
-        const data = await searchRecommendedBooks(recommendationEntries[index]);
-        const edition = selectRecommendedEdition(data.items || [], recommendationEntries[index]);
-        return edition ? googleBookToLivro(edition) : null;
-      }));
-      let failures = 0;
-      batch.forEach((response, i) => {
-        const index = indices[i];
-        if (response.status === "fulfilled") {
+    let cursor = 0;
+    let inFlight = 0;
+    // Cada consulta que termina libera sua vaga imediatamente, sem esperar as demais.
+    async function worker() {
+      while (cursor < pending.length && collected.length + inFlight < 12 && !signal.aborted) {
+        const index = pending[cursor++];
+        inFlight++;
+        try {
+          const data = await searchRecommendedBooks(recommendationEntries[index], { signal });
+          const edition = selectRecommendedEdition(data.items || [], recommendationEntries[index]);
           recomendacoesPendentes = recomendacoesPendentes.filter(value => value !== index);
-          if (response.value) collected.push(response.value);
-        } else {
-          firstError ||= response.reason;
+          if (edition) {
+            const book = googleBookToLivro(edition);
+            append(book);
+            onProgress([...collected]);
+          }
+        } catch (err) {
+          firstError ||= err;
           failedIndices.push(index);
-          failures++;
-        }
-      });
-      if (collected.length) onProgress([...collected]);
-      if (failures === batch.length) break;
+          // Uma fonte com falha não ocupa novamente esta vaga na mesma rodada.
+          return;
+        } finally { inFlight--; }
+      }
     }
+    await Promise.all([worker(), worker(), worker()]);
     // Uma nova tentativa busca outros títulos antes dos que falharam.
     recomendacoesPendentes = [
       ...recomendacoesPendentes.filter(index => !failedIndices.includes(index)), ...failedIndices,
@@ -327,7 +338,7 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
       const previousBooks = [...resultados.value];
       const books = await consultarProximasRecomendacoes(partial => {
         resultados.value = mergeSearchBooks([...previousBooks, ...partial]);
-      });
+      }, previousBooks);
       resultados.value = mergeSearchBooks([...resultados.value, ...books]);
       salvarCacheRecomendados();
       if (books.length) loadBookRatings(books).catch(() => markBookRatingsUnavailable(books));
