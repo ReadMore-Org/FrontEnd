@@ -36,7 +36,8 @@ onMounted(load);
 </template>
 <style scoped>
 .favorites { margin:32px 0 48px; color:#5a4636; }
-h2 { color:#2c2c2c; font-size:26px; font-weight:500; margin-bottom:24px; }
+h2 { position:relative; display:inline-block; color:#2c2c2c; font-size:26px; font-weight:500; margin-bottom:24px; }
+h2::after { content:""; position:absolute; left:0; bottom:-8px; width:50%; height:3px; background:#6b4226; border-radius:999px; }
 .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:24px; }
 article { max-width:200px; }
 img { width:100%; height:210px; object-fit:cover; border-radius:8px; }
