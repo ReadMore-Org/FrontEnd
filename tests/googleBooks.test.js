@@ -635,3 +635,100 @@ test('catálogo local travado não impede consultar as fontes de recomendados', 
   assert.equal(s.resultados.length, 12);
   assert.equal(s.error, null);
 });
+
+test('duas obras novas e respostas vazias não esgotam a paginação', async () => {
+  handler = async config => recommendationHandler(config);
+  const s = store(); await s.buscarRecomendados(true);
+  handler = async config => {
+    const index = GENERAL_RECOMMENDATIONS.findIndex(([title]) => title === config.params.titulo);
+    return index < 14 ? recommendationHandler(config) : ok(config, []);
+  };
+  await s.carregarMaisRecomendados();
+  assert.equal(s.resultados.length, 14);
+  assert.equal(s.temMaisRecomendados, true);
+  handler = async config => recommendationHandler(config);
+  await s.carregarMaisRecomendados();
+  assert.equal(s.resultados.length, 26);
+  assert.equal(new Set(s.resultados.map(book => book.id)).size, 26);
+});
+
+test('cache antigo esgotado por respostas vazias recupera os títulos ainda não exibidos', async t => {
+  const { googleBookToLivro } = await import('../src/utils/googleBooksAdapter.js');
+  const books = Array.from({ length: 14 }, (_, index) => googleBookToLivro(recommendedVolume(index)));
+  const memory = new Map([['recomendados_google_books_v11:general', JSON.stringify({
+    time: Date.now(), livros: books, entries: GENERAL_RECOMMENDATIONS, pendentes: [],
+  })]]);
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
+    getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, value),
+  } });
+  t.after(() => {
+    if (previous) Object.defineProperty(globalThis, 'localStorage', previous);
+    else delete globalThis.localStorage;
+  });
+  handler = async config => recommendationHandler(config);
+  const s = store(); await s.buscarRecomendados();
+  assert.equal(s.resultados.length, 14);
+  assert.equal(s.temMaisRecomendados, true);
+  await s.carregarMaisRecomendados();
+  assert.equal(s.resultados.length, 26);
+});
+
+test('botão real permanece após apenas dois resultados e permite o próximo clique', async t => {
+  const { default: GradeBook } = await import('../src/components/books/GradeBook.vue');
+  const previousObserver = globalThis.ResizeObserver;
+  globalThis.ResizeObserver = class { observe() {} disconnect() {} };
+  t.after(() => { globalThis.ResizeObserver = previousObserver; });
+  handler = async config => recommendationHandler(config);
+  const s = store(); await s.buscarRecomendados(true);
+  handler = async config => {
+    const index = GENERAL_RECOMMENDATIONS.findIndex(([title]) => title === config.params.titulo);
+    return index < 14 ? recommendationHandler(config) : ok(config, []);
+  };
+  const node = type => ({ type, props: {}, children: [], parent: null, clientWidth: 800 });
+  const renderer = createRenderer({
+    createElement: node, createText: text => ({ ...node('text'), text }), createComment: node,
+    insert(child, parent, anchor) {
+      child.parent = parent;
+      const index = anchor ? parent.children.indexOf(anchor) : -1;
+      if (index < 0) parent.children.push(child); else parent.children.splice(index, 0, child);
+    },
+    remove(child) { if (child.parent) child.parent.children.splice(child.parent.children.indexOf(child), 1); },
+    setText(el, text) { el.text = text; }, setElementText(el, text) { el.text = text; },
+    parentNode: el => el.parent, nextSibling: () => null,
+    patchProp(el, key, old, value) { el.props[key] = value; },
+  });
+  const root = node('root');
+  const app = renderer.createApp({ setup() { return () => h(GradeBook, {
+    livros: s.resultados, temMaisRemoto: s.temMaisRecomendados, carregandoMais: s.carregandoMaisRecomendados,
+    onCarregarMais: () => s.carregarMaisRecomendados(),
+  }, { default: ({ livro }) => h('span', livro.titulo) }); } });
+  app.mount(root); t.after(() => app.unmount()); await flush();
+  const find = (el, predicate) => predicate(el) ? el : el.children.map(child => find(child, predicate)).find(Boolean);
+  find(root, el => el.type === 'button').props.onClick(); await flush();
+  assert.equal(s.resultados.length, 14);
+  const button = find(root, el => el.type === 'button');
+  assert.ok(button); assert.equal(button.props.disabled, false);
+  handler = async config => {
+    assert.equal(config.params.retry_empty, '1');
+    return recommendationHandler(config);
+  };
+  button.props.onClick(); await flush();
+  assert.equal(s.resultados.length, 26);
+  assert.ok(find(root, el => el.type === 'button'));
+});
+
+test('rodada sem nenhum resultado mantém a opção de tentar novamente', async () => {
+  handler = async config => recommendationHandler(config);
+  const s = store(); await s.buscarRecomendados(true);
+  handler = async config => ok(config, []);
+  await s.carregarMaisRecomendados();
+  assert.equal(s.resultados.length, 12);
+  assert.equal(s.temMaisRecomendados, true);
+  assert.equal(s.carregandoMaisRecomendados, false);
+  assert.match(s.erroMaisRecomendados, /Nenhum livro novo/);
+  handler = async config => recommendationHandler(config);
+  await s.carregarMaisRecomendados();
+  assert.equal(s.resultados.length, 24);
+  assert.equal(s.erroMaisRecomendados, null);
+});

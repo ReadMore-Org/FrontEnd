@@ -41,9 +41,9 @@ export async function getSavedRecommendations(entries, { signal } = {}) {
   return [...new Map(available.flatMap(response => response.value).map(book => [book.id, book])).values()];
 }
 
-export async function searchRecommendedBooks([title, author], { signal } = {}) {
+export async function searchRecommendedBooks([title, author], { signal, retryEmpty = false } = {}) {
   const { data } = await catalogGet('/livros/catalogo-recomendados/', {
-    params: { titulo: title, autor: author }, signal,
+    params: { titulo: title, autor: author, ...(retryEmpty ? { retry_empty: "1" } : {}) }, signal,
   });
   return data;
 }

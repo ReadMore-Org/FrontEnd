@@ -158,7 +158,7 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
   // =========================
   // RECOMENDADOS
   // =========================
-  const CACHE_KEY_RECOMENDADOS = "recomendados_google_books_v11:general";
+  const CACHE_KEY_RECOMENDADOS = "recomendados_google_books_v12:general";
   let recommendationEntries = [...GENERAL_RECOMMENDATIONS];
   const CACHE_EXPIRATION_MS = 12 * 60 * 60 * 1000;
   let recomendadosEmAndamento = null;
@@ -172,14 +172,21 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
 
   function lerCacheRecomendados() {
     try {
-      const cache = JSON.parse(localStorage.getItem(CACHE_KEY_RECOMENDADOS));
-      return cache && Array.isArray(cache.livros) && cache.livros.length
+      const cache = JSON.parse(localStorage.getItem(CACHE_KEY_RECOMENDADOS)
+        || localStorage.getItem("recomendados_google_books_v11:general"));
+      const valid = cache && Array.isArray(cache.livros) && cache.livros.length
         && cache.livros.every(livro => livro?.id && livro?.titulo)
         && Array.isArray(cache.entries) && cache.entries.length <= 200
         && cache.entries.every(entry => Array.isArray(entry) && entry.length === 2
           && entry.every(value => typeof value === 'string' && value.trim()))
         && Array.isArray(cache.pendentes) && cache.pendentes.every(index => Number.isInteger(index)
-          && index >= 0 && index < cache.entries.length) ? cache : null;
+          && index >= 0 && index < cache.entries.length);
+      if (!valid) return null;
+      // Recupera inclusive caches antigos que descartaram títulos após uma resposta vazia.
+      const entries = [...GENERAL_RECOMMENDATIONS];
+      const pendentes = entries.map((_, index) => index).filter(index => !cache.livros.some(book =>
+        matchesRecommendedWork(book.titulo, book.autores || [], entries[index])));
+      return { ...cache, entries, pendentes };
     } catch { return null; }
   }
 
@@ -295,13 +302,16 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
         const index = pending[cursor++];
         inFlight++;
         try {
-          const data = await searchRecommendedBooks(recommendationEntries[index], { signal });
+          const data = await searchRecommendedBooks(recommendationEntries[index], { signal, retryEmpty: existingBooks.length > 0 });
           const edition = selectRecommendedEdition(data.items || [], recommendationEntries[index]);
-          recomendacoesPendentes = recomendacoesPendentes.filter(value => value !== index);
           if (edition) {
+            recomendacoesPendentes = recomendacoesPendentes.filter(value => value !== index);
             const book = googleBookToLivro(edition);
             append(book);
             onProgress([...collected]);
+          } else {
+            // Vazio ou sem edição elegível nesta consulta não significa catálogo esgotado.
+            failedIndices.push(index);
           }
         } catch (err) {
           firstError ||= err;
@@ -341,6 +351,10 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
       }, previousBooks);
       resultados.value = mergeSearchBooks([...resultados.value, ...books]);
       salvarCacheRecomendados();
+      if (!books.length && temMaisRecomendados.value) {
+        erroMaisRecomendados.value = "Nenhum livro novo ficou disponível nesta tentativa. Tente carregar mais novamente.";
+        catalogoLocalRecomendados = null;
+      }
       if (books.length) loadBookRatings(books).catch(() => markBookRatingsUnavailable(books));
     } catch (err) {
       avisoRecomendados.value = null;
