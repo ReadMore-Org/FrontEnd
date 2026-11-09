@@ -141,10 +141,6 @@ const splideOptions = {
     </div>
 
     <!-- Bloco de Gerenciamento da Meta de Leitura -->
-    <RouterLink class="reading-preferences-link" to="/preferencias-leitura">
-      <span><strong>Preferências de leitura</strong><small>Seus gêneros, autores e livros favoritos. Mude quando quiser.</small></span>
-      <Edit2 :size="20" aria-hidden="true" />
-    </RouterLink>
     <div class="card-meta-perfil">
       <div class="meta-header">
         <div class="meta-titulo">
@@ -218,10 +214,6 @@ const splideOptions = {
 </template>
 
 <style scoped>
-.reading-preferences-link { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:22px; margin:24px 0; border:1px solid #d8c3a8; border-radius:16px; background:#fff9f0; color:#6b4226; }
-.reading-preferences-link span { display:grid; gap:7px; }
-.reading-preferences-link small { color:#806b58; line-height:1.5; }
-.reading-preferences-link:hover { background:#f3e7d7; }
 .perfil-publico { display: inline-block; margin-left: 24px; color: #6b4226; }
 
 #me {

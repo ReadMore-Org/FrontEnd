@@ -521,7 +521,7 @@ test('recomendados priorizam capas salvas e continuam oferecendo as demais obras
   assert.equal(new Set(s.resultados.map(book => `${book.origem}:${book.id}`)).size, s.resultados.length);
 });
 
-test('preferências ampliam os recomendados e o cache não mistura contas ou versões das escolhas', async t => {
+test('recomendados gerais reutilizam o cache sem consultar endpoints de preferências', async t => {
   const memory = new Map();
   const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
@@ -532,28 +532,18 @@ test('preferências ampliam os recomendados e o cache não mistura contas ou ver
     if (previous) Object.defineProperty(globalThis, 'localStorage', previous);
     else delete globalThis.localStorage;
   });
-  let discoveryCalls = 0;
+  let catalogCalls = 0;
   handler = async config => {
-    if (config.url === '/usuarios/recomendacoes-preferencias/') {
-      discoveryCalls++;
-      return { config, data: [['Uma nova história', 'Autora Nova']], status: 200, headers: {} };
-    }
-    if (config.params?.titulo === 'Uma nova história') return ok(config, [{ id: 'new-personal', volumeInfo: {
-      title: 'Uma nova história', authors: ['Autora Nova'], language: 'pt', imageLinks: { thumbnail: 'https://example.com/real.jpg' },
-    } }]);
+    assert.ok(!config.url.includes('/usuarios/'));
+    if (config.params?.titulo) catalogCalls++;
     return recommendationHandler(config);
   };
-  const profile = { id: 1, reading_preferences_status: 'completed', reading_preferences: { categories: [], authors: ['Autora Nova'], books: [] } };
   const s = store();
-  await s.buscarRecomendados(false, profile);
-  assert.equal(s.resultados[0].titulo, 'Uma nova história');
-  assert.equal(discoveryCalls, 1);
-  await s.buscarRecomendados(false, profile);
-  assert.equal(discoveryCalls, 1);
-  await s.buscarRecomendados(false, { id: 2, reading_preferences_status: 'skipped', reading_preferences: {} });
+  await s.buscarRecomendados();
   assert.equal(s.resultados[0].titulo, 'Dom Casmurro');
-  assert.ok(!s.resultados.some(book => book.id === 'new-personal'));
-  await s.buscarRecomendados(false, { ...profile, reading_preferences: { categories: [], authors: ['Tolkien'], books: [] } });
-  assert.equal(discoveryCalls, 2);
-  assert.equal(s.resultados[0].autores[0].nome, 'Tolkien');
+  const calls = catalogCalls;
+  const restored = store();
+  await restored.buscarRecomendados();
+  assert.deepEqual(restored.resultados.map(book => book.id), s.resultados.map(book => book.id));
+  assert.equal(catalogCalls, calls);
 });

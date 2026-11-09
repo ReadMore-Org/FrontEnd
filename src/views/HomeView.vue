@@ -1,8 +1,6 @@
 <script setup>
 import { onMounted, ref, computed } from "vue";
 
-import { useAuthStore } from "@/stores/auth";
-import { hasReadingPreferences } from "@/utils/readingPreferences";
 import { useLivrosStore } from "@/stores/livros";
 import { useGoogleBooksStore } from "@/stores/googleBooks";
 
@@ -22,7 +20,6 @@ import GradeBook from "@/components/books/GradeBook.vue";
 import { bookCoverKey, prioritizeBooksWithCovers } from "@/utils/images";
 
 const googleBooksStore = useGoogleBooksStore();
-const authStore = useAuthStore();
 const livroStore = useLivrosStore();
 
 const isLoading = ref(true);
@@ -32,7 +29,7 @@ const recomendadosComCapaPrimeiro = computed(() =>
 
 onMounted(async () => {
   // As recomendações independem da disponibilidade da API da estante.
-  googleBooksStore.buscarRecomendados(false, authStore.user);
+  googleBooksStore.buscarRecomendados();
   try {
     // Carrega dados essenciais da sua API primeiro
     await Promise.all([livroStore.fetchLivros(), livroStore.fetchMeusLivros()]);
@@ -74,7 +71,6 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
       <barraProgresso />
 
       <h1 class="titulo-secao">Recomendados</h1>
-      <p v-if="hasReadingPreferences(authStore.user)" class="recommendation-preferences-note">Leituras inspiradas nos seus gostos, com espaço para novas descobertas. <RouterLink to="/preferencias-leitura">Ajustar preferências</RouterLink></p>
       <p v-if="googleBooksStore.avisoRecomendados && googleBooksStore.resultados.length" role="status">
         {{ googleBooksStore.avisoRecomendados }}
       </p>
@@ -88,7 +84,7 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
       <div v-else-if="googleBooksStore.error" class="status-recomendados erro" role="alert">
         <p>{{ googleBooksStore.error }}</p>
         <button
-          @click="googleBooksStore.buscarRecomendados(true, authStore.user)"
+          @click="googleBooksStore.buscarRecomendados(true)"
           class="btn-tentar-novamente"
         >
           Tentar novamente
@@ -120,7 +116,7 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
       <!-- 4. Fallback se não retornar nenhum item -->
       <div v-if="!googleBooksStore.loading && !googleBooksStore.error && !googleBooksStore.resultados.length" class="status-recomendados">
         <p>Ainda não encontramos recomendações disponíveis. Tente buscar novamente em instantes.</p>
-        <button type="button" class="btn-tentar-novamente" @click="googleBooksStore.buscarRecomendados(true, authStore.user)">
+        <button type="button" class="btn-tentar-novamente" @click="googleBooksStore.buscarRecomendados(true)">
           Buscar recomendações
         </button>
       </div>
@@ -131,8 +127,6 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
 </template>
 
 <style scoped>
-.recommendation-preferences-note { color:#8d7054; font-size:13px; line-height:1.7; margin:-10px 0 24px; }
-.recommendation-preferences-note a { color:#6b4226; text-decoration:underline; text-underline-offset:3px; }
 .loading-container {
   display: flex;
   flex-direction: column;

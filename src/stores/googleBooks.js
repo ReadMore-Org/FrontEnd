@@ -1,5 +1,3 @@
-import { buildRecommendationCatalog, hasReadingPreferences, preferencesCacheKey } from '@/utils/readingPreferences';
-import { getPersonalizedEntries } from '@/services/readingPreferences';
 import { recommendationErrorMessage } from "@/utils/recommendationMessages";
 import { hasExplicitBookCover } from "@/utils/images";
 import { getSavedRecommendations, searchRecommendedBooks } from "@/services/recommendations";
@@ -160,10 +158,8 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
   // =========================
   // RECOMENDADOS
   // =========================
-  let CACHE_KEY_RECOMENDADOS = "recomendados_google_books_v10:general";
+  const CACHE_KEY_RECOMENDADOS = "recomendados_google_books_v11:general";
   let recommendationEntries = [...GENERAL_RECOMMENDATIONS];
-  let recommendationContext = null;
-  let recommendationPersonalized = false;
   const CACHE_EXPIRATION_MS = 12 * 60 * 60 * 1000;
   let recomendadosEmAndamento = null;
   let maisRecomendadosEmAndamento = null;
@@ -187,32 +183,18 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
     } catch { return null; }
   }
 
-  function buscarRecomendados(forceRefresh = false, profile = null) {
-    const context = preferencesCacheKey(profile);
+  function buscarRecomendados(forceRefresh = false) {
     if (maisRecomendadosEmAndamento) {
-      if (recommendationContext !== context) loading.value = true;
-      return maisRecomendadosEmAndamento.then(() => buscarRecomendados(forceRefresh, profile));
+      return maisRecomendadosEmAndamento.then(() => buscarRecomendados(forceRefresh));
     }
-    if (recomendadosEmAndamento) {
-      if (recommendationContext === context) return recomendadosEmAndamento;
-      return recomendadosEmAndamento.then(() => buscarRecomendados(forceRefresh, profile));
-    }
-    if (context !== recommendationContext) {
-      resultados.value = [];
-      catalogoLocalRecomendados = null;
-      erroMaisRecomendados.value = null;
-      avisoRecomendados.value = null;
-      recommendationContext = context;
-    }
-    CACHE_KEY_RECOMENDADOS = `recomendados_google_books_v10:${context}`;
-    recommendationEntries = buildRecommendationCatalog(profile);
-    recommendationPersonalized = hasReadingPreferences(profile);
-    recomendadosEmAndamento = carregarRecomendados(forceRefresh, profile)
+    if (recomendadosEmAndamento) return recomendadosEmAndamento;
+    recommendationEntries = [...GENERAL_RECOMMENDATIONS];
+    recomendadosEmAndamento = carregarRecomendados(forceRefresh)
       .finally(() => { recomendadosEmAndamento = null; });
     return recomendadosEmAndamento;
   }
 
-  async function carregarRecomendados(forceRefresh, profile) {
+  async function carregarRecomendados(forceRefresh) {
     if (forceRefresh) catalogoLocalRecomendados = null;
     loading.value = true;
     error.value = null;
@@ -226,12 +208,6 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
         return;
       }
 
-      if (hasReadingPreferences(profile)) {
-        try {
-          const discovered = await getPersonalizedEntries();
-          recommendationEntries = buildRecommendationCatalog(profile, Array.isArray(discovered) ? discovered : []);
-        } catch { /* As preferências também ordenam o catálogo editorial offline. */ }
-      }
       recomendacoesPendentes = recommendationEntries.map((_, index) => index);
       const livros = await consultarProximasRecomendacoes();
       if (!livros.length) throw new Error("Nenhuma recomendação disponível");
@@ -286,9 +262,7 @@ export const useGoogleBooksStore = defineStore("googleBooks", () => {
         .sort((a, b) => Number(hasExplicitBookCover(b)) - Number(hasExplicitBookCover(a))
           || Number(!!(b.google_book_id || b.capa_google)) - Number(!!(a.google_book_id || a.capa_google)))[0],
     ]));
-    // Com preferências, reserva espaço para consultar os gostos escolhidos;
-    // livros gerais já salvos não devem ocupar a página inteira antes disso.
-    const savedOrder = (recommendationPersonalized ? recomendacoesPendentes.slice(0, 12) : [...recomendacoesPendentes]).sort((a, b) =>
+    const savedOrder = [...recomendacoesPendentes].sort((a, b) =>
       Number(hasExplicitBookCover(savedByIndex.get(b))) - Number(hasExplicitBookCover(savedByIndex.get(a))));
     for (const index of savedOrder) {
       if (collected.length >= 12) break;

@@ -3,7 +3,6 @@ import { defineStore } from "pinia";
 
 import auth from "../services/auth";
 import api from "../services/api";
-import { saveReadingPreferences } from "../services/readingPreferences";
 
 import { useLivrosStore } from "./livros";
 
@@ -11,29 +10,6 @@ export const useAuthStore = defineStore("auth", () => {
   const accessToken = ref(localStorage.getItem("access_token"));
   const refreshToken = ref(localStorage.getItem("refresh_token"));
   const user = ref(JSON.parse(localStorage.getItem("user")));
-  let profileLoaded = false;
-  let profileRequest = null;
-
-  function setUser(data) {
-    user.value = data;
-    profileLoaded = true;
-    localStorage.setItem('user', JSON.stringify(data));
-  }
-
-  async function ensureProfile() {
-    if (!isAuthenticated.value || profileLoaded) return user.value;
-    const token = accessToken.value;
-    if (!profileRequest) profileRequest = auth.me().then(response => {
-      if (accessToken.value === token) setUser(response.data);
-      return user.value;
-    }).finally(() => { profileRequest = null; });
-    return profileRequest;
-  }
-
-  async function updateReadingPreferences(payload) {
-    setUser(await saveReadingPreferences(payload));
-  }
-
   const error = ref(null);
 
   const isAuthenticated = computed(() => !!accessToken.value);
@@ -51,7 +27,6 @@ export const useAuthStore = defineStore("auth", () => {
 
     const response = await auth.me();
     user.value = response.data;
-    profileLoaded = true;
     localStorage.setItem("user", JSON.stringify(response.data));
   }
 
@@ -64,7 +39,6 @@ export const useAuthStore = defineStore("auth", () => {
 
     const response = await auth.me();
     user.value = response.data;
-    profileLoaded = true;
     localStorage.setItem("user", JSON.stringify(response.data));
   }
 
@@ -72,8 +46,6 @@ export const useAuthStore = defineStore("auth", () => {
     accessToken.value = null;
     refreshToken.value = null;
     user.value = null;
-    profileLoaded = false;
-    profileRequest = null;
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
@@ -139,7 +111,5 @@ export const useAuthStore = defineStore("auth", () => {
     logout,
     updateOnboardingPreference,
     updateProfile,
-    ensureProfile,
-    updateReadingPreferences,
   };
 });
