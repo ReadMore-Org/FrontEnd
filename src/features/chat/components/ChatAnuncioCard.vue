@@ -2,7 +2,9 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { X } from 'lucide-vue-next'
-import { ROTULO_TIPO, getCapaUrl } from '@/utils/marketplaceHelpers'
+import { ROTULO_TIPO } from '@/utils/marketplaceHelpers'
+import AppImage from '@/components/common/AppImage.vue'
+import { bookImageFallbacks } from '@/utils/images'
 
 // Card do livro anunciado: aparece acima do campo de texto ("contexto" da conversa, ainda não enviado)
 // e dentro da primeira mensagem enviada a partir do anúncio.
@@ -13,14 +15,14 @@ const { anuncio, dismissible = false } = defineProps({
 
 const emit = defineEmits(['dismiss'])
 
-const capa = computed(() => getCapaUrl({ capa: anuncio.capa }))
+const capas = computed(() => bookImageFallbacks({ ...anuncio, origem: 'local' }))
 const tipo = computed(() => ROTULO_TIPO[anuncio.tipo] ?? 'Anúncio')
 </script>
 
 <template>
   <div class="card" :class="{ 'card--bar': dismissible }">
     <RouterLink class="card__link" :to="`/marketplace/${anuncio.id}`" :title="`Ver anúncio: ${anuncio.titulo}`">
-      <img class="card__capa" :src="capa" alt="" loading="lazy" />
+      <AppImage class="card__capa" :src="capas[0]" :fallbacks="capas.slice(1)" :alt="`Capa de ${anuncio.titulo}`" loading="lazy" />
       <span class="card__text">
         <small>{{ dismissible ? 'Conversando sobre' : 'Anúncio' }} · {{ tipo }}</small>
         <strong>{{ anuncio.titulo }}</strong>

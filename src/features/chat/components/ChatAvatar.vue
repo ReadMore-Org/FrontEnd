@@ -1,28 +1,31 @@
 <script setup>
 import { computed } from 'vue'
 import { initials } from '../lib/format'
-import { mediaUrl } from '../lib/urls'
+import AppImage from '@/components/common/AppImage.vue'
+import { resolveImageUrl } from '@/utils/images'
 
 const {
   name = '',
   src = null,
+  fallbackSrc = null,
   size = 40,
   online = null,
 } = defineProps({
   name: { type: String, default: '' },
   src: { type: String, default: null },
+  fallbackSrc: { type: String, default: null },
   size: { type: Number, default: 40 },
   // null = não mostra indicador; true/false = bolinha online/offline.
   online: { type: Boolean, default: null },
 })
 
 const style = computed(() => ({ '--avatar-size': `${size}px` }))
-const url = computed(() => mediaUrl(src))
+const url = computed(() => resolveImageUrl(src) || resolveImageUrl(fallbackSrc))
 </script>
 
 <template>
   <span class="avatar" :style="style">
-    <img v-if="url" class="avatar__image" :src="url" alt="" loading="lazy" />
+    <AppImage v-if="url" class="avatar__image" :src="url" :fallbacks="[fallbackSrc]" avatar alt="" loading="lazy" />
     <span v-else class="avatar__initials" aria-hidden="true">{{ initials(name) }}</span>
     <span
       v-if="online !== null"

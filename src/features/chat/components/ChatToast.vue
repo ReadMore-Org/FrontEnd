@@ -5,13 +5,14 @@ import ChatAvatar from './ChatAvatar.vue'
 defineProps({
   author: { type: String, required: true },
   avatar: { type: String, default: null },
+  avatarFallback: { type: String, default: null },
   preview: { type: String, default: '' },
 })
 </script>
 
 <template>
   <div class="chat-toast">
-    <ChatAvatar :name="author" :src="avatar" :size="40" />
+    <ChatAvatar :name="author" :src="avatar" :fallback-src="avatarFallback" :size="40" />
     <div class="chat-toast__text">
       <strong>{{ author }}</strong>
       <span>{{ preview }}</span>

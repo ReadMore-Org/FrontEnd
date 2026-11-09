@@ -62,7 +62,7 @@ function replyPreview(reply) {
         class="message__avatar"
         :class="{ 'message__avatar--hidden': !showAuthor }"
         :name="authorName"
-        :src="message.author?.avatar ?? null"
+        :src="message.author?.avatar ?? null" :fallback-src="message.author?.google_picture"
         :size="36"
       />
 

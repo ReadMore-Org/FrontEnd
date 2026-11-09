@@ -1,3 +1,4 @@
+import { resolveImageUrl } from '@/utils/images'
 import axios from 'axios'
 import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
@@ -73,9 +74,9 @@ export const useChatStore = defineStore('chatStore', () => {
 
     if (!user?.id) return null
 
-    const foto = user.foto?.url ?? user.google_picture ?? null
+    const foto = resolveImageUrl(user.foto_url || user.foto) || resolveImageUrl(user.google_picture) || null
 
-    return { id: user.id, name: user.name || 'Leitor', avatar: foto }
+    return { id: user.id, name: user.name || 'Leitor', avatar: foto, google_picture: user.google_picture || null }
   })
 
   const rooms = computed(() => sortedRooms(state))
@@ -171,7 +172,7 @@ export const useChatStore = defineStore('chatStore', () => {
     const item = {
       id: -(pendingSeq += 1),
       room: roomId,
-      author: { id: me.value.id, name: me.value.name, avatar: me.value.avatar ?? null },
+      author: { id: me.value.id, name: me.value.name, avatar: me.value.avatar ?? null, google_picture: me.value.google_picture },
       body,
       file: null,
       created: new Date().toISOString(),
@@ -247,6 +248,7 @@ export const useChatStore = defineStore('chatStore', () => {
         props: {
           author,
           avatar: message.author?.avatar ?? null,
+          avatarFallback: message.author?.google_picture ?? null,
           preview: messagePreview(message),
         },
       },

@@ -74,7 +74,7 @@ function preview(room) {
           :aria-current="room.id === activeId ? 'true' : undefined"
           @click="emit('select', room.id)"
         >
-          <ChatAvatar :name="room.name" :src="room.image" :size="40" />
+          <ChatAvatar :name="room.name" :src="room.image" :fallback-src="room.other?.google_picture" :size="40" />
           <span class="room__body">
             <span class="room__top">
               <span class="room__name">{{ room.name }}</span>

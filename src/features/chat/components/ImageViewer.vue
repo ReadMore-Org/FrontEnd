@@ -62,7 +62,7 @@ onBeforeUnmount(() => {
       aria-label="Visualizador de foto"
     >
       <header class="viewer__bar">
-        <ChatAvatar :name="authorName" :src="current.author?.avatar ?? null" :size="36" />
+        <ChatAvatar :name="authorName" :src="current.author?.avatar ?? null" :fallback-src="current.author?.google_picture" :size="36" />
         <div class="viewer__who">
           <strong>{{ authorName }}</strong>
           <span>{{ formatDay(current.created) }} às {{ formatTime(current.created) }}</span>

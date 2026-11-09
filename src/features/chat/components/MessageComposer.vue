@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
-import { Paperclip, SendHorizontal, X } from 'lucide-vue-next'
+import { FilePlus2, SendHorizontal, X } from 'lucide-vue-next'
 
 const MAX_LENGTH = 2000
 
@@ -123,7 +123,7 @@ function replyLabel(message) {
         :disabled="disabled"
         @click="fileInput.click()"
       >
-        <Paperclip :size="20" aria-hidden="true" />
+        <FilePlus2 :size="21" :stroke-width="1.8" aria-hidden="true" />
       </button>
       <input ref="fileInput" type="file" class="composer__file" tabindex="-1" @change="onFile" />
 
@@ -243,11 +243,29 @@ function replyLabel(message) {
 }
 
 .composer__icon {
-  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  color: #76502e;
+  border: 1px solid #e5d3bc;
+  border-radius: 14px;
+  background: #faf3e8;
+  box-shadow: 0 2px 5px rgba(101, 67, 33, 0.04);
+  cursor: pointer;
 }
 
 .composer__icon:hover:not(:disabled) {
-  background-color: var(--color-surface);
+  color: #654321;
+  border-color: #cbaa83;
+  background: #f1e4d2;
+}
+
+.composer__icon:focus-visible {
+  outline: 2px solid #85572c;
+  outline-offset: 3px;
+}
+
+.composer__icon:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .composer__send {

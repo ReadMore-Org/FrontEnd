@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { ArrowLeft, Ellipsis } from 'lucide-vue-next'
+import { ArrowLeft, SlidersHorizontal } from 'lucide-vue-next'
 import { formatLastSeen } from '../lib/format'
 import ChatAvatar from './ChatAvatar.vue'
 import ChatAnuncioCard from './ChatAnuncioCard.vue'
@@ -106,7 +106,7 @@ function onEdit(payload) {
         :key="`avatar-${room.id}`"
         class="window__swap"
         :name="room.name"
-        :src="room.image"
+        :src="room.image" :fallback-src="room.other?.google_picture"
         :size="38"
       />
       <div :key="`title-${room.id}`" class="window__title window__swap">
@@ -120,9 +120,10 @@ function onEdit(payload) {
         type="button"
         class="window__info"
         aria-label="Detalhes do contato"
+        title="Detalhes da conversa"
         @click="emit('info')"
       >
-        <Ellipsis :size="20" aria-hidden="true" />
+        <SlidersHorizontal :size="19" :stroke-width="1.8" aria-hidden="true" />
       </button>
     </header>
 
@@ -220,6 +221,30 @@ function onEdit(payload) {
 .window__info:hover {
   color: #ffffff;
   background-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Creme e dourado suave acompanham o cabeçalho em tons de madeira. */
+.window__info {
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: #fff3df;
+  border: 1px solid rgba(243, 218, 180, 0.28);
+  border-radius: 14px;
+  background: rgba(255, 243, 223, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+}
+
+.window__info:hover {
+  color: #fff9ef;
+  border-color: rgba(243, 218, 180, 0.55);
+  background: rgba(255, 243, 223, 0.2);
+}
+
+.window__info:focus-visible {
+  outline: 2px solid #f3dab4;
+  outline-offset: 3px;
 }
 
 /* Só no celular existe a lista como tela separada. */
