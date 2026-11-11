@@ -191,6 +191,17 @@ onMounted(() => scrollToBottom())
 </template>
 
 <style scoped>
+/* Controles simples, sem o fundo e a borda cinza nativos do navegador. */
+button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #654321;
+  font: inherit;
+  cursor: pointer;
+}
+button:disabled { cursor: default; opacity: 0.5; }
+
 .list {
   flex: 1;
   min-height: 0;

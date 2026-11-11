@@ -89,6 +89,7 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
 
       <!-- 3. Estado de Sucesso (Lista de Livros) -->
       <GradeBook
+        class="recomendados"
         v-else-if="googleBooksStore.resultados.length > 0"
         :livros="googleBooksStore.resultados"
         :tem-mais-remoto="googleBooksStore.temMaisRecomendados"
@@ -244,6 +245,16 @@ const totalQueroLer = computed(() => livroStore.totalQueroLer);
 }
 
 @media (max-width: 650px) {
+  .recomendados :deep(.card-livro-grid) {
+    width: 100%;
+    max-width: 180px;
+    margin-inline: auto;
+  }
+
+  .recomendados :deep(.capa) {
+    width: 100%;
+  }
+
   .splide__slide {
     transition: none;
   }

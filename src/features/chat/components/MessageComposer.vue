@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
-import { FilePlus2, SendHorizontal, X } from 'lucide-vue-next'
+import { Paperclip, SendHorizontal, X } from 'lucide-vue-next'
 
 const MAX_LENGTH = 2000
 
@@ -123,7 +123,7 @@ function replyLabel(message) {
         :disabled="disabled"
         @click="fileInput.click()"
       >
-        <FilePlus2 :size="21" :stroke-width="1.8" aria-hidden="true" />
+        <Paperclip :size="21" :stroke-width="1.8" aria-hidden="true" />
       </button>
       <input ref="fileInput" type="file" class="composer__file" tabindex="-1" @change="onFile" />
 
@@ -156,6 +156,17 @@ function replyLabel(message) {
 </template>
 
 <style scoped>
+/* Controles simples, sem o fundo e a borda cinza nativos do navegador. */
+button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #654321;
+  font: inherit;
+  cursor: pointer;
+}
+button:disabled { cursor: default; opacity: 0.5; }
+
 .composer {
   display: flex;
   flex-direction: column;
@@ -193,7 +204,7 @@ function replyLabel(message) {
 .composer__context button {
   display: inline-flex;
   padding: 0.25rem;
-  color: var(--color-text-secondary);
+  color: #76502e;
 }
 
 .composer__error {
@@ -246,9 +257,8 @@ function replyLabel(message) {
   flex-shrink: 0;
   color: #76502e;
   border: 1px solid #e5d3bc;
-  border-radius: 14px;
+  border-radius: 50%;
   background: #faf3e8;
-  box-shadow: 0 2px 5px rgba(101, 67, 33, 0.04);
   cursor: pointer;
 }
 
@@ -279,7 +289,7 @@ function replyLabel(message) {
 
 .composer__count {
   align-self: flex-end;
-  color: var(--color-text-secondary);
+  color: #76502e;
 }
 
 .composer__icon,

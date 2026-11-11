@@ -77,6 +77,7 @@ function selectRoom(id) {
 </script>
 
 <template>
+  <div class="conversas-page">
   <AppHeader />
 
   <main class="conversas">
@@ -113,7 +114,8 @@ function selectRoom(id) {
     </div>
   </main>
 
-  <AppFooter />
+  <AppFooter class="conversas-footer" />
+  </div>
 </template>
 
 <style scoped>
@@ -151,6 +153,10 @@ function selectRoom(id) {
   border-radius: 16px;
   background-color: var(--chat-bg);
   box-shadow: 0 2px 12px rgba(101, 67, 33, 0.08);
+}
+
+ .chat :deep(.lucide) {
+  stroke-width: 1.8;
 }
 
 .chat :deep(button),
@@ -224,15 +230,30 @@ function selectRoom(id) {
   }
 }
 
-/* Celular: uma tela por vez (lista -> conversa). O menu fixo de baixo ocupa ~70px. */
+/* No celular, header, conversa e navegação dividem a altura disponível sem sobreposição. */
 @media (max-width: 650px) {
+  .conversas-page {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .conversas-footer {
+    position: static;
+    margin-top: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   .conversas {
     padding: 0;
+    min-height: 0;
   }
 
   .chat {
     grid-template-columns: minmax(0, 1fr);
-    height: calc(100dvh - 140px);
+    height: 100%;
+    min-height: 0;
     border: none;
     border-radius: 0;
     box-shadow: none;

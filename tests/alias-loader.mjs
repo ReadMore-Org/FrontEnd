@@ -1,4 +1,5 @@
 export async function resolve(specifier, context, nextResolve) {
+  if (specifier === 'vue-toastification') return { url: new URL('../node_modules/vue-toastification/dist/index.mjs', import.meta.url).href, shortCircuit: true };
   if (specifier === '@/router') return { url: new URL('./router-stub.mjs', import.meta.url).href, shortCircuit: true };
   if (specifier.startsWith('@/')) {
     const path = specifier.slice(2);

@@ -85,6 +85,17 @@ async function download() {
 </template>
 
 <style scoped>
+/* Controles simples, sem o fundo e a borda cinza nativos do navegador. */
+button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #654321;
+  font: inherit;
+  cursor: pointer;
+}
+button:disabled { cursor: default; opacity: 0.5; }
+
 .attachment__image-button {
   display: block;
   width: fit-content;
@@ -108,7 +119,8 @@ async function download() {
   padding: 1.5rem 1rem;
   font-size: 0.8125rem;
   border-radius: var(--radius-md);
-  background-color: color-mix(in srgb, currentColor 8%, transparent);
+  color: #76502e;
+  background-color: #faf3e8;
 }
 
 .attachment__file {
@@ -119,11 +131,12 @@ async function download() {
   padding: 0.5rem 0.75rem;
   text-align: left;
   border-radius: var(--radius-md);
-  background-color: color-mix(in srgb, currentColor 8%, transparent);
+  color: #76502e;
+  background-color: #faf3e8;
 }
 
 .attachment__file:hover:not(:disabled) {
-  background-color: color-mix(in srgb, currentColor 14%, transparent);
+  background-color: #f1e4d2;
 }
 
 .attachment__meta {

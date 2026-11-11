@@ -154,6 +154,17 @@ function replyPreview(reply) {
 </template>
 
 <style scoped>
+/* Controles simples, sem o fundo e a borda cinza nativos do navegador. */
+button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #654321;
+  font: inherit;
+  cursor: pointer;
+}
+button:disabled { cursor: default; opacity: 0.5; }
+
 /* Visual minimalista: balões suaves sem borda, nome e hora acima, tons derivados da cor primária. */
 .message {
   display: grid;
@@ -212,7 +223,8 @@ function replyPreview(reply) {
 }
 
 .message__meta svg.message__read {
-  color: #2563eb;
+  color: #654321;
+  stroke-width: 2.5;
 }
 
 /* Foto: a hora fica sobre a imagem (canto inferior direito). */
@@ -227,11 +239,11 @@ function replyPreview(reply) {
   padding: 0.0625rem 0.375rem;
   color: #ffffff;
   border-radius: 999px;
-  background-color: rgb(0 0 0 / 50%);
+  background-color: rgb(65 40 22 / 80%);
 }
 
 .message__bubble--photo .message__meta svg.message__read {
-  color: #60a5fa;
+  color: #f3dab8;
 }
 
 .message__row {
@@ -344,13 +356,14 @@ function replyPreview(reply) {
 .message__actions button {
   display: inline-flex;
   padding: 0.375rem;
-  color: var(--color-text-secondary);
+  color: #76502e;
+  background: #faf3e8;
   border-radius: 50%;
 }
 
 .message__actions button:hover {
-  color: var(--color-text);
-  background-color: var(--color-border);
+  color: #654321;
+  background-color: #e8d8c3;
 }
 
 .message__actions .message__danger:hover {

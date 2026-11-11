@@ -1,12 +1,13 @@
 <script setup>
 import AppImage from "@/components/common/AppImage.vue";
 import { getUserPhoto } from "@/utils/images";
-import { BellDot } from "lucide-vue-next";
+import { MessageCircle } from "lucide-vue-next";
 import { Plus } from "lucide-vue-next";
-import { MoonStar, Search } from "lucide-vue-next";
+import { Search } from "lucide-vue-next";
 import { computed, ref } from "vue";
-import { useAuthStore } from "@/stores/auth";
+import ChatNotifications from "@/features/chat/components/ChatNotifications.vue";
 import { useChatStore } from "@/features/chat/stores/chat";
+import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import { useRoute } from "vue-router";
 
@@ -22,7 +23,6 @@ const isHome = computed(() => route.path === "/home");
 const isLivros = computed(() => route.path === "/meus-livros");
 const isMarketplace = computed(() => route.path === "/marketplace");
 const isExplore = computed(() => route.path === "/explore");
-const isConversas = computed(() => route.path.startsWith("/conversas"));
 
 const menuAberto = ref(false);
 
@@ -36,12 +36,7 @@ function handleLogout() {
   router.push("/home");
 }
 
-const active = ref("home");
 
-console.log(authStore.user);
-console.log(authStore.user?.google_picture);
-console.log(userPhoto.value);
-console.count("AppHeader");
 </script>
 
 <template>
@@ -70,16 +65,10 @@ console.count("AppHeader");
             <RouterLink to="/explore">Explore</RouterLink>
           </li>
 
-          <li v-if="authStore.isAuthenticated" :class="{ active: isConversas }">
+          <li v-if="authStore.isAuthenticated" :class="{ active: route.path.startsWith('/conversas') }">
             <RouterLink to="/conversas" class="link-conversas">
               Conversas
-              <span
-                v-if="chatStore.unreadTotal > 0"
-                class="badge-conversas"
-                :aria-label="`${chatStore.unreadTotal} mensagens não lidas`"
-              >
-                {{ chatStore.unreadTotal > 99 ? "99+" : chatStore.unreadTotal }}
-              </span>
+              <span v-if="chatStore.unreadTotal" class="badge-conversas">{{ chatStore.unreadTotal > 99 ? '99+' : chatStore.unreadTotal }}</span>
             </RouterLink>
           </li>
         </ul>
@@ -109,9 +98,11 @@ console.count("AppHeader");
         <button @click="$router.push('/explore')" class="icon" id="Lupa">
           <Search :size="24" />
         </button>
-        <button class="icon" id="Sino">
-          <BellDot :size="24" />
-        </button>
+        <RouterLink to="/conversas" class="mobile-chat icon" aria-label="Conversas" :aria-current="route.path.startsWith('/conversas') ? 'page' : undefined">
+          <MessageCircle :size="22" />
+          <span v-if="chatStore.unreadTotal" class="badge-conversas">{{ chatStore.unreadTotal > 99 ? '99+' : chatStore.unreadTotal }}</span>
+        </RouterLink>
+        <ChatNotifications />
       </div>
 
       <div class="imagem">
@@ -149,6 +140,12 @@ console.count("AppHeader");
 </template>
 
 <style scoped>
+.link-conversas { display: inline-flex; align-items: center; gap: 6px; }
+.badge-conversas { padding: 2px 5px; border-radius: 12px; background: #654321; color: white; font-size: 10px; line-height: 14px; }
+.mobile-chat { display: none; position: relative; text-decoration: none; }
+.mobile-chat .badge-conversas { position: absolute; top: -5px; right: -6px; }
+
+
 button a {
   text-decoration: none;
   color: #654321;
@@ -185,7 +182,7 @@ img {
 
 nav ul {
   display: flex;
-  gap: 56px;
+  gap: clamp(12px, 2vw, 32px);
   text-decoration: none;
   color: #9c8a7a;
   font-weight: 500;
@@ -203,35 +200,16 @@ nav ul li.active a {
   color: #654321;
 }
 
-.link-conversas {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.badge-conversas {
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
-  background: #654321;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 18px;
-  text-align: center;
-}
-
 .left {
   display: flex;
   align-items: center;
-  gap: 192px;
+  gap: clamp(16px, 3vw, 60px);
 }
 
 .right {
   display: flex;
   align-items: center;
-  gap: 45px;
+  gap: 20px;
 }
 
 button {
@@ -276,7 +254,7 @@ button {
 .icones {
   display: flex;
   align-items: center;
-  gap: 55px;
+  gap: 20px;
 }
 
 .avatar {
@@ -412,7 +390,37 @@ button {
   border-radius: 6px;
 }
 
+@media (min-width: 651px) {
+  .app-header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 20px;
+    box-sizing: border-box;
+    padding: 16px 24px;
+  }
+
+  .left { display: contents; }
+  .left > h1 { grid-column: 1; grid-row: 1; justify-self: start; }
+  .left > nav { grid-column: 2; grid-row: 1; min-width: 0; }
+  nav ul { justify-content: center; gap: clamp(16px, 2.5vw, 48px); padding: 0; margin: 0; font-size: 18px; }
+  nav li { white-space: nowrap; }
+  .right, .deslogado { grid-column: 3; grid-row: 1; justify-self: end; }
+}
+
+@media (min-width: 651px) and (max-width: 1249px) {
+  .app-header { grid-template-columns: minmax(0, 1fr) auto; }
+  .right, .deslogado { grid-column: 2; }
+  .left > nav { grid-column: 1 / -1; grid-row: 2; }
+  nav ul { flex-wrap: wrap; }
+}
 @media (max-width: 650px) {
+  .mobile-chat { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 50%; background: white; flex-shrink: 0; }
+  .app-header { box-sizing: border-box; }
+  .right { gap: 8px; }
+  .icones { gap: 8px; flex-shrink: 0; }
+  .imagem, .intro_mobile { min-width: 0; }
+  .imagem { gap: 8px; }
+  .avatar { flex-shrink: 0; }
   .left {
     gap: 0;
   }
@@ -445,10 +453,10 @@ button {
     overflow: hidden;
     text-overflow: ellipsis;
 
-    max-width: 120px;
+    max-width: 100px;
     line-height: 18px;
     font-family: "inter", sans-serif;
-    min-width: 120px;
+    min-width: 0;
   }
 
   .app-header {
@@ -456,7 +464,7 @@ button {
     background: #f5e6d3;
     border: none;
     margin: 0;
-    padding: 20px 25px;
+    padding: 20px 12px;
   }
 
   .right {

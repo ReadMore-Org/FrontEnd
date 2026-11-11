@@ -118,14 +118,25 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* Controles simples, sem o fundo e a borda cinza nativos do navegador. */
+button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #654321;
+  font: inherit;
+  cursor: pointer;
+}
+button:disabled { cursor: default; opacity: 0.5; }
+
 .viewer {
   position: fixed;
   inset: 0;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  color: #ffffff;
-  background-color: rgb(11 20 26 / 95%);
+  color: #fff3df;
+  background-color: rgb(43 29 19 / 96%);
 }
 
 .viewer__bar {
@@ -160,7 +171,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: #fff3df;
   border-radius: 50%;
 }
 
@@ -170,7 +181,7 @@ onBeforeUnmount(() => {
 
 .viewer__button:hover,
 .viewer__nav:hover {
-  background-color: rgb(255 255 255 / 15%);
+  background-color: rgb(243 218 180 / 18%);
 }
 
 .viewer__stage {
@@ -187,7 +198,7 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 50%;
   padding: 0.625rem;
-  background-color: rgb(255 255 255 / 10%);
+  background-color: rgb(243 218 180 / 12%);
   transform: translateY(-50%);
 }
 
